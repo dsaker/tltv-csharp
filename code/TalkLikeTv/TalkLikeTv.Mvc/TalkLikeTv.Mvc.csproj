@@ -7,10 +7,10 @@
     </PropertyGroup>
 
     <ItemGroup Label="To simplify use of WriteLine.">
-        <Using Include="System.Console" Static="true" />
+        <Using Include="System.Console" Static="true"/>
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\TalkLikeTv.DataContext\TalkLikeTv.DataContext.csproj" />
+        <ProjectReference Include="..\TalkLikeTv.DataContext\TalkLikeTv.DataContext.csproj"/>
     </ItemGroup>
 </Project>

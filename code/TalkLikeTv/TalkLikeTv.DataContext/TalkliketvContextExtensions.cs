@@ -1,13 +1,18 @@
-using Microsoft.Data.SqlClient; // To use SqlConnectionStringBuilder.
-using Microsoft.EntityFrameworkCore; // To use UseSqlServer.
-using Microsoft.Extensions.DependencyInjection; // To use IServiceCollection.
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
+// To use SqlConnectionStringBuilder.
+// To use UseSqlServer.
+
+// To use IServiceCollection.
 
 namespace TalkLikeTv.EntityModels;
 
 public static class TalkliketvContextExtensions
 {
     /// <summary>
-    /// Adds TalkliketvContext to the specified IServiceCollection. Uses the SqlServer database provider.
+    ///     Adds TalkliketvContext to the specified IServiceCollection. Uses the SqlServer database provider.
     /// </summary>
     /// <param name="services">The service collection.</param>
     /// <param name="connectionString">Set to override the default.</param>
@@ -30,17 +35,17 @@ public static class TalkliketvContextExtensions
             builder.Password = Environment.GetEnvironmentVariable("MY_SQL_PWD");
             connectionString = builder.ConnectionString;
         }
+
         services.AddDbContext<TalkliketvContext>(options =>
             {
                 options.UseSqlServer(connectionString);
                 options.LogTo(TalkliketvContextLogger.WriteLine,
-                    new[] { Microsoft.EntityFrameworkCore
-                        .Diagnostics.RelationalEventId.CommandExecuting });
+                    new[] { RelationalEventId.CommandExecuting });
             },
             // Register with a transient lifetime to avoid concurrency
             // issues with Blazor Server projects.
-            contextLifetime: ServiceLifetime.Transient,
-            optionsLifetime: ServiceLifetime.Transient);
+            ServiceLifetime.Transient,
+            ServiceLifetime.Transient);
         return services;
     }
 }

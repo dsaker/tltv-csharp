@@ -7,14 +7,14 @@
     </PropertyGroup>
 
     <ItemGroup Label="To simplify use of WriteLine.">
-        <Using Include="System.Console" Static="true" />
+        <Using Include="System.Console" Static="true"/>
     </ItemGroup>
     <ItemGroup Label="Versions are set at solution-level.">
         <PackageReference
-                Include="Microsoft.EntityFrameworkCore.SqlServer" />
+                Include="Microsoft.EntityFrameworkCore.SqlServer"/>
     </ItemGroup>
     <ItemGroup>
-        <ProjectReference Include="..\TalkLikeTv.EntityModels\TalkLikeTv.EntityModels.csproj" />
+        <ProjectReference Include="..\TalkLikeTv.EntityModels\TalkLikeTv.EntityModels.csproj"/>
     </ItemGroup>
 
 

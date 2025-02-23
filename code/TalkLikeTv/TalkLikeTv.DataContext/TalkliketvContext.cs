@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace TalkLikeTv.EntityModels;
 
@@ -26,8 +27,9 @@ public partial class TalkliketvContext : DbContext
 
     public virtual DbSet<Translate> Translates { get; set; }
 
-    protected override void OnConfiguring(
-        DbContextOptionsBuilder optionsBuilder)
+    public virtual DbSet<Voice> Voices { get; set; }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         if (!optionsBuilder.IsConfigured)
         {
@@ -41,12 +43,11 @@ public partial class TalkliketvContext : DbContext
             // SQL Server authentication.
             builder.UserID = Environment.GetEnvironmentVariable("MY_SQL_USR");
             builder.Password = Environment.GetEnvironmentVariable("MY_SQL_PWD");
-            
+
             optionsBuilder.UseSqlServer(builder.ConnectionString);
-            
+
             optionsBuilder.LogTo(TalkliketvContextLogger.WriteLine,
-                new[] { Microsoft.EntityFrameworkCore
-                    .Diagnostics.RelationalEventId.CommandExecuting });
+                new[] { RelationalEventId.CommandExecuting });
         }
     }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -58,9 +59,9 @@ public partial class TalkliketvContext : DbContext
 
         modelBuilder.Entity<Phrase>(entity =>
         {
-            entity.HasKey(e => e.PhraseId).HasName("PK__Phrases__0DBA0E8236F54210");
+            entity.HasKey(e => e.PhraseId).HasName("PK__Phrases__0DBA0E8210193462");
 
-            entity.HasOne(d => d.Title).WithMany(p => p.Phrases).HasConstraintName("FK__Phrases__TitleId__76969D2E");
+            entity.HasOne(d => d.Title).WithMany(p => p.Phrases).HasConstraintName("FK__Phrases__TitleId__6CD828CA");
         });
 
         modelBuilder.Entity<Title>(entity =>
@@ -72,11 +73,19 @@ public partial class TalkliketvContext : DbContext
 
         modelBuilder.Entity<Translate>(entity =>
         {
-            entity.HasKey(e => new { e.PhraseId, e.LanguageId }).HasName("PK__Translat__A6298BD86E7573EA");
+            entity.HasKey(e => new { e.PhraseId, e.LanguageId }).HasName("PK__Translat__A6298BD8FC160EBF");
 
-            entity.HasOne(d => d.Language).WithMany(p => p.Translates).HasConstraintName("FK__Translate__Langu__7A672E12");
+            entity.HasOne(d => d.Language).WithMany(p => p.Translates).HasConstraintName("FK__Translate__Langu__70A8B9AE");
 
-            entity.HasOne(d => d.PhraseNavigation).WithMany(p => p.Translates).HasConstraintName("FK__Translate__Phras__797309D9");
+            entity.HasOne(d => d.PhraseNavigation).WithMany(p => p.Translates).HasConstraintName("FK__Translate__Phras__6FB49575");
+        });
+
+        modelBuilder.Entity<Voice>(entity =>
+        {
+            entity.Property(e => e.LanguageId).ValueGeneratedNever();
+            entity.Property(e => e.VoiceId).ValueGeneratedOnAdd();
+
+            entity.HasOne(d => d.Language).WithOne(p => p.Voice).HasConstraintName("FK__Voices__Language__662B2B3B");
         });
 
         OnModelCreatingPartial(modelBuilder);

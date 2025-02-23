@@ -4,22 +4,22 @@ namespace TalkLikeTv.EntityModels;
 
 public class TalkliketvContextLogger
 {
-  public static void WriteLine(string message)
-  {
-    string folder = Path.Combine(GetFolderPath(
-      SpecialFolder.DesktopDirectory), "book-logs");
+    public static void WriteLine(string message)
+    {
+        var folder = Path.Combine(GetFolderPath(
+            SpecialFolder.DesktopDirectory), "book-logs");
 
-    if (!Directory.Exists(folder)) 
-      Directory.CreateDirectory(folder);
+        if (!Directory.Exists(folder))
+            Directory.CreateDirectory(folder);
 
-    string dateTimeStamp = DateTime.Now.ToString(
-      "yyyyMMdd_HHmmss");
+        var dateTimeStamp = DateTime.Now.ToString(
+            "yyyyMMdd_HHmmss");
 
-    string path = Path.Combine(folder,
-      $"talkliketvlog-{dateTimeStamp}.txt");
+        var path = Path.Combine(folder,
+            $"talkliketvlog-{dateTimeStamp}.txt");
 
-    StreamWriter textFile = File.AppendText(path);
-    textFile.WriteLine(message);
-    textFile.Close();
-  }
+        var textFile = File.AppendText(path);
+        textFile.WriteLine(message);
+        textFile.Close();
+    }
 }
