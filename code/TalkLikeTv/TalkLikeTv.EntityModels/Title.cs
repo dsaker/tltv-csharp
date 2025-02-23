@@ -6,10 +6,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace TalkLikeTv.EntityModels;
 
-[Index("Title1", Name = "UQ__Titles__2CB664DCE9BEE5E0", IsUnique = true)]
+[Index("Title1", Name = "UQ__Titles__2CB664DC9F414B11", IsUnique = true)]
 public partial class Title
 {
     [Key]
+    [Column("TitleID")]
     public int TitleId { get; set; }
 
     [Column("Title")]
@@ -18,11 +19,12 @@ public partial class Title
 
     public int NumPhrases { get; set; }
 
-    public int OriginalLanguageId { get; set; }
+    [Column("OriginalLanguageID")]
+    public int? OriginalLanguageId { get; set; }
 
     [ForeignKey("OriginalLanguageId")]
     [InverseProperty("Titles")]
-    public virtual Language OriginalLanguage { get; set; } = null!;
+    public virtual Language? OriginalLanguage { get; set; }
 
     [InverseProperty("Title")]
     public virtual ICollection<Phrase> Phrases { get; set; } = new List<Phrase>();

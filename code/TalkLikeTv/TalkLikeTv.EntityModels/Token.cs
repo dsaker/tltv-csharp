@@ -9,6 +9,7 @@ namespace TalkLikeTv.EntityModels;
 public partial class Token
 {
     [Key]
+    [Column("TokenID")]
     public int TokenId { get; set; }
 
     [StringLength(64)]

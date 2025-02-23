@@ -6,14 +6,15 @@ using Microsoft.EntityFrameworkCore;
 
 namespace TalkLikeTv.EntityModels;
 
-[Index("DisplayName", Name = "UQ_Voices_DisplayName", IsUnique = true)]
-[Index("ShortName", Name = "UQ_Voices_ShortName", IsUnique = true)]
+[Index("ShortName", Name = "UQ__Voices__A6160FD116C784E7", IsUnique = true)]
 public partial class Voice
 {
+    [Key]
+    [Column("VoiceID")]
     public int VoiceId { get; set; }
 
-    [Key]
-    public int LanguageId { get; set; }
+    [Column("LanguageID")]
+    public int? LanguageId { get; set; }
 
     [StringLength(32)]
     public string DisplayName { get; set; } = null!;
@@ -21,13 +22,13 @@ public partial class Voice
     [StringLength(32)]
     public string LocalName { get; set; } = null!;
 
-    [StringLength(32)]
+    [StringLength(64)]
     public string ShortName { get; set; } = null!;
 
     [StringLength(8)]
     public string Gender { get; set; } = null!;
 
-    [StringLength(8)]
+    [StringLength(16)]
     public string Locale { get; set; } = null!;
 
     [StringLength(32)]
@@ -38,12 +39,24 @@ public partial class Voice
     [StringLength(8)]
     public string VoiceType { get; set; } = null!;
 
-    [StringLength(8)]
+    [StringLength(32)]
     public string Status { get; set; } = null!;
 
     public int WordsPerMinute { get; set; }
 
     [ForeignKey("LanguageId")]
-    [InverseProperty("Voice")]
-    public virtual Language Language { get; set; } = null!;
+    [InverseProperty("Voices")]
+    public virtual Language? Language { get; set; }
+
+    [ForeignKey("VoiceId")]
+    [InverseProperty("Voices")]
+    public virtual ICollection<Personality> Personalities { get; set; } = new List<Personality>();
+
+    [ForeignKey("VoiceId")]
+    [InverseProperty("Voices")]
+    public virtual ICollection<Scenario> Scenarios { get; set; } = new List<Scenario>();
+
+    [ForeignKey("VoiceId")]
+    [InverseProperty("Voices")]
+    public virtual ICollection<Style> Styles { get; set; } = new List<Style>();
 }

@@ -10,17 +10,18 @@ namespace TalkLikeTv.EntityModels;
 public partial class Translate
 {
     [Key]
+    [Column("PhraseID")]
     public int PhraseId { get; set; }
 
     [Key]
+    [Column("LanguageID")]
     public int LanguageId { get; set; }
 
     [StringLength(128)]
-    public string? Phrase { get; set; }
+    public string Phrase { get; set; } = null!;
 
-    [Column("phrase_hint")]
     [StringLength(128)]
-    public string? PhraseHint { get; set; }
+    public string PhraseHint { get; set; } = null!;
 
     [ForeignKey("LanguageId")]
     [InverseProperty("Translates")]
