@@ -7,24 +7,24 @@ namespace TalkLikeTv.Upload;
 
 public class LanguagesUploader(TalkliketvContext db)
 {
-    private const string JsonFilePath = "/Users/dustysaker/Documents/csharp-repos/tltv-net9/code/TalkLikeTv/TalkLikeTv.Upload/json/languages.json";
+    private const string JsonFilePath = "/Users/dustysaker/Documents/csharp-repos/tltv-net9/code/TalkLikeTv/TalkLikeTv.Scripts/json/languages.json";
 
     public class Translation
     {
         [JsonPropertyName("translation")]
-        public Dictionary<string, LanguageDetails> Languages { get; set; }
+        public required Dictionary<string, LanguageDetails> Languages { get; set; }
     }
 
     public class LanguageDetails
     {
         [JsonPropertyName("name")]
-        public string Name { get; set; }
+        public required string Name { get; set; }
 
         [JsonPropertyName("nativeName")]
-        public string NativeName { get; set; }
+        public required string NativeName { get; set; }
 
         [JsonPropertyName("dir")]
-        public string Direction { get; set; }
+        public required string Direction { get; set; }
     }
 
 

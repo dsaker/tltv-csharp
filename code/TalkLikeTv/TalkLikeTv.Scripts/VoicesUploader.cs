@@ -7,22 +7,22 @@ namespace TalkLikeTv.Upload;
 
 public class VoicesUploader(TalkliketvContext db)
 {
-    private const string JsonFilePath = "/Users/dustysaker/Documents/csharp-repos/tltv-net9/code/TalkLikeTv/TalkLikeTv.Upload/json/voices.json";
+    private const string JsonFilePath = "/Users/dustysaker/Documents/csharp-repos/tltv-net9/code/TalkLikeTv/TalkLikeTv.Scripts/json/voices.json";
     
     // Define the structure of the JSON file for desearlization
     private class JsonVoice
     {
-        public string DisplayName { get; set; }
-        public string LocalName { get; set; }
-        public string ShortName { get; set; }
-        public string Gender { get; set; }
-        public string Locale { get; set; }
-        public string LocaleName { get; set; }
+        public required string DisplayName { get; set; }
+        public required string LocalName { get; set; }
+        public required string ShortName { get; set; }
+        public required string Gender { get; set; }
+        public required string Locale { get; set; }
+        public required string LocaleName { get; set; }
         public List<string> StyleList { get; set; } = new();
         public int SampleRateHertz { get; set; }
-        public string VoiceType { get; set; }
-        public string Status { get; set; }
-        public VoiceTag VoiceTag { get; set; }
+        public required string VoiceType { get; set; }
+        public required string Status { get; set; }
+        public required VoiceTag VoiceTag { get; set; }
         public int WordsPerMinute { get; set; }
     }
 

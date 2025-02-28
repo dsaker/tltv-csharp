@@ -29,3 +29,25 @@ body {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+#language-columns
+{
+    column-count: 3;
+}
+
+#voice-columns
+{
+    column-count: 3;
+}
+
+.upload-form {
+    display: flex;
+    flex-direction: column;
+    margin-top: 5px; /* Adds a small gap between the form and the upload button */
+}
+.upload-form .form-group {
+    margin-bottom: 10px; /* Adds a small gap between form groups */
+}
+.upload-form .btn {
+    width: 100px; /* Makes the upload button shorter */
+}

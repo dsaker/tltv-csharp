@@ -12,5 +12,10 @@
 
     <ItemGroup>
         <ProjectReference Include="..\TalkLikeTv.DataContext\TalkLikeTv.DataContext.csproj"/>
+        <ProjectReference Include="..\TalkLikeTv.FileService\TalkLikeTv.FileService.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="wwwroot\uploads\" />
     </ItemGroup>
 </Project>

@@ -8,7 +8,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TalkLikeTv.UnitTests", "Tal
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TalkLikeTv.Mvc", "TalkLikeTv.Mvc\TalkLikeTv.Mvc.csproj", "{E24EB3AA-EE99-4453-A474-6EDA76EAC62E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TalkLikeTv.Upload", "TalkLikeTv.Upload\TalkLikeTv.Upload.csproj", "{C66883CA-E626-4163-B4F6-228FAE45CE7D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TalkLikeTv.Scripts", "TalkLikeTv.Scripts\TalkLikeTv.Scripts.csproj", "{C66883CA-E626-4163-B4F6-228FAE45CE7D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TalkLikeTv.FileService", "TalkLikeTv.FileService\TalkLikeTv.FileService.csproj", "{58522B1A-F788-4920-A0AC-4F578F3BBC42}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -36,5 +38,9 @@ Global
 		{C66883CA-E626-4163-B4F6-228FAE45CE7D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C66883CA-E626-4163-B4F6-228FAE45CE7D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C66883CA-E626-4163-B4F6-228FAE45CE7D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{58522B1A-F788-4920-A0AC-4F578F3BBC42}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{58522B1A-F788-4920-A0AC-4F578F3BBC42}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{58522B1A-F788-4920-A0AC-4F578F3BBC42}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{58522B1A-F788-4920-A0AC-4F578F3BBC42}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
