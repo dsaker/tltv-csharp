@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using TalkLikeTv.EntityModels;
 using TalkLikeTv.Mvc.Models;
@@ -32,25 +33,35 @@ public class HomeController : Controller
     {
         if (ModelState.IsValid && model.File?.Length > 0)
         {
-            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads", model.File.FileName);
-            
-            await using (var stream = new FileStream(filePath, FileMode.Create))
+            try
             {
-                await model.File.CopyToAsync(stream);
-            }
-            
-            // Reopen the file and pass the stream to another function
-            await using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
-            {
-                Parse.ParseFile(fileStream);
-            }
+                var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads", model.File.FileName);
 
-            ViewBag.Message = "File uploaded successfully.";
+                await using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await model.File.CopyToAsync(stream);
+                }
+
+                // Reopen the file and pass the stream to another function
+                await using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+                {
+                    var fileInfo = Parse.ParseFile(fileStream);
+
+                    // Read the file content
+                    var fileBytes = await System.IO.File.ReadAllBytesAsync(fileInfo.FullName);
+                    var fileName = Path.GetFileName(fileInfo.FullName);
+
+                    // Return the file as a response
+                    return File(fileBytes, "application/zip", fileName);
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Something went wrong: {ex.Message}");
+            }
         }
-        else
-        {
-            ViewBag.Message = "No file selected.";
-        }
+
+        ViewBag.Message = "No file selected.";
 
         return View("Index");
     }

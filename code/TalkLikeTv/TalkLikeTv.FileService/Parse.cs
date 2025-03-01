@@ -5,53 +5,50 @@ namespace TalkLikeTv.FileService;
 public partial class Parse
 {
     [GeneratedRegex(@"\[.*?\]|\{.*?\}|<.*?>|♪|-|\""")]
-    private static partial Regex ReplaceFmt();  
+    private static partial Regex ReplaceFmt();
     private static string _replaceFmt(string input) => ReplaceFmt().Replace(input, "");
-    
-    [GeneratedRegex("[!.?,;]")]
-    private static partial Regex SplitOnPunctuationBreak();  
+
+    [GeneratedRegex("(?<=[!.?,;])")]
+    private static partial Regex SplitOnPunctuationBreak();
     private static string[] _splitOnPunctuationBreak(string input) => SplitOnPunctuationBreak().Split(input);
-    
+
     [GeneratedRegex("[!.?]")]
-    private static partial Regex SplitOnEndingPunctuation();  
+    private static partial Regex SplitOnEndingPunctuation();
     private static string[] _splitOnEndingPunctuation(string input) => SplitOnEndingPunctuation().Split(input);
-    
-    public static List<string> ParseFile(FileStream? fileStream)
+
+    public static FileInfo ParseFile(FileStream? fileStream)
     {
         ArgumentNullException.ThrowIfNull(fileStream, nameof(fileStream));
 
         Console.WriteLine($"File size: {fileStream.Length} bytes");
 
-        if (fileStream.Length > 8192)
+        if (fileStream.Length > 8192*8)
         {
-            throw new Exception($"File too large ({fileStream.Length} > 8192 bytes)");
+            throw new Exception($"File too large ({fileStream.Length} > {8192*8} bytes)");
         }
 
-        return _getLines(fileStream);
+        var stringsList = _getLines(fileStream);
+
+        var filename = Path.GetFileNameWithoutExtension(fileStream.Name);
+        var txtPath = Path.Combine("/tmp/ParseFile/", filename);
+        var file = ZipFile.ZipStringsList(stringsList, 100, txtPath, filename);
+
+        return file;
     }
 
     private static List<string> _getLines(FileStream fileStream)
     {
-        var reader = new StreamReader(fileStream);
+        using var reader = new StreamReader(fileStream);
         var textFormat = TextFormatDetector.DetectTextFormat(fileStream);
-       
-        fileStream.Seek(0, SeekOrigin.Begin);
-        if (textFormat == TextFormatDetector.TextFormat.Srt)
-        {
-            return _parseSrt(reader);
-        }
-        if (textFormat == TextFormatDetector.TextFormat.Paragraph)
-        {
-            return _parseParagraph(reader);
-        }
-        if (textFormat == TextFormatDetector.TextFormat.OnePhrasePerLine)
-        {
-            return _parseOnePhrasePerLine(reader);
-        }
 
         fileStream.Seek(0, SeekOrigin.Begin);
-        return _parseSrt(reader);
-
+        return textFormat switch
+        {
+            TextFormatDetector.TextFormat.Srt => _parseSrt(reader),
+            TextFormatDetector.TextFormat.Paragraph => _parseParagraph(reader),
+            TextFormatDetector.TextFormat.OnePhrasePerLine => _parseOnePhrasePerLine(reader),
+            _ => _parseOnePhrasePerLine(reader)
+        };
     }
 
     private static List<string> _parseSrt(StreamReader reader)
@@ -63,13 +60,14 @@ public partial class Parse
         {
             line = line.Trim();
             if (
-                string.IsNullOrEmpty(line) || 
-                char.IsDigit(line[0]) || 
+                string.IsNullOrEmpty(line) ||
+                char.IsDigit(line[0]) ||
                 (line[0] == '[' && line.Last() == ']') ||
-                line.Contains("<font") || 
+                line.Contains("<font") ||
                 line.Contains("font>")
                 )
             {
+                line = reader.ReadLine();
                 continue;
             }
             // if the line is not empty then it is another line of the same phrase
@@ -80,10 +78,10 @@ public partial class Parse
             }
 
             line = _replaceFmt(line);
-            
+
             var phrases = _splitLongPhrases(line);
             // TODO return list of skipped phrases to user
-            if (phrases != null)            
+            if (phrases != null)
             {
                 stringsSlice.AddRange(phrases);
             }
@@ -91,12 +89,12 @@ public partial class Parse
         }
 
         return stringsSlice;
-    } 
-    
+    }
+
     private static List<string> _parseParagraph(StreamReader reader)
     {
         ArgumentNullException.ThrowIfNull(reader, nameof(reader));
-        
+
         var all = reader.ReadToEnd();
         var allLines = _splitOnEndingPunctuation(all);
         var stringsSlice = new List<string>();
@@ -114,7 +112,7 @@ public partial class Parse
     private static List<string> _parseOnePhrasePerLine(StreamReader reader)
     {
         ArgumentNullException.ThrowIfNull(reader, nameof(reader));
-        
+
         var stringsSlice = new List<string>();
         var line = reader.ReadLine();
         while (line != null)
@@ -132,37 +130,39 @@ public partial class Parse
         }
         return stringsSlice;
     }
-    
+
     private static List<string>? _splitLongPhrases(string line)
     {
+        line = line.Trim();
         var words = line.Split(' ');
 
-        // if phrase is too short skip it
         if (words.Length <= 3)
         {
             return null;
         }
         
-        var splitString = _splitOnPunctuationBreak(line);
-        var keptStrings = new List<string>();
-
-        for (var i = 0; i < splitString.Length; i++)
+        if (words.Length < 8)
         {
-            // if before last string see if combining with next string is less than 10 words
-            if (i < splitString.Length - 1)
+            return new List<string> {line};
+        }
+
+        var splitString = _splitOnPunctuationBreak(line).
+            Where(s => !string.IsNullOrEmpty(s) && s != ".").ToList();
+        var keptStrings = new List<string>();
+        
+
+        for (var i = 0; i < splitString.Count; i++)
+        {
+            if (splitString[i].Split(' ').Length > 4)
+            {
+                keptStrings.Add(splitString[i]);
+            }
+            else if (i < splitString.Count - 1)
             {
                 var combined = splitString[i] + " " + splitString[i + 1];
-                if (splitString[i].Split(' ').Length < 4 || combined.Split(' ').Length <= 10)
-                {
-                    keptStrings.Add(combined);
-                    i++;
-                }
-                else
-                {
-                    keptStrings.Add(splitString[i]);
-                }
+                keptStrings.Add(combined);
+                i++;
             }
-            // if last string is less than 4 words combine with previous string
             else if (splitString[i].Split(' ').Length < 4 && i > 0)
             {
                 keptStrings[^1] += " " + splitString[i];
@@ -173,7 +173,6 @@ public partial class Parse
             }
         }
 
-        // replace any double spaces with single spaces
         return keptStrings.Select(s => s.Replace("  ", " ").Trim()).ToList();
     }
 }

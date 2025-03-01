@@ -118,12 +118,12 @@ CREATE TABLE "Titles" (
 GO
 CREATE TABLE "Phrases" (
     "PhraseID" INT IDENTITY PRIMARY KEY,
-    "TitleID" INT FOREIGN KEY REFERENCES Titles(TitleID),
+    "TitleID" INT FOREIGN KEY REFERENCES Titles(TitleID) ON DELETE CASCADE,,
 )
 GO
 CREATE TABLE "Translates" (
-    "PhraseID" INT FOREIGN KEY REFERENCES Phrases(PhraseID),
-    "LanguageID" INT FOREIGN KEY REFERENCES Languages(LanguageID),
+    "PhraseID" INT FOREIGN KEY REFERENCES Phrases(PhraseID) ON DELETE CASCADE,,
+    "LanguageID" INT FOREIGN KEY REFERENCES Languages(LanguageID) ON DELETE CASCADE,,
     "Phrase" nvarchar (128) NOT NULL ,
     "PhraseHint" nvarchar (128) NOT NULL ,
     PRIMARY KEY ("PhraseID", "LanguageID")
