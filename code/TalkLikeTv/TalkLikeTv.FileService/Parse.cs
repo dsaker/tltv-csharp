@@ -160,8 +160,17 @@ public partial class Parse
             else if (i < splitString.Count - 1)
             {
                 var combined = splitString[i] + " " + splitString[i + 1];
-                keptStrings.Add(combined);
                 i++;
+                if (combined.Split(' ').Length > 4)
+                {
+                    keptStrings.Add(combined);
+                }
+                else if (splitString[i].Split(' ').Length < 4 && i < splitString.Count - 1)
+                {
+                    combined =  combined + " " + splitString[i + 1];
+                    keptStrings.Add(combined);
+                    i++;
+                }
             }
             else if (splitString[i].Split(' ').Length < 4 && i > 0)
             {

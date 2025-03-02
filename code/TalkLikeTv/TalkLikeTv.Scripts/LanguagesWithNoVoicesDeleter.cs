@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using TalkLikeTv.EntityModels;
 
-namespace TalkLikeTv.Upload;
+namespace TalkLikeTv.Scripts;
 
 public class LanguagesWithNoVoicesDeleter(TalkliketvContext db)
 {

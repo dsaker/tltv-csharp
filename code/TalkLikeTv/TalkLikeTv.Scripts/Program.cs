@@ -1,16 +1,21 @@
 using TalkLikeTv.EntityModels;
 
-namespace TalkLikeTv.Upload;
+namespace TalkLikeTv.Scripts;
 
 internal class Program
 {
+    private static bool _isValidSelection(string[] selected)
+    {
+        return selected.Any(s => s == "all" || s == "languages" || s == "voices" || s == "delete" || s == "audio" || s == "translates");
+    }
+    
     private static async Task Main(string[] args)
     {
-        var selected = args.Select(arg => arg.ToLowerInvariant()).ToList();
+        var selected = args.Select(arg => arg.ToLowerInvariant()).ToArray();
 
-        if (!selected.Contains("all") && !selected.Contains("languages") && !selected.Contains("voices") && !selected.Contains("delete"))
+        if (!_isValidSelection(selected))
         {
-            Console.WriteLine("Error: You must specify 'voices', 'languages', or 'all'.");
+            Console.WriteLine("Error: You must specify 'voices', 'languages', 'translates', or 'audio'.");
             PrintUsage();
             return;
         }
@@ -37,13 +42,27 @@ internal class Program
             var languagesWithNoVoicesDeleter = new LanguagesWithNoVoicesDeleter(dbContext);
             await languagesWithNoVoicesDeleter.DeleteLanguagesWithNoVoices();
         }
+        
+        if (selected.Contains("audio"))
+        {
+            Console.WriteLine("Starting audio upload...");
+            var audioUploader = new AudioUploader(dbContext);
+            await audioUploader.UploadAudio();
+        }
+        
+        if (selected.Contains("translates"))
+        {
+            Console.WriteLine("Starting translates upload...");
+            var translatesUploader = new TranslatesUploader(dbContext);
+            await translatesUploader.UploadTranslates();
+        }
 
         Console.WriteLine("Upload process complete.");
     }
 
     private static void PrintUsage()
     {
-        Console.WriteLine("Usage: Upload [voices|languages|all]");
+        Console.WriteLine("Usage: Upload [voices|languages|all|audio|translates]");
         Console.WriteLine("Example:");
         Console.WriteLine("  Upload all models: Upload all");
         Console.WriteLine("  Upload only voices: Upload voices");

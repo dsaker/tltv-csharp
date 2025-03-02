@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using TalkLikeTv.EntityModels;
 using Newtonsoft.Json;
 
-namespace TalkLikeTv.Upload;
+namespace TalkLikeTv.Scripts;
 
 public class VoicesUploader(TalkliketvContext db)
 {
