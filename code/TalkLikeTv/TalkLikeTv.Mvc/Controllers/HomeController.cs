@@ -1,6 +1,6 @@
 using System.Diagnostics;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using TalkLikeTv.EntityModels;
 using TalkLikeTv.Mvc.Models;
 using TalkLikeTv.FileService;
@@ -64,6 +64,49 @@ public class HomeController : Controller
         ViewBag.Message = "No file selected.";
 
         return View("Index");
+    }
+    
+    
+    public IActionResult CreateAudio()
+    {
+        var dbVoices = _db.Voices
+            .Include(v => v.Styles)
+            .Include(v => v.Scenarios)
+            .Include(v => v.Personalities)
+            .OrderBy(v => v.DisplayName);
+
+        var modelVoices = new List<VoiceViewModel>();
+        foreach (var v in dbVoices)
+        {
+            var vStyles = "";
+            if (v.Styles.Count > 0)
+            {
+                vStyles = "Styles:&nbsp;" + string.Join(",&nbsp;", v.Styles.Select(s => s.StyleName)) + "<br>";
+            }
+            var vScenarios = "";
+            if (v.Scenarios.Count > 0)
+            {
+                vScenarios = "Scenarios:&nbsp;" + string.Join(",&nbsp;", v.Scenarios.Select(s => s.ScenarioName)) + "<br>";
+            }
+            var vPersonalities = "";
+            if (v.Personalities.Count > 0)
+            {
+                vPersonalities = "Personalities:&nbsp;" + string.Join(",&nbsp;", v.Personalities.Select(p => p.PersonalityName)) + "<br>";
+            }
+            var vDetails = $"Gender:&nbsp;{v.Gender}<br>Type:&nbsp;{v.VoiceType}{vStyles}{vScenarios}{vPersonalities}";
+            modelVoices.Add(new VoiceViewModel(v.VoiceId, v.DisplayName, v.LocaleName, v.ShortName, vDetails));
+        }
+        
+        CreateAudioInputsModel model = new(
+            _db.Languages
+                .OrderBy(l => l.Name)
+                .ThenBy(l => l.NativeName),
+            modelVoices);
+        var viewModel = new CreateAudioViewModel
+        {
+            CreateAudioInputsModel = model
+        };
+        return View(viewModel);
     }
     
 

@@ -1,0 +1,61 @@
+@model TalkLikeTv.Mvc.Models.CreateAudioViewModel
+
+<div class="row">
+    <h1 class="display-2">Choose your voices</h1>
+    
+    <form id="audio-form" type="POST" enctype="multipart/form-data">
+        @Html.AntiForgeryToken()
+        <div class="row">
+            <div class="col-md-12">
+                <h3>Language to learn from</h3>
+                <div id="language-columns">
+                    <ul class="list-group">
+                        @if (Model is not null)
+                        {
+                            @foreach (Language l in @Model.CreateAudioInputsModel.Languages)
+                            {
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="" id="@l.LanguageId">
+                                    <label class="form-check-label" for="@l.LanguageId">
+                                        @l.Name - @l.NativeName
+                                    </label>
+                                </div>
+                            }
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <hr/>
+        <br/>
+        <div>
+            <audio id="sound" src="~/voices/azure/af-ZA-AdriNeural.wav" preload="auto"></audio>
+            <button onclick="document.getElementById('sound').play()">Play through Javascript</button>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <h3>Voice to learn from</h3>
+                <div id="voice-columns">
+                    <ul class="list-group">
+                        @if (Model is not null)
+                        {
+                            @foreach (var v in @Model.CreateAudioInputsModel.Voices)
+                            {
+                                <div class="form-check">
+                                    <input asp-for="CreateAudioForm.ToVoice" class="form-check-input" type="checkbox" value="" id="@v.Id">
+
+                                    <label class="form-check-label" for="@v.Id">
+                                        <span class="voice_info" title=@v.Details>@v.DisplayName</span>
+                                    </label>
+                                    <br/>
+                                    @* <button id="play-sound-button-@(v.Id)">Play Sound</button> *@
+                                    @* <audio id="sound" src="~/voices/azure/@(v.ShortName).wav" preload="auto"></audio> *@
+                                </div>
+                            }
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>

@@ -16,8 +16,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="wwwroot\translates\azure\" />
-      <Folder Include="wwwroot\uploads\" />
-      <Folder Include="wwwroot\voices\azure\" />
+      <Folder Include="wwwroot\voices\azure\*" />
     </ItemGroup>
+    
 </Project>

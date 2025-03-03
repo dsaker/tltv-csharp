@@ -8,8 +8,6 @@ namespace TalkLikeTv.Scripts;
 
 public class TranslatesUploader(TalkliketvContext db)
 {
-    private const string AzureTranslatesDir =
-        "/Users/dustysaker/Documents/csharp-repos/tltv-net9/code/TalkLikeTv/TalkLikeTv.Mvc/wwwroot/translates/azure";
 
     private readonly TalkliketvContext _db = db ?? throw new ArgumentNullException(nameof(db));
     private static readonly string SubscriptionKey = Environment.GetEnvironmentVariable("AZURE_TRANSLATOR_KEY") 

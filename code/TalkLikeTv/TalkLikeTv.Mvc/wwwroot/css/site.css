@@ -45,9 +45,27 @@ body {
     flex-direction: column;
     margin-top: 5px; /* Adds a small gap between the form and the upload button */
 }
+
 .upload-form .form-group {
     margin-bottom: 10px; /* Adds a small gap between form groups */
 }
+
 .upload-form .btn {
     width: 100px; /* Makes the upload button shorter */
+}
+
+.voice_info {
+    border-bottom: 1px dotted;
+    position: relative;
+}
+
+.voice_info .title {
+    position: absolute;
+    top: 20px;
+    background: silver;
+    padding: 4px;
+    left: 0;
+    white-space: nowrap;
+    opacity: 1;
+    z-index: 10;
 }
