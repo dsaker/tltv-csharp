@@ -57,6 +57,11 @@ body {
 .voice_info {
     border-bottom: 1px dotted;
     position: relative;
+    cursor: pointer;
+}
+
+.play_sound {
+    cursor: default;
 }
 
 .voice_info .title {

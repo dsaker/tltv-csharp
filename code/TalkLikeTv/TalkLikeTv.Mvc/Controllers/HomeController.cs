@@ -91,9 +91,9 @@ public class HomeController : Controller
             var vPersonalities = "";
             if (v.Personalities.Count > 0)
             {
-                vPersonalities = "Personalities:&nbsp;" + string.Join(",&nbsp;", v.Personalities.Select(p => p.PersonalityName)) + "<br>";
+                vPersonalities = "Personalities:&nbsp;" + string.Join(",&nbsp;", v.Personalities.Select(p => p.PersonalityName));
             }
-            var vDetails = $"Gender:&nbsp;{v.Gender}<br>Type:&nbsp;{v.VoiceType}{vStyles}{vScenarios}{vPersonalities}";
+            var vDetails = $"Gender:&nbsp;{v.Gender}<br>Type:&nbsp;<br>{v.VoiceType}{vStyles}{vScenarios}{vPersonalities}";
             modelVoices.Add(new VoiceViewModel(v.VoiceId, v.DisplayName, v.LocaleName, v.ShortName, vDetails));
         }
         

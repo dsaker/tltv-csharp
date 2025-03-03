@@ -6,6 +6,10 @@
         <ImplicitUsings>enable</ImplicitUsings>
     </PropertyGroup>
 
+    <ItemGroup>
+        <None Update="app.db" CopyToOutputDirectory="PreserveNewest" ExcludeFromSingleFile="true"/>
+    </ItemGroup>
+
     <ItemGroup Label="To simplify use of WriteLine.">
         <Using Include="System.Console" Static="true"/>
     </ItemGroup>
@@ -16,7 +20,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="wwwroot\voices\azure\*" />
+      <_ContentIncludedByDefault Remove="wwwroot\voice\af-ZA-AdriNeural.wav" />
     </ItemGroup>
-    
+  
 </Project>
