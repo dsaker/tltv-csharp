@@ -1,16 +1,94 @@
 @model TalkLikeTv.Mvc.Models.CreateAudioViewModel
 
 <div class="row">
-    <h1 class="display-2">Choose your voices</h1>
+    <h2 class="display-2">Design your audio</h2>
     <form id="audio-form" type="POST" enctype="multipart/form-data">
         @Html.AntiForgeryToken()
-        <div id="language-selection">
-            @await Html.PartialAsync("_LanguageSelection", Model)
+        <div id="from-language-selection">
+            <div class="row">
+                <div class="col-md-12">
+                    <h3>Language to learn from</h3>
+                    <div class="three-columns">
+                        <ul class="list-group">
+                            @if (Model is not null)
+                            {
+                                @foreach (Language l in @Model.Languages)
+                                {
+                                    <div class="form-check">
+                                        <input class="form-check-input language-radio" type="radio" name="from_language" value="@l.LanguageId" id="@l.LanguageId">
+                                        <label class="form-check-label" for="@l.LanguageId">
+                                            @l.Name - @l.NativeName
+                                        </label>
+                                    </div>
+                                }
+                            }
+                        </ul>
+                    </div>
+                </div>
+            </div>
         </div>
         <hr/>
         <br/>
-        <div id="voice-selection">
+        <div id="from-voice-selection">
             <!-- Voice selection will be loaded here -->
+        </div>
+        <hr/>
+        <div id="to-language-selection">
+            <div class="row">
+                <div class="col-md-12">
+                    <h3>Language to learn from</h3>
+                    <div class="three-columns">
+                        <ul class="list-group">
+                            @if (Model is not null)
+                            {
+                                @foreach (Language l in @Model.Languages)
+                                {
+                                    <div class="form-check">
+                                        <input class="form-check-input language-radio" type="radio" name="to_language" value="@l.LanguageId" id="@l.LanguageId">
+                                        <label class="form-check-label" for="@l.LanguageId">
+                                            @l.Name - @l.NativeName
+                                        </label>
+                                    </div>
+                                }
+                            }
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <hr/>
+        <br/>
+        <div id="to-voice-selection">
+            <!-- Voice selection will be loaded here -->
+        </div>
+        <hr/>
+        <br/>
+        <div id="pause-selection" class="three-columns">
+            <label for="pause-selection">Pause Duration (seconds)</label>
+            @for (int i = 3; i <= 10; i++)
+            {
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="pauseDuration" value="@i" id="pauseDuration-@i" @(Model.PauseDuration == i ? "checked" : "")>
+                    <label class="form-check-label" for="pauseDuration-@i">@i seconds</label>
+                </div>
+            }
+        </div>
+        <hr/>
+        <br/>
+        <div id="pattern-selection" class="three-columns">
+            <label for="pattern-selection">Pattern</label>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="pattern" value="Standard" id="pattern-standard" @(Model.Pattern == "Standard" ? "checked" : "")>
+                <label class="form-check-label" for="pattern-standard">Standard</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="pattern" value="Advanced" id="pattern-advanced" @(Model.Pattern == "Advanced" ? "checked" : "")>
+                <label class="form-check-label" for="pattern-advanced">Advanced</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="pattern" value="Review" id="pattern-review" @(Model.Pattern == "Review" ? "checked" : "")>
+                <label class="form-check-label" for="pattern-review">Review</label>
+            </div>
         </div>
     </form>
 </div>
@@ -29,17 +107,19 @@
     document.querySelectorAll('.language-radio').forEach(function(radio) {
         radio.addEventListener('change', function() {
             var selectedLanguage = document.querySelector('.language-radio:checked').value;
+            var isFromLanguage = this.name === 'from_language';
             fetch('/Home/GetVoices', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
                 },
-                body: JSON.stringify(selectedLanguage)
+                body: JSON.stringify({ selectedLanguage: selectedLanguage, isFromLanguage: isFromLanguage })
             })
                 .then(response => response.text())
                 .then(html => {
-                    document.getElementById('voice-selection').innerHTML = html;
+                    var targetId = isFromLanguage ? 'from-voice-selection' : 'to-voice-selection';
+                    document.getElementById(targetId).innerHTML = html;
                     attachPlaySoundListeners(); // Re-attach event listeners
                 });
         });

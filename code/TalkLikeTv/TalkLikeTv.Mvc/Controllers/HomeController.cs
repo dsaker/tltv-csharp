@@ -72,15 +72,21 @@ public class HomeController : Controller
         return View(model);
     }
     
+    public class GetVoicesRequest
+    {
+        public int SelectedLanguage { get; set; }
+        public bool IsFromLanguage { get; set; }
+    }
+    
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult GetVoices([FromBody] int selectedLanguage)
+    public IActionResult GetVoices([FromBody] GetVoicesRequest request)
     {
         var dbVoices = _db.Voices
             .Include(v => v.Styles)
             .Include(v => v.Scenarios)
             .Include(v => v.Personalities)
-            .Where(v => v.LanguageId == selectedLanguage)
+            .Where(v => v.LanguageId == request.SelectedLanguage)
             .OrderBy(v => v.DisplayName);
 
         var modelVoices = new List<VoiceViewModel>();
@@ -105,7 +111,8 @@ public class HomeController : Controller
             modelVoices.Add(new VoiceViewModel(v.VoiceId, v.DisplayName, v.LocaleName, v.ShortName, vDetails));
         }
 
-        return PartialView("_VoiceSelection", modelVoices);
+        var partialViewName = request.IsFromLanguage ? "_FromVoiceSelection" : "_ToVoiceSelection";
+        return PartialView(partialViewName, modelVoices);
     }
 
     public IActionResult Privacy()

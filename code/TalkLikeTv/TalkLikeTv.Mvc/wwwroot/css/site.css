@@ -30,22 +30,32 @@ body {
     text-align: start;
 }
 
-#language-columns {
+.three-columns {
     column-count: 3;
 }
 
-#voice-columns {
-    column-count: 3;
+.voice-columns {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.voice-list-group {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    padding-bottom: 80px;
+}
+
+.voice-list-group .form-radio {
+    flex: 1 1 calc(33.333% - 10px); /* Adjust the width of each item */
+    margin: 5px; /* Add some margin between items */
+    box-sizing: border-box;
 }
 
 .upload-form {
     display: flex;
     flex-direction: column;
     margin-top: 5px; /* Adds a small gap between the form and the upload button */
-}
-
-.voice-list-group {
-    padding-bottom: 60px;
 }
 
 .upload-form .form-group {

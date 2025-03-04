@@ -22,7 +22,7 @@ public class CreateAudioViewModel(IEnumerable<Language>? languages)
     public string FromVoice { get; set; }
     [Range(3,10)]
     [Required]
-    public string PauseDuration { get; set; }
+    public int PauseDuration { get; set; }
     [Range(1,3)]
     [Required]
     public string Pattern { get; set; }
