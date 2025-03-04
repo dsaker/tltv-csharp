@@ -7,10 +7,10 @@
             <ul class="list-group">
                 @if (Model is not null)
                 {
-                    @foreach (Language l in @Model.CreateAudioInputsModel.Languages)
+                    @foreach (Language l in @Model.Languages)
                     {
                         <div class="form-check">
-                            <input class="form-check-input language-checkbox" type="checkbox" value="@l.LanguageId" id="@l.LanguageId">
+                            <input class="form-check-input language-radio" type="radio" name="language" value="@l.LanguageId" id="@l.LanguageId">
                             <label class="form-check-label" for="@l.LanguageId">
                                 @l.Name - @l.NativeName
                             </label>

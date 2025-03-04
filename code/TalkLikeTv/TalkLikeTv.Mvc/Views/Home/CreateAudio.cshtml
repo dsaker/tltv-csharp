@@ -4,57 +4,46 @@
     <h1 class="display-2">Choose your voices</h1>
     <form id="audio-form" type="POST" enctype="multipart/form-data">
         @Html.AntiForgeryToken()
-        <div class="row">
-            <div class="col-md-12">
-                <h3>Language to learn from</h3>
-                <div id="language-columns">
-                    <ul class="list-group">
-                        @if (Model is not null)
-                        {
-                            @foreach (Language l in @Model.CreateAudioInputsModel.Languages)
-                            {
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" value="" id="@l.LanguageId">
-                                    <label class="form-check-label" for="@l.LanguageId">
-                                        @l.Name - @l.NativeName
-                                    </label>
-                                </div>
-                            }
-                        }
-                    </ul>
-                </div>
-            </div>
+        <div id="language-selection">
+            @await Html.PartialAsync("_LanguageSelection", Model)
         </div>
         <hr/>
         <br/>
-        <div class="row">
-            <div class="col-md-12">
-                <h3>Voice to learn from</h3>
-                <div id="voice-columns">
-                    <ul class="list-group">
-                        @if (Model is not null)
-                        {
-                            @foreach (var v in @Model.CreateAudioInputsModel.Voices)
-                            {
-                                <div class="form-check">
-                                    <input asp-for="CreateAudioForm.ToVoice" class="form-check-input" type="checkbox" value="" id="voice-input-@v.Id">
-
-                                    <label class="form-check-label" for="voice-input-@v.Id"></label>
-                                    <span class="voice_info" title=@v.Details>@v.DisplayName</span>
-                                    <span class="play_sound" id="play-sound-@(v.Id)"> - &#9654;</span>
-                                    <audio id="sound-@(v.Id)" src="~/voices/azure/@(v.ShortName).wav" preload="auto"></audio>
-                                    <script>
-                                        document.getElementById('play-sound-@(v.Id)').addEventListener('click', function() {
-                                            var audio = document.getElementById('sound-@v.Id');
-                                            audio.play();
-                                        });
-                                    </script>
-                                    </div>
-                            }
-                        }
-                    </ul>
-                </div>
-            </div>
+        <div id="voice-selection">
+            <!-- Voice selection will be loaded here -->
         </div>
     </form>
 </div>
+
+<script>
+    function attachPlaySoundListeners() {
+        document.querySelectorAll('.play_sound').forEach(function(playButton) {
+            playButton.addEventListener('click', function() {
+                var audioId = this.id.replace('play-sound-', 'sound-');
+                var audio = document.getElementById(audioId);
+                audio.play();
+            });
+        });
+    }
+
+    document.querySelectorAll('.language-radio').forEach(function(radio) {
+        radio.addEventListener('change', function() {
+            var selectedLanguage = document.querySelector('.language-radio:checked').value;
+            fetch('/Home/GetVoices', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: JSON.stringify(selectedLanguage)
+            })
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('voice-selection').innerHTML = html;
+                    attachPlaySoundListeners(); // Re-attach event listeners
+                });
+        });
+    });
+
+    attachPlaySoundListeners(); // Initial attachment of event listeners
+</script>

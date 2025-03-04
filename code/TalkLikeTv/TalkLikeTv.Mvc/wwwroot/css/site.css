@@ -30,13 +30,11 @@ body {
     text-align: start;
 }
 
-#language-columns
-{
+#language-columns {
     column-count: 3;
 }
 
-#voice-columns
-{
+#voice-columns {
     column-count: 3;
 }
 
@@ -44,6 +42,10 @@ body {
     display: flex;
     flex-direction: column;
     margin-top: 5px; /* Adds a small gap between the form and the upload button */
+}
+
+.voice-list-group {
+    padding-bottom: 60px;
 }
 
 .upload-form .form-group {
@@ -60,10 +62,6 @@ body {
     cursor: pointer;
 }
 
-.play_sound {
-    cursor: default;
-}
-
 .voice_info .title {
     position: absolute;
     top: 20px;
@@ -73,4 +71,8 @@ body {
     white-space: nowrap;
     opacity: 1;
     z-index: 10;
+}
+
+.play_sound {
+    cursor: default;
 }

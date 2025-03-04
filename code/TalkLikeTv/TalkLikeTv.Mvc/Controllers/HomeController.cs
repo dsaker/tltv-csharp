@@ -20,11 +20,7 @@ public class HomeController : Controller
 
     public IActionResult Index()
     {
-        var model = new HomeIndexViewModel
-        {
-            VisitorCount = Random.Shared.Next(1, 1001),
-        };
-        return View(model);
+        return View(new HomeIndexViewModel());
     }
     
     [HttpPost]
@@ -69,10 +65,22 @@ public class HomeController : Controller
     
     public IActionResult CreateAudio()
     {
+        CreateAudioViewModel model = new(
+            _db.Languages
+                .OrderBy(l => l.Name)
+                .ThenBy(l => l.NativeName));
+        return View(model);
+    }
+    
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public IActionResult GetVoices([FromBody] int selectedLanguage)
+    {
         var dbVoices = _db.Voices
             .Include(v => v.Styles)
             .Include(v => v.Scenarios)
             .Include(v => v.Personalities)
+            .Where(v => v.LanguageId == selectedLanguage)
             .OrderBy(v => v.DisplayName);
 
         var modelVoices = new List<VoiceViewModel>();
@@ -93,54 +101,12 @@ public class HomeController : Controller
             {
                 vPersonalities = "Personalities:&nbsp;" + string.Join(",&nbsp;", v.Personalities.Select(p => p.PersonalityName));
             }
-            var vDetails = $"Gender:&nbsp;{v.Gender}<br>Type:&nbsp;<br>{v.VoiceType}{vStyles}{vScenarios}{vPersonalities}";
+            var vDetails = $"Gender:&nbsp;{v.Gender}<br>Type:&nbsp;{v.VoiceType}<br>{vStyles}{vScenarios}{vPersonalities}";
             modelVoices.Add(new VoiceViewModel(v.VoiceId, v.DisplayName, v.LocaleName, v.ShortName, vDetails));
         }
-        
-        CreateAudioInputsModel model = new(
-            _db.Languages
-                .OrderBy(l => l.Name)
-                .ThenBy(l => l.NativeName),
-            modelVoices);
-        var viewModel = new CreateAudioViewModel
-        {
-            CreateAudioInputsModel = model
-        };
-        return View(viewModel);
-    }
-    
 
-    // public IActionResult LanguageDetail(int? id)
-    // {
-    //     if (!id.HasValue)
-    //     {
-    //         return BadRequest("You must pass a language ID in the route, for example, /Home/LanguageDetail/21");
-    //     }
-    //     var model = _db.Languages.SingleOrDefault(p => p.LanguageId == id);
-    //     if (model is null)
-    //     {
-    //         return NotFound($"Language {id} not found.");
-    //     }
-    //     return View(model); // Pass model to view and then return result.
-    // }
-    
-    // public IActionResult VoiceDetail(int? id)
-    // {
-    //     if (!id.HasValue)
-    //     {
-    //         return BadRequest("You must pass a voice ID in the route, fo rexample, /Home/VoiceDetail/21");
-    //     }
-    //     var model = _db.Voices.Include(v => v.Language)
-    //         .Include(v => v.Styles)
-    //         .Include(v => v.Scenarios)
-    //         .Include(v => v.Personalities)
-    //         .SingleOrDefault(p => p.VoiceId == id);
-    //     if (model is null)
-    //     {
-    //         return NotFound($"Voice {id} not found.");
-    //     }
-    //     return View(model); // Pass model to view and then return result.
-    // }
+        return PartialView("_VoiceSelection", modelVoices);
+    }
 
     public IActionResult Privacy()
     {

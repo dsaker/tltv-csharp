@@ -4,23 +4,17 @@
     <div class="col-md-12">
         <h3>Voice to learn from</h3>
         <div id="voice-columns">
-            <ul class="list-group">
+            <ul class="voice-list-group">
                 @if (Model is not null)
                 {
                     @foreach (var v in Model)
                     {
                         <div class="form-check">
-                            <input asp-for="CreateAudioForm.ToVoice" class="form-check-input" type="checkbox" value="" id="voice-input-@v.Id">
+                            <input name="to_voice" class="form-check-input" type="radio" value="@v.Id" id="voice-input-@v.Id">
                             <label class="form-check-label" for="voice-input-@v.Id"></label>
-                            <span class="voice_info" title=@v.Details>@v.DisplayName</span>
-                            <span class="play_sound" id="play-sound-@(v.Id)"> - &#9654;</span>
-                            <audio id="sound-@(v.Id)" src="~/voices/azure/@(v.ShortName).wav" preload="auto"></audio>
-                            <script>
-                                document.getElementById('play-sound-@(v.Id)').addEventListener('click', function() {
-                                    var audio = document.getElementById('sound-@v.Id');
-                                    audio.play();
-                                });
-                            </script>
+                            <span class="voice_info" title="@v.Details">@v.DisplayName</span>
+                            <span class="play_sound" id="play-sound-@v.Id"> - &#9654;</span>
+                            <audio id="sound-@v.Id" src="~/voices/azure/@(v.ShortName).wav" preload="auto"></audio>
                         </div>
                     }
                 }
