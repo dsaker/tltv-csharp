@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace TalkLikeTv.EntityModels;
 
@@ -36,99 +34,79 @@ public partial class TalkliketvContext : DbContext
     public virtual DbSet<Voice> Voices { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        if (!optionsBuilder.IsConfigured)
-        {
-            SqlConnectionStringBuilder builder = new();
-            builder.DataSource = "tcp:127.0.0.1,1433"; // SQL Edge in Docker.
-            builder.InitialCatalog = "Talkliketv";
-            builder.TrustServerCertificate = true;
-            builder.MultipleActiveResultSets = true;
-            // Because we want to fail faster. Default is 15 seconds.
-            builder.ConnectTimeout = 3;
-            // SQL Server authentication.
-            builder.UserID = Environment.GetEnvironmentVariable("MY_SQL_USR");
-            builder.Password = Environment.GetEnvironmentVariable("MY_SQL_PWD");
-
-            optionsBuilder.UseSqlServer(builder.ConnectionString);
-
-            optionsBuilder.LogTo(TalkliketvContextLogger.WriteLine,
-                new[] { RelationalEventId.CommandExecuting });
-        }
-    }
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseSqlServer("Data Source=tcp:127.0.0.1,1433;Initial Catalog=Talkliketv;User Id=sa;Password=s3cret-Ninja;TrustServerCertificate=true;");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Language>(entity =>
         {
-            entity.HasKey(e => e.LanguageId).HasName("PK__Language__B938558BBAA6BB07");
+            entity.HasKey(e => e.LanguageId).HasName("PK__Language__B938558B7331CE3E");
         });
 
         modelBuilder.Entity<Personality>(entity =>
         {
-            entity.HasKey(e => e.PersonalityId).HasName("PK__Personal__CD053C5491E3FF7A");
+            entity.HasKey(e => e.PersonalityId).HasName("PK__Personal__CD053C549E66C094");
         });
 
         modelBuilder.Entity<Phrase>(entity =>
         {
-            entity.HasKey(e => e.PhraseId).HasName("PK__Phrases__0DBA0EA27CBE7DFC");
+            entity.HasKey(e => e.PhraseId).HasName("PK__Phrases__0DBA0EA2097F3083");
 
-            entity.HasOne(d => d.Title).WithMany(p => p.Phrases).HasConstraintName("FK__Phrases__TitleID__42B7D1CC");
+            entity.HasOne(d => d.Title).WithMany(p => p.Phrases)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK__Phrases__TitleID__08211BE3");
         });
 
         modelBuilder.Entity<Scenario>(entity =>
         {
-            entity.HasKey(e => e.ScenarioId).HasName("PK__Scenario__0DF6D1A34DDC40CD");
+            entity.HasKey(e => e.ScenarioId).HasName("PK__Scenario__0DF6D1A34BA28E2F");
         });
 
         modelBuilder.Entity<Style>(entity =>
         {
-            entity.HasKey(e => e.StyleId).HasName("PK__Styles__8AD147A0A73623D5");
+            entity.HasKey(e => e.StyleId).HasName("PK__Styles__8AD147A0E82402FE");
         });
 
         modelBuilder.Entity<Title>(entity =>
         {
-            entity.HasKey(e => e.TitleId).HasName("PK__Titles__757589E6A1AF53A0");
+            entity.HasKey(e => e.TitleId).HasName("PK__Titles__757589E6925551ED");
 
-            entity.HasOne(d => d.OriginalLanguage).WithMany(p => p.Titles).HasConstraintName("FK__Titles__Original__3FDB6521");
+            entity.HasOne(d => d.OriginalLanguage).WithMany(p => p.Titles).HasConstraintName("FK__Titles__Original__0544AF38");
         });
 
         modelBuilder.Entity<Token>(entity =>
         {
-            entity.HasKey(e => e.TokenId).HasName("PK__Tokens__658FEE8AEEE06094");
+            entity.HasKey(e => e.TokenId).HasName("PK__Tokens__658FEE8A14927765");
         });
 
         modelBuilder.Entity<Translate>(entity =>
         {
-            entity.HasKey(e => new { e.PhraseId, e.LanguageId }).HasName("PK__Translat__A6298BFA7F219216");
+            entity.HasKey(e => new { e.PhraseId, e.LanguageId }).HasName("PK__Translat__A6298BFA5814AD00");
 
-            entity.HasOne(d => d.Language).WithMany(p => p.Translates)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Translate__Langu__468862B0");
+            entity.HasOne(d => d.Language).WithMany(p => p.Translates).HasConstraintName("FK__Translate__Langu__0BF1ACC7");
 
-            entity.HasOne(d => d.PhraseNavigation).WithMany(p => p.Translates)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Translate__Phras__45943E77");
+            entity.HasOne(d => d.PhraseNavigation).WithMany(p => p.Translates).HasConstraintName("FK__Translate__Phras__0AFD888E");
         });
 
         modelBuilder.Entity<Voice>(entity =>
         {
-            entity.HasKey(e => e.VoiceId).HasName("PK__Voices__D870D587C6CFF3C9");
+            entity.HasKey(e => e.VoiceId).HasName("PK__Voices__D870D587ED363D1F");
 
-            entity.HasOne(d => d.Language).WithMany(p => p.Voices).HasConstraintName("FK__Voices__Language__2803DB90");
+            entity.HasOne(d => d.Language).WithMany(p => p.Voices).HasConstraintName("FK__Voices__Language__6D6D25A7");
 
             entity.HasMany(d => d.Personalities).WithMany(p => p.Voices)
                 .UsingEntity<Dictionary<string, object>>(
                     "VoicePersonality",
                     r => r.HasOne<Personality>().WithMany()
                         .HasForeignKey("PersonalityId")
-                        .HasConstraintName("FK__VoicePers__Perso__3C0AD43D"),
+                        .HasConstraintName("FK__VoicePers__Perso__01741E54"),
                     l => l.HasOne<Voice>().WithMany()
                         .HasForeignKey("VoiceId")
-                        .HasConstraintName("FK__VoicePers__Voice__3B16B004"),
+                        .HasConstraintName("FK__VoicePers__Voice__007FFA1B"),
                     j =>
                     {
-                        j.HasKey("VoiceId", "PersonalityId").HasName("PK__VoicePer__84A0864214AC939F");
+                        j.HasKey("VoiceId", "PersonalityId").HasName("PK__VoicePer__84A086420DA0EA11");
                         j.ToTable("VoicePersonalities");
                         j.IndexerProperty<int>("VoiceId").HasColumnName("VoiceID");
                         j.IndexerProperty<int>("PersonalityId").HasColumnName("PersonalityID");
@@ -139,13 +117,13 @@ public partial class TalkliketvContext : DbContext
                     "VoiceScenario",
                     r => r.HasOne<Scenario>().WithMany()
                         .HasForeignKey("ScenarioId")
-                        .HasConstraintName("FK__VoiceScen__Scena__355DD6AE"),
+                        .HasConstraintName("FK__VoiceScen__Scena__7AC720C5"),
                     l => l.HasOne<Voice>().WithMany()
                         .HasForeignKey("VoiceId")
-                        .HasConstraintName("FK__VoiceScen__Voice__3469B275"),
+                        .HasConstraintName("FK__VoiceScen__Voice__79D2FC8C"),
                     j =>
                     {
-                        j.HasKey("VoiceId", "ScenarioId").HasName("PK__VoiceSce__F8AFB89D2C1769F2");
+                        j.HasKey("VoiceId", "ScenarioId").HasName("PK__VoiceSce__F8AFB89DCB2D66F2");
                         j.ToTable("VoiceScenarios");
                         j.IndexerProperty<int>("VoiceId").HasColumnName("VoiceID");
                         j.IndexerProperty<int>("ScenarioId").HasColumnName("ScenarioID");
@@ -156,13 +134,13 @@ public partial class TalkliketvContext : DbContext
                     "VoiceStyle",
                     r => r.HasOne<Style>().WithMany()
                         .HasForeignKey("StyleId")
-                        .HasConstraintName("FK__VoiceStyl__Style__2EB0D91F"),
+                        .HasConstraintName("FK__VoiceStyl__Style__741A2336"),
                     l => l.HasOne<Voice>().WithMany()
                         .HasForeignKey("VoiceId")
-                        .HasConstraintName("FK__VoiceStyl__Voice__2DBCB4E6"),
+                        .HasConstraintName("FK__VoiceStyl__Voice__7325FEFD"),
                     j =>
                     {
-                        j.HasKey("VoiceId", "StyleId").HasName("PK__VoiceSty__C0DDC1FD1B7A5C74");
+                        j.HasKey("VoiceId", "StyleId").HasName("PK__VoiceSty__C0DDC1FDA74EB19F");
                         j.ToTable("VoiceStyles");
                         j.IndexerProperty<int>("VoiceId").HasColumnName("VoiceID");
                         j.IndexerProperty<int>("StyleId").HasColumnName("StyleID");

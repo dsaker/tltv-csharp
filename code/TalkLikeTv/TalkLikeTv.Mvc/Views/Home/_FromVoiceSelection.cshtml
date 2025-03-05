@@ -2,7 +2,6 @@
 
 <div class="row">
     <div class="col-md-12">
-        <h3>Voice to learn from</h3>
         <div class="voice-columns">
             <ul class="voice-list-group">
                 @if (Model is not null)
@@ -10,7 +9,7 @@
                     @foreach (var v in Model)
                     {
                         <div class="form-radio">
-                            <input name="from_voice" class="form-check-input" type="radio" value="@v.Id" id="from-voice-input-@v.Id">
+                            <input name="fromVoice" class="form-check-input" type="radio" value="@v.Id" id="from-voice-input-@v.Id">
                             <label class="form-check-label" for="from-voice-input-@v.Id"></label>
                             <span class="voice_info" title="@v.Details">@v.DisplayName</span>
                             <span class="play_sound" id="play-sound-@v.Id"> - &#127925;</span>

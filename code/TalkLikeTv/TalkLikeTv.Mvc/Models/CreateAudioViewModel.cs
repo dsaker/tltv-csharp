@@ -12,8 +12,6 @@ public record VoiceViewModel(
 
 public class CreateAudioViewModel(IEnumerable<Language>? languages)
 {
-    // public CreateAudioInputsModel? CreateAudioInputsModel { get; set; }
-    // public CreateAudioForm? CreateAudioForm { get; set; }
     public IEnumerable<Language>? Languages = languages;
     
     [Required]

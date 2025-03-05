@@ -1,97 +1,154 @@
 @model TalkLikeTv.Mvc.Models.CreateAudioViewModel
 
 <div class="row">
-    <h2 class="display-2">Design your audio</h2>
-    <form id="audio-form" type="POST" enctype="multipart/form-data">
+    <h1 >Design your audio</h1>
+    <form id="audio-form" method="POST" action="/Home/CreateTitle" enctype="multipart/form-data">
         @Html.AntiForgeryToken()
-        <div id="from-language-selection">
-            <div class="row">
-                <div class="col-md-12">
-                    <h3>Language to learn from</h3>
-                    <div class="three-columns">
-                        <ul class="list-group">
-                            @if (Model is not null)
-                            {
-                                @foreach (Language l in @Model.Languages)
-                                {
-                                    <div class="form-check">
-                                        <input class="form-check-input language-radio" type="radio" name="from_language" value="@l.LanguageId" id="@l.LanguageId">
-                                        <label class="form-check-label" for="@l.LanguageId">
-                                            @l.Name - @l.NativeName
-                                        </label>
+        <div class="accordion accordion-flush" id="audioAccordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingFromLang">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFromLang" aria-expanded="true" aria-controls="collapseFromLang">
+                        Language to learn from
+                    </button>
+                </h2>
+                <div id="collapseFromLang" class="accordion-collapse collapse show" aria-labelledby="headingFromLang" data-bs-parent="#audioAccordion">
+                    <div class="accordion-body">
+                        <div id="from-language-selection">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="three-columns">
+                                        <ul class="list-group">
+                                            @if (Model is not null)
+                                            {
+                                                @foreach (Language l in @Model.Languages)
+                                                {
+                                                    <div class="form-check">
+                                                        <input class="form-check-input language-radio" type="radio" name="fromLanguage" value="@l.LanguageId" id="@l.LanguageId">
+                                                        <label class="form-check-label" for="@l.LanguageId">
+                                                            @l.Name - @l.NativeName
+                                                        </label>
+                                                    </div>
+                                                }
+                                            }
+                                        </ul>
                                     </div>
-                                }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingFromVoice">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFromVoice" aria-expanded="true" aria-controls="collapseFromVoice">
+                        Voice to learn from
+                    </button>
+                </h2>
+                <div id="collapseFromVoice" class="accordion-collapse collapse" aria-labelledby="headingFromVoice" data-bs-parent="#audioAccordion">
+                    <div class="accordion-body">
+                        <div id="from-voice-selection">
+                            <!-- Voice selection will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingToLang">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseToLang" aria-expanded="true" aria-controls="collapseToLang">
+                        Language you want to learn
+                    </button>
+                </h2>
+                <div id="collapseToLang" class="accordion-collapse collapse" aria-labelledby="headingToLang" data-bs-parent="#audioAccordion">
+                    <div class="accordion-body">
+                        <div id="to-language-selection">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="three-columns">
+                                        <ul class="list-group">
+                                            @if (Model is not null)
+                                            {
+                                                @foreach (Language l in @Model.Languages)
+                                                {
+                                                    <div class="form-check">
+                                                        <input class="form-check-input language-radio" type="radio" name="toLanguage" value="@l.LanguageId" id="@l.LanguageId">
+                                                        <label class="form-check-label" for="@l.LanguageId">
+                                                            @l.Name - @l.NativeName
+                                                        </label>
+                                                    </div>
+                                                }
+                                            }
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingToVoice">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseToVoice" aria-expanded="false" aria-controls="collapseToVoice">
+                        Voice you want to learn
+                    </button>
+                </h2>
+                <div id="collapseToVoice" class="accordion-collapse collapse" aria-labelledby="headingToVoice" data-bs-parent="#audioAccordion">
+                    <div class="accordion-body">
+                        <div id="to-voice-selection">
+                            <!-- Voice selection will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingPause">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePause" aria-expanded="false" aria-controls="collapsePause">
+                        Pause Duration (seconds)
+                    </button>
+                </h2>
+                <div id="collapsePause" class="accordion-collapse collapse" aria-labelledby="headingPause" data-bs-parent="#audioAccordion">
+                    <div class="accordion-body">
+                        <div id="pause-selection" class="three-columns">
+                            @for (int i = 3; i <= 10; i++)
+                            {
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="pauseDuration" value="@i" id="pauseDuration-@i" @(Model.PauseDuration == i ? "checked" : "")>
+                                    <label class="form-check-label" for="pauseDuration-@i">@i seconds</label>
+                                </div>
                             }
-                        </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingPattern">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePattern" aria-expanded="false" aria-controls="collapsePattern">
+                        Pattern
+                    </button>
+                </h2>
+                <div id="collapsePattern" class="accordion-collapse collapse" aria-labelledby="headingPattern" data-bs-parent="#audioAccordion">
+                    <div class="accordion-body">
+                        <div id="pattern-selection" class="three-columns">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="pattern" value="0" id="pattern-standard" @(Model.Pattern == "Standard" ? "checked" : "")>
+                                <label class="form-check-label" for="pattern-standard">Standard</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="pattern" value="1" id="pattern-advanced" @(Model.Pattern == "Advanced" ? "checked" : "")>
+                                <label class="form-check-label" for="pattern-advanced">Advanced</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="pattern" value="2" id="pattern-review" @(Model.Pattern == "Review" ? "checked" : "")>
+                                <label class="form-check-label" for="pattern-review">Review</label>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-        <hr/>
-        <br/>
-        <div id="from-voice-selection">
-            <!-- Voice selection will be loaded here -->
-        </div>
-        <hr/>
-        <div id="to-language-selection">
-            <div class="row">
-                <div class="col-md-12">
-                    <h3>Language to learn from</h3>
-                    <div class="three-columns">
-                        <ul class="list-group">
-                            @if (Model is not null)
-                            {
-                                @foreach (Language l in @Model.Languages)
-                                {
-                                    <div class="form-check">
-                                        <input class="form-check-input language-radio" type="radio" name="to_language" value="@l.LanguageId" id="@l.LanguageId">
-                                        <label class="form-check-label" for="@l.LanguageId">
-                                            @l.Name - @l.NativeName
-                                        </label>
-                                    </div>
-                                }
-                            }
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <hr/>
-        <br/>
-        <div id="to-voice-selection">
-            <!-- Voice selection will be loaded here -->
-        </div>
-        <hr/>
-        <br/>
-        <div id="pause-selection" class="three-columns">
-            <label for="pause-selection">Pause Duration (seconds)</label>
-            @for (int i = 3; i <= 10; i++)
-            {
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" name="pauseDuration" value="@i" id="pauseDuration-@i" @(Model.PauseDuration == i ? "checked" : "")>
-                    <label class="form-check-label" for="pauseDuration-@i">@i seconds</label>
-                </div>
-            }
-        </div>
-        <hr/>
-        <br/>
-        <div id="pattern-selection" class="three-columns">
-            <label for="pattern-selection">Pattern</label>
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="pattern" value="Standard" id="pattern-standard" @(Model.Pattern == "Standard" ? "checked" : "")>
-                <label class="form-check-label" for="pattern-standard">Standard</label>
-            </div>
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="pattern" value="Advanced" id="pattern-advanced" @(Model.Pattern == "Advanced" ? "checked" : "")>
-                <label class="form-check-label" for="pattern-advanced">Advanced</label>
-            </div>
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="pattern" value="Review" id="pattern-review" @(Model.Pattern == "Review" ? "checked" : "")>
-                <label class="form-check-label" for="pattern-review">Review</label>
-            </div>
-        </div>
+        <button type="submit" id="next-button" class="btn btn-primary float-right" style="display: none;">Next</button>
     </form>
 </div>
+
 
 <script>
     function attachPlaySoundListeners() {
@@ -104,26 +161,88 @@
         });
     }
 
-    document.querySelectorAll('.language-radio').forEach(function(radio) {
-        radio.addEventListener('change', function() {
-            var selectedLanguage = document.querySelector('.language-radio:checked').value;
-            var isFromLanguage = this.name === 'from_language';
-            fetch('/Home/GetVoices', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                },
-                body: JSON.stringify({ selectedLanguage: selectedLanguage, isFromLanguage: isFromLanguage })
-            })
-                .then(response => response.text())
-                .then(html => {
-                    var targetId = isFromLanguage ? 'from-voice-selection' : 'to-voice-selection';
-                    document.getElementById(targetId).innerHTML = html;
-                    attachPlaySoundListeners(); // Re-attach event listeners
-                });
+    function attachLanguageChangeListeners() {
+        document.querySelectorAll('.language-radio').forEach(function(radio) {
+            radio.addEventListener('change', function() {
+                var selectedLanguage = this.value;
+                var isFromLanguage = this.name === 'fromLanguage';
+                fetch('/Home/GetVoices', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: JSON.stringify({ selectedLanguage: selectedLanguage, isFromLanguage: isFromLanguage })
+                })
+                    .then(response => response.text())
+                    .then(html => {
+                        var targetId = isFromLanguage ? 'from-voice-selection' : 'to-voice-selection';
+                        document.getElementById(targetId).innerHTML = html;
+                        attachPlaySoundListeners(); // Re-attach event listeners
+                        attachVoiceSelectionListeners(); // Re-attach event listeners for voice selection
+                        // Collapse the current accordion section and open the next one
+                        var currentAccordion = isFromLanguage ? document.getElementById('collapseFromLang') : document.getElementById('collapseToLang');
+                        var nextAccordion = isFromLanguage ? document.getElementById('collapseFromVoice') : document.getElementById('collapseToVoice');
+                        var nextAccordionButton = isFromLanguage ? document.querySelector('[data-bs-target="#collapseFromVoice"]') : document.querySelector('[data-bs-target="#collapseToVoice"]');
+                        if (currentAccordion && nextAccordion && nextAccordionButton) {
+                            var bsCollapseCurrent = new bootstrap.Collapse(currentAccordion, { toggle: false });
+                            var bsCollapseNext = new bootstrap.Collapse(nextAccordion, { toggle: false });
+                            bsCollapseCurrent.hide();
+                            bsCollapseNext.show();
+                            nextAccordionButton.classList.remove('collapsed');
+                        }
+                    });
+            });
         });
-    });
+    }
 
-    attachPlaySoundListeners(); // Initial attachment of event listeners
+    function attachVoiceSelectionListeners() {
+        document.querySelectorAll('input[name="fromVoice"], input[name="toVoice"]').forEach(function(radio) {
+            radio.addEventListener('change', function() {
+                var isFromVoice = this.name === 'fromVoice';
+                // Collapse the current accordion section and open the next one
+                var currentAccordion = isFromVoice ? document.getElementById('collapseFromVoice') : document.getElementById('collapseToVoice');
+                var nextAccordion = isFromVoice ? document.getElementById('collapseToLang') : document.getElementById('collapsePause');
+                var nextAccordionButton = isFromVoice ? document.querySelector('[data-bs-target="#collapseToLang"]') : document.querySelector('[data-bs-target="#collapsePause"]');
+                if (currentAccordion && nextAccordion && nextAccordionButton) {
+                    var bsCollapseCurrent = new bootstrap.Collapse(currentAccordion, { toggle: false });
+                    var bsCollapseNext = new bootstrap.Collapse(nextAccordion, { toggle: false });
+                    bsCollapseCurrent.hide();
+                    bsCollapseNext.show();
+                    nextAccordionButton.classList.remove('collapsed');
+                }
+            });
+        });
+    }
+
+    function attachPauseDurationListeners() {
+        document.querySelectorAll('input[name="pauseDuration"]').forEach(function(radio) {
+            radio.addEventListener('change', function() {
+                // Open the pattern selection accordion section
+                var nextAccordion = document.getElementById('collapsePattern');
+                var nextAccordionButton = document.querySelector('[data-bs-target="#collapsePattern"]');
+                if (nextAccordion && nextAccordionButton) {
+                    var bsCollapse = new bootstrap.Collapse(nextAccordion, { toggle: false });
+                    bsCollapse.show();
+                    nextAccordionButton.classList.remove('collapsed');
+                }
+            });
+        });
+    }
+
+    function attachPatternSelectionListeners() {
+        document.querySelectorAll('input[name="pattern"]').forEach(function(radio) {
+            radio.addEventListener('change', function() {
+                document.getElementById('next-button').style.display = 'block';
+            });
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        attachPlaySoundListeners(); // Initial attachment of event listeners
+        attachLanguageChangeListeners(); // Attach language change listeners
+        attachVoiceSelectionListeners(); // Attach voice selection listeners
+        attachPauseDurationListeners(); // Attach pause duration listeners
+        attachPatternSelectionListeners(); // Attach pattern selection listeners
+    });
 </script>

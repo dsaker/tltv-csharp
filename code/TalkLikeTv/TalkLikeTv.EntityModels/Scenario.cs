@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace TalkLikeTv.EntityModels;
 
-[Index("ScenarioName", Name = "UQ__Scenario__ADC5B11D241240E7", IsUnique = true)]
+[Index("ScenarioName", Name = "UQ__Scenario__ADC5B11D0DEA5189", IsUnique = true)]
 public partial class Scenario
 {
     [Key]

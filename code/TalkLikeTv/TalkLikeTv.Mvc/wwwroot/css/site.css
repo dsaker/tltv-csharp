@@ -34,6 +34,10 @@ body {
     column-count: 3;
 }
 
+.two-columns {
+    column-count: 2;
+}
+
 .voice-columns {
     display: flex;
     flex-wrap: wrap;
@@ -85,4 +89,12 @@ body {
 
 .play_sound {
     cursor: default;
+}
+
+.smaller-heading {
+    font-size: 24px;
+}
+
+.float-right {
+    float: right;
 }

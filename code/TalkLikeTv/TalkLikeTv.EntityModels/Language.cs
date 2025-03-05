@@ -6,13 +6,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace TalkLikeTv.EntityModels;
 
-[Index("Name", Name = "UQ__Language__737584F6FE732E5B", IsUnique = true)]
-[Index("Tag", Name = "UQ__Language__C45164139DD8CAEE", IsUnique = true)]
+[Index("Name", Name = "UQ__Language__737584F60B894BDB", IsUnique = true)]
+[Index("Tag", Name = "UQ__Language__C4516413919B6BE1", IsUnique = true)]
 public partial class Language
 {
     [Key]
     [Column("LanguageID")]
     public int LanguageId { get; set; }
+
+    [StringLength(16)]
+    public string Platform { get; set; } = null!;
 
     [StringLength(32)]
     public string Name { get; set; } = null!;

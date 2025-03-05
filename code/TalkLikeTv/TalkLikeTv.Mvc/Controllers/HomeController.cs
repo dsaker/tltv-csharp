@@ -62,6 +62,37 @@ public class HomeController : Controller
         return View("Index");
     }
     
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateTitle(AudioFormModel audioFormModel)
+    {
+        var toVoice = await _db.Voices
+            .Include(v => v.Personalities)
+            .Include(v => v.Styles)
+            .Include(v => v.Scenarios)
+            .SingleOrDefaultAsync(v => v.VoiceId == audioFormModel.ToVoice);
+        var fromVoice = await _db.Voices
+            .Include(v => v.Personalities)
+            .Include(v => v.Styles)
+            .Include(v => v.Scenarios)
+            .SingleOrDefaultAsync(v => v.VoiceId == audioFormModel.FromVoice);
+        
+        if (toVoice == null || fromVoice == null)
+        {
+            ModelState.AddModelError("", "Invalid voice selection.");
+        }
+        
+        CreateTitleViewModel model = new(
+            ToVoice: toVoice,
+            FromVoice: fromVoice,
+            AudioFormModel: audioFormModel, HasErrors: !ModelState.IsValid,
+            ValidationErrors: ModelState.Values
+                .SelectMany(state => state.Errors)
+                .Select(error => error.ErrorMessage)
+        );
+
+        return View(model);
+    }
     
     public IActionResult CreateAudio()
     {

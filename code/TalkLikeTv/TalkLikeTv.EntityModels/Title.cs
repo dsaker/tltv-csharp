@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace TalkLikeTv.EntityModels;
 
-[Index("Title1", Name = "UQ__Titles__2CB664DC9F414B11", IsUnique = true)]
+[Index("Title1", Name = "UQ__Titles__2CB664DC6B84AEA5", IsUnique = true)]
 public partial class Title
 {
     [Key]
@@ -16,6 +16,9 @@ public partial class Title
     [Column("Title")]
     [StringLength(64)]
     public string Title1 { get; set; } = null!;
+
+    [StringLength(256)]
+    public string? Description { get; set; }
 
     public int NumPhrases { get; set; }
 

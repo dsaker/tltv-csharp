@@ -52,6 +52,7 @@ public class LanguagesUploader(TalkliketvContext db)
                                 var entity = new Language
                                 {
                                     Name = language.Value.Name,
+                                    Platform = "azure",
                                     NativeName = language.Value.NativeName,
                                     Tag = language.Key,
                                 };

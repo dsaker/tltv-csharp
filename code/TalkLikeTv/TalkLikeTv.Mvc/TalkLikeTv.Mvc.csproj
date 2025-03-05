@@ -18,9 +18,5 @@
         <ProjectReference Include="..\TalkLikeTv.DataContext\TalkLikeTv.DataContext.csproj"/>
         <ProjectReference Include="..\TalkLikeTv.FileService\TalkLikeTv.FileService.csproj"/>
     </ItemGroup>
-
-    <ItemGroup>
-      <_ContentIncludedByDefault Remove="wwwroot\voice\af-ZA-AdriNeural.wav" />
-    </ItemGroup>
   
 </Project>

@@ -54,6 +54,7 @@ public class VoicesUploader(TalkliketvContext db)
                             var dbVoice = new Voice
                             {
                                 DisplayName = jsonVoice.DisplayName,
+                                Platform = "azure",
                                 LocalName = jsonVoice.LocalName,
                                 ShortName = jsonVoice.ShortName,
                                 Locale = jsonVoice.Locale,

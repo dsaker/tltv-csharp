@@ -1,0 +1,101 @@
+@model CreateTitleViewModel
+
+@{
+    ViewData["Title"] = "Create Title";
+}
+<h1>@ViewData["Title"]</h1>
+<hr />
+<div class="two-columns">
+    <div>
+        <dl class="dl-horizontal">
+            <dt>Pattern</dt>
+            @{
+                string patternText = Model.AudioFormModel.Pattern switch
+                {
+                    0 => "Standard",
+                    1 => "Advanced",
+                    _ => "Review"
+                };
+            }
+            <dd>@patternText</dd>
+            <dt>Pause</dt>
+            <dd>@Model.AudioFormModel.PauseDuration</dd>
+        </dl>
+        <hr/>
+        <h1 class="smaller-heading">To Voice</h1>
+        <dl class="dl-horizontal">
+            <dt>Display Name</dt>
+            <dd>@Model.ToVoice.DisplayName</dd>
+            <dt>Locale Name</dt>
+            <dd>@Model.ToVoice.LocaleName</dd>
+            <dt>Gender</dt>
+            <dd>@Model.ToVoice.Gender</dd>
+            @if (Model.ToVoice.Styles.Count > 0)
+            {
+                <dt>Styles</dt>
+                foreach (var s in Model.ToVoice.Styles)
+                {
+                    <dd>@s.StyleName</dd>
+                }
+            }
+            @if (Model.ToVoice.Scenarios.Count > 0)
+            {
+                <dt>Scenarios</dt>
+                foreach (var s in Model.ToVoice.Scenarios)
+                {
+                    <dd>@s.ScenarioName</dd>
+                }
+            }
+            @if (Model.ToVoice.Personalities.Count > 0)
+            {
+                <dt>Personalities</dt>
+                foreach (var p in Model.ToVoice.Personalities)
+                {
+                    <dd>@p.PersonalityName</dd>
+                }
+            }
+        </dl>
+    </div>
+    <hr />
+    <div>
+        <h1 class="smaller-heading">From Voice</h1>
+        <dl class="dl-horizontal">
+            <dt>Display Name</dt>
+            <dd>@Model.FromVoice.DisplayName</dd>
+            <dt>Locale Name</dt>
+            <dd>@Model.FromVoice.LocaleName</dd>
+            <dt>Gender</dt>
+            <dd>@Model.FromVoice.Gender</dd>
+            @if (Model.FromVoice.Styles.Count > 0)
+            {
+                <dt>Styles</dt>
+                foreach (var s in Model.FromVoice.Styles)
+                {
+                    <dd>@s.StyleName</dd>
+                }
+            }
+            @if (Model.FromVoice.Scenarios.Count > 0)
+            {
+                <dt>Scenarios</dt>
+                foreach (var s in Model.FromVoice.Scenarios)
+                {
+                    <dd>@s.ScenarioName</dd>
+                }
+            }
+            @if (Model.FromVoice.Personalities.Count > 0)
+            {
+                <dt>Personalities</dt>
+                foreach (var p in Model.FromVoice.Personalities)
+                {
+                    <dd>@p.PersonalityName</dd>
+                }
+            }
+        </dl>
+    </div>
+</div>
+<hr />
+
+@* The following is required to enable validation. *@
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

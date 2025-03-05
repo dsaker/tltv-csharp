@@ -51,6 +51,7 @@ CREATE TABLE "Tokens" (
 )
 CREATE TABLE "Languages" (
     "LanguageID" INT IDENTITY PRIMARY KEY ,
+    "Platform" nvarchar (16) NOT NULL ,
     "Name" nvarchar (32) NOT NULL UNIQUE ,
     "NativeName" nvarchar (32) NOT NULL ,
     "Tag" nvarchar(8) NOT NULL UNIQUE ,
@@ -58,6 +59,7 @@ CREATE TABLE "Languages" (
 GO
 CREATE TABLE "Voices" (
     "VoiceID" INT IDENTITY PRIMARY KEY ,
+    "Platform" nvarchar (16) NOT NULL ,
     "LanguageID"  INT FOREIGN KEY REFERENCES Languages(LanguageID),
     "DisplayName" nvarchar (32) NOT NULL ,
     "LocalName" nvarchar (32) NOT NULL ,
@@ -112,18 +114,19 @@ GO
 CREATE TABLE "Titles" (
     "TitleID" INT IDENTITY PRIMARY KEY,
     "Title" nvarchar (64) NOT NULL UNIQUE ,
+    "Description" nvarchar (256) ,
     "NumPhrases" int NOT NULL,
     "OriginalLanguageID" INT FOREIGN KEY REFERENCES Languages(LanguageID),
 )
 GO
 CREATE TABLE "Phrases" (
     "PhraseID" INT IDENTITY PRIMARY KEY,
-    "TitleID" INT FOREIGN KEY REFERENCES Titles(TitleID) ON DELETE CASCADE,,
+    "TitleID" INT FOREIGN KEY REFERENCES Titles(TitleID) ON DELETE CASCADE,
 )
 GO
 CREATE TABLE "Translates" (
-    "PhraseID" INT FOREIGN KEY REFERENCES Phrases(PhraseID) ON DELETE CASCADE,,
-    "LanguageID" INT FOREIGN KEY REFERENCES Languages(LanguageID) ON DELETE CASCADE,,
+    "PhraseID" INT FOREIGN KEY REFERENCES Phrases(PhraseID) ON DELETE CASCADE,
+    "LanguageID" INT FOREIGN KEY REFERENCES Languages(LanguageID) ON DELETE CASCADE,
     "Phrase" nvarchar (128) NOT NULL ,
     "PhraseHint" nvarchar (128) NOT NULL ,
     PRIMARY KEY ("PhraseID", "LanguageID")
@@ -133,7 +136,7 @@ SET IDENTITY_INSERT "Languages" ON
 go
 ALTER TABLE "Languages" NOCHECK CONSTRAINT ALL
 go
-INSERT INTO "Languages" ("LanguageID", "Name", "Tag", "NativeName") VALUES (-1, 'Not a Language', 'NaL', 'Not a Language')
+INSERT INTO "Languages" ("LanguageID", "Platform", "Name", "Tag", "NativeName") VALUES (-1, 'Not a Platform', 'Not a Language', 'NaL', 'Not a Language')
 go
 SET IDENTITY_INSERT "Languages" OFF
 go
