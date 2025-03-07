@@ -1,7 +1,6 @@
 @using System.Text.Json
 @using System.Text.Json.Serialization
 @using Microsoft.AspNetCore.Mvc.TagHelpers
-@using TalkLikeTv.Mvc.Helpers
 @model CreateTitleViewModel
 
 @{
@@ -108,7 +107,7 @@
 </table>
 <br/>
 @Html.AntiForgeryToken()
-<form asp-action="CreateTitle" asp-controller="Home" method="post" enctype="multipart/form-data">
+<form asp-action="CreateTitle" asp-controller="Audio" method="post" enctype="multipart/form-data">
     <input type="hidden" name="ToVoice" value="@JsonSerializer.Serialize(Model.CreateTitleFormModel.ToVoice, new JsonSerializerOptions { ReferenceHandler = ReferenceHandler.Preserve })" />
     <input type="hidden" name="FromVoice" value="@JsonSerializer.Serialize(Model.CreateTitleFormModel.FromVoice, new JsonSerializerOptions { ReferenceHandler = ReferenceHandler.Preserve })" />
     <input type="hidden" name="Pattern" value="@Model.CreateTitleFormModel.Pattern" />
@@ -134,12 +133,3 @@
         <input type="submit" value="Create Title" class="btn btn-primary"/>
     </div>
 </form>
-@* @section Scripts { *@
-@*     <partial name="_ValidationScriptsPartial"/> *@
-@*     <script> *@
-@*         document.addEventListener("DOMContentLoaded", function() { *@
-@*             var toVoiceJson = '@JsonSerializer.Serialize(Model.CreateTitleFormModel.ToVoice, new JsonSerializerOptions { ReferenceHandler = ReferenceHandler.Preserve })"'; *@
-@*             console.log("toVoiceJson:", toVoiceJson); *@
-@*         }); *@
-@*     </script> *@
-@* } *@

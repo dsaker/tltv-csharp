@@ -11,7 +11,7 @@
 }
 <div class="row">
     <h1 >Design your audio</h1>
-    <form id="audio-form" method="POST" action="/Home/CreateAudio" enctype="multipart/form-data">
+    <form id="audio-form" method="POST" action="/Audio/CreateAudio" enctype="multipart/form-data">
         @Html.AntiForgeryToken()
         <div class="accordion accordion-flush" id="audioAccordion">
             <div class="accordion-item">
@@ -175,7 +175,7 @@
             radio.addEventListener('change', function() {
                 var selectedLanguage = this.value;
                 var isFromLanguage = this.name === 'fromLanguage';
-                fetch('/Home/GetVoices', {
+                fetch('/Audio/GetVoices', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
