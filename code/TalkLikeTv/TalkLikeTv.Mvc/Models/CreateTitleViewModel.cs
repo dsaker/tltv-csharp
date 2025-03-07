@@ -3,8 +3,6 @@ using TalkLikeTv.EntityModels;
 namespace TalkLikeTv.Mvc.Models;
 
 public record CreateTitleViewModel(
-    Voice ToVoice, 
-    Voice FromVoice, 
-    AudioFormModel AudioFormModel, 
+    CreateTitleFormModel CreateTitleFormModel,
     bool HasErrors,
     IEnumerable<string> ValidationErrors);

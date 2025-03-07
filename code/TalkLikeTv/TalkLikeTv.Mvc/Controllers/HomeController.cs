@@ -1,9 +1,13 @@
 using System.Diagnostics;
+using System.Security.Cryptography;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TalkLikeTv.EntityModels;
 using TalkLikeTv.Mvc.Models;
 using TalkLikeTv.FileService;
+using TalkLikeTv.Mvc.Helpers;
 
 namespace TalkLikeTv.Mvc.Controllers;
 
@@ -22,10 +26,10 @@ public class HomeController : Controller
     {
         return View(new HomeIndexViewModel());
     }
-    
+ 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Upload(HomeIndexViewModel model)
+    public async Task<IActionResult> Index(HomeIndexViewModel model)
     {
         if (ModelState.IsValid && model.File?.Length > 0)
         {
@@ -62,44 +66,129 @@ public class HomeController : Controller
         return View("Index");
     }
     
+    public IActionResult CreateTitle(Voice toVoice, Voice fromVoice, int? pauseDuration, string? pattern)
+    {
+        var formModel = new CreateTitleFormModel(
+            toVoice,
+            fromVoice,
+            pauseDuration,
+           pattern,
+            null,
+            null,
+            null,
+            null);
+        CreateTitleViewModel model = new(
+            formModel,
+            HasErrors: false,
+            ValidationErrors: []);
+        return View("CreateTitle", model);
+    }
+
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> CreateTitle(AudioFormModel audioFormModel)
+    public IActionResult CreateTitle(IFormCollection form)
     {
-        var toVoice = await _db.Voices
-            .Include(v => v.Personalities)
-            .Include(v => v.Styles)
-            .Include(v => v.Scenarios)
-            .SingleOrDefaultAsync(v => v.VoiceId == audioFormModel.ToVoice);
-        var fromVoice = await _db.Voices
-            .Include(v => v.Personalities)
-            .Include(v => v.Styles)
-            .Include(v => v.Scenarios)
-            .SingleOrDefaultAsync(v => v.VoiceId == audioFormModel.FromVoice);
-        
-        if (toVoice == null || fromVoice == null)
+        var toVoiceJson = form["ToVoice"];
+        var fromVoiceJson = form["FromVoice"];
+        var pattern = form["Pattern"];
+        var pauseDuration = int.Parse(form["PauseDuration"]);
+        var token = form["Token"];
+        var titleName = form["TitleName"];
+        var description = form["Description"];
+        var file = form.Files["File"];
+
+        var options = new JsonSerializerOptions
         {
-            ModelState.AddModelError("", "Invalid voice selection.");
+            PropertyNameCaseInsensitive = true,
+            ReferenceHandler = ReferenceHandler.Preserve
+        };
+
+        var toVoice = JsonSerializer.Deserialize<Voice>(toVoiceJson, options);
+        var fromVoice = JsonSerializer.Deserialize<Voice>(fromVoiceJson, options);
+        var formModel = new CreateTitleFormModel(
+            toVoice,
+            fromVoice,
+            pauseDuration,
+            pattern,
+            token,
+            titleName,
+            description,
+            file
+        );
+        
+        if (!TryValidateModel(formModel))
+        {
+            CreateTitleViewModel model = new(
+                CreateTitleFormModel: formModel,
+                HasErrors: true,
+                ValidationErrors: ModelState.Values
+                    .SelectMany(state => state.Errors)
+                    .Select(error => error.ErrorMessage)
+            );
+
+            return View(model);
         }
         
-        CreateTitleViewModel model = new(
-            ToVoice: toVoice,
-            FromVoice: fromVoice,
-            AudioFormModel: audioFormModel, HasErrors: !ModelState.IsValid,
-            ValidationErrors: ModelState.Values
-                .SelectMany(state => state.Errors)
-                .Select(error => error.ErrorMessage)
-        );
 
+        WriteLine("The model is valid. Continue processing the file.");
+        return View("Index");
+    }
+  
+    [HttpGet]
+    public IActionResult CreateAudio()
+    {
+        var model = new CreateAudioViewModel(
+            _db.Languages.OrderBy(l => l.Name).ThenBy(l => l.NativeName),
+            new CreateAudioFormModel(null, null, null, null),
+            HasErrors: false,
+            ValidationErrors: []
+        );
         return View(model);
     }
     
-    public IActionResult CreateAudio()
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateAudio(CreateAudioFormModel modelIn)
     {
-        CreateAudioViewModel model = new(
-            _db.Languages
-                .OrderBy(l => l.Name)
-                .ThenBy(l => l.NativeName));
+        if (ModelState.IsValid)
+        {
+            var dbToVoice = await _db.Voices
+                .Include(v => v.Personalities)
+                .Include(v => v.Styles)
+                .Include(v => v.Scenarios)
+                .SingleOrDefaultAsync(v => v.VoiceId == modelIn.ToVoice);
+            var dbFromVoice = await _db.Voices
+                .Include(v => v.Personalities)
+                .Include(v => v.Styles)
+                .Include(v => v.Scenarios)
+                .SingleOrDefaultAsync(v => v.VoiceId == modelIn.FromVoice);
+        
+            if (dbToVoice == null || dbFromVoice == null)
+            {
+                ModelState.AddModelError("", "Invalid voice selection.");
+                var errorModel = new CreateAudioViewModel(
+                    _db.Languages.OrderBy(l => l.Name).ThenBy(l => l.NativeName),
+                    modelIn,
+                   !ModelState.IsValid,
+                    ModelState.Values
+                        .SelectMany(state => state.Errors)
+                        .Select(error => error.ErrorMessage)
+                );
+                return View(errorModel);
+            }
+            
+            return CreateTitle(dbToVoice, dbFromVoice, modelIn.PauseDuration, modelIn.Pattern);
+        }
+
+        var model = new CreateAudioViewModel(
+            _db.Languages.OrderBy(l => l.Name).ThenBy(l => l.NativeName),
+            modelIn,
+            !ModelState.IsValid,
+            ModelState.Values
+                .SelectMany(state => state.Errors)
+                .Select(error => error.ErrorMessage)
+        );
+        
         return View(model);
     }
     

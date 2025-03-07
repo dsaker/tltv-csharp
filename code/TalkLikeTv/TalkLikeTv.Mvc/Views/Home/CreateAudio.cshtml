@@ -1,8 +1,17 @@
 @model TalkLikeTv.Mvc.Models.CreateAudioViewModel
 
+@if (Model.HasErrors)
+{
+    <div>
+        @foreach (string errorMessage in Model.ValidationErrors)
+        {
+            <div class="alert alert-danger" role="alert">@errorMessage</div>
+        }
+    </div>
+}
 <div class="row">
     <h1 >Design your audio</h1>
-    <form id="audio-form" method="POST" action="/Home/CreateTitle" enctype="multipart/form-data">
+    <form id="audio-form" method="POST" action="/Home/CreateAudio" enctype="multipart/form-data">
         @Html.AntiForgeryToken()
         <div class="accordion accordion-flush" id="audioAccordion">
             <div class="accordion-item">
@@ -111,7 +120,7 @@
                             @for (int i = 3; i <= 10; i++)
                             {
                                 <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="pauseDuration" value="@i" id="pauseDuration-@i" @(Model.PauseDuration == i ? "checked" : "")>
+                                    <input class="form-check-input" type="radio" name="pauseDuration" value="@i" id="pauseDuration-@i" @(Model?.CreateAudioFormModel.PauseDuration == i ? "checked" : "")>
                                     <label class="form-check-label" for="pauseDuration-@i">@i seconds</label>
                                 </div>
                             }
@@ -129,15 +138,15 @@
                     <div class="accordion-body">
                         <div id="pattern-selection" class="three-columns">
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="pattern" value="0" id="pattern-standard" @(Model.Pattern == "Standard" ? "checked" : "")>
+                                <input class="form-check-input" type="radio" name="pattern" value="standard" id="pattern-standard" @(Model?.CreateAudioFormModel.Pattern == "pattern" ? "checked" : "")>
                                 <label class="form-check-label" for="pattern-standard">Standard</label>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="pattern" value="1" id="pattern-advanced" @(Model.Pattern == "Advanced" ? "checked" : "")>
+                                <input class="form-check-input" type="radio" name="pattern" value="advanced" id="pattern-advanced" @(Model?.CreateAudioFormModel.Pattern == "advanced" ? "checked" : "")>
                                 <label class="form-check-label" for="pattern-advanced">Advanced</label>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="pattern" value="2" id="pattern-review" @(Model.Pattern == "Review" ? "checked" : "")>
+                                <input class="form-check-input" type="radio" name="pattern" value="review" id="pattern-review" @(Model?.CreateAudioFormModel.Pattern == "review" ? "checked" : "")>
                                 <label class="form-check-label" for="pattern-review">Review</label>
                             </div>
                         </div>

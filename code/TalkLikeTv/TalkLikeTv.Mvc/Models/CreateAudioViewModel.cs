@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using TalkLikeTv.EntityModels;
 
 namespace TalkLikeTv.Mvc.Models;
@@ -10,19 +9,8 @@ public record VoiceViewModel(
     string ShortName,
     string Details);
 
-public class CreateAudioViewModel(IEnumerable<Language>? languages)
-{
-    public IEnumerable<Language>? Languages = languages;
-    
-    [Required]
-    public string ToVoice { get; set; }
-    [Required]
-    public string FromVoice { get; set; }
-    [Range(3,10)]
-    [Required]
-    public int PauseDuration { get; set; }
-    [Range(1,3)]
-    [Required]
-    public string Pattern { get; set; }
-    
-}
+public record CreateAudioViewModel(
+    IEnumerable<Language>? Languages,
+    CreateAudioFormModel CreateAudioFormModel,
+    bool HasErrors,
+    IEnumerable<string> ValidationErrors);

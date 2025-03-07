@@ -98,3 +98,7 @@ body {
 .float-right {
     float: right;
 }
+
+.form-group {
+    margin-bottom: 15px; /* Adds margin between form groups */
+}
