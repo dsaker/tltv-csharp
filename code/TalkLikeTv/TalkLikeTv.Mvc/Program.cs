@@ -1,12 +1,18 @@
 using Microsoft.Data.SqlClient;
 using TalkLikeTv.EntityModels;
+using TalkLikeTv.Mvc.Configurations;
+using TalkLikeTv.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-string? sqlServerConnection = builder.Configuration
+// Register TokenService
+builder.Services.AddScoped<TokenService>();
+builder.Services.Configure<SharedSettings>(builder.Configuration.GetSection("SharedSettings"));
+
+var sqlServerConnection = builder.Configuration
     .GetConnectionString("TalkliketvConnection");
 if (sqlServerConnection is null)
 {

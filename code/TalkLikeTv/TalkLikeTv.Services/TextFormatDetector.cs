@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace TalkLikeTv.FileService;
+namespace TalkLikeTv.Services;
 
 public partial class TextFormatDetector
 {
@@ -16,8 +16,9 @@ public partial class TextFormatDetector
     private static partial Regex SrtFormatCheck();  
     private static bool _srtFormatCheck(string input) => SrtFormatCheck().IsMatch(input);
 
-    public static TextFormat DetectTextFormat(FileStream fileStream)
+    public static TextFormat DetectTextFormat(Stream fileStream)
     {
+        ArgumentNullException.ThrowIfNull(fileStream, nameof(fileStream));
         var reader = new StreamReader(fileStream);
         string? line;
         // check if the file is in SRT format

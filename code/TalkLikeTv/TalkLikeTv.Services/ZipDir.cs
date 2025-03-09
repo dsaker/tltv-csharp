@@ -1,6 +1,6 @@
-namespace TalkLikeTv.FileService;
+namespace TalkLikeTv.Services;
 
-public static class ZipFile
+public static class ZipDir
 {
     public static FileInfo ZipStringsList(List<string> stringList, int max, string txtPath, string filename)
     {
@@ -13,9 +13,6 @@ public static class ZipFile
     {
         try
         {
-            // Create outputs folder to hold all the txt files to zip
-            Directory.CreateDirectory(zipPath);
-
             var count = 0;
             foreach (var chunk in chunkedPhrases)
             {

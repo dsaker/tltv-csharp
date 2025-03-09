@@ -7,8 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="System.IO.Compression" Version="4.3.0" />
-        <PackageReference Include="System.IO.Compression.ZipFile" Version="4.3.0" />
+        <ProjectReference Include="..\TalkLikeTv.DataContext\TalkLikeTv.DataContext.csproj"/>
     </ItemGroup>
-
+    
 </Project>

@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace TalkLikeTv.FileService;
+namespace TalkLikeTv.Services;
 
 public partial class Parse
 {
@@ -16,7 +16,7 @@ public partial class Parse
     private static partial Regex SplitOnEndingPunctuation();
     private static string[] _splitOnEndingPunctuation(string input) => SplitOnEndingPunctuation().Split(input);
 
-    public static FileInfo ParseFile(FileStream? fileStream)
+    public static FileInfo ParseFile(Stream fileStream,string fileName, int maxPhrases)
     {
         ArgumentNullException.ThrowIfNull(fileStream, nameof(fileStream));
 
@@ -29,14 +29,40 @@ public partial class Parse
 
         var stringsList = _getLines(fileStream);
 
-        var filename = Path.GetFileNameWithoutExtension(fileStream.Name);
-        var txtPath = Path.Combine("/tmp/ParseFile/", filename);
-        var file = ZipFile.ZipStringsList(stringsList, 100, txtPath, filename);
+        var txtPath = Path.Combine("/tmp/ParseFile/", fileName);
+        
+        // Create outputs folder to hold all the txt files to zip
+        Directory.CreateDirectory(txtPath);
+        // var filePath = Path.Combine(txtPath, "tooLongPhrases.txt");
+        // using var writer = new StreamWriter(filePath);
+        
+        var tooLongPhrases = new List<string>();
+        for( var i=0; i < stringsList.Count; i++)
+        {
+            // 128 is the max length of a phrase in db
+            if (stringsList[i].Length > 128)
+            {
+                tooLongPhrases.Add(stringsList[i]);
+                stringsList.RemoveAt(i);
+            }
+        }
+
+        if (tooLongPhrases.Count > 0)
+        {
+            var filePath = Path.Combine(txtPath, "tooLongPhrases.txt");
+            using var writer = new StreamWriter(filePath);
+            foreach (var phrase in tooLongPhrases)
+            {
+                writer.WriteLine(phrase);
+            }
+        }
+
+        var file = ZipDir.ZipStringsList(stringsList, maxPhrases, txtPath, fileName);
 
         return file;
     }
 
-    private static List<string> _getLines(FileStream fileStream)
+    private static List<string> _getLines(Stream fileStream)
     {
         using var reader = new StreamReader(fileStream);
         var textFormat = TextFormatDetector.DetectTextFormat(fileStream);
@@ -46,8 +72,8 @@ public partial class Parse
         {
             TextFormatDetector.TextFormat.Srt => _parseSrt(reader),
             TextFormatDetector.TextFormat.Paragraph => _parseParagraph(reader),
-            TextFormatDetector.TextFormat.OnePhrasePerLine => _parseOnePhrasePerLine(reader),
-            _ => _parseOnePhrasePerLine(reader)
+            TextFormatDetector.TextFormat.OnePhrasePerLine => ParseOnePhrasePerLine(reader),
+            _ => ParseOnePhrasePerLine(reader)
         };
     }
 
@@ -109,7 +135,7 @@ public partial class Parse
         return stringsSlice;
     }
 
-    private static List<string> _parseOnePhrasePerLine(StreamReader reader)
+    public static List<string> ParseOnePhrasePerLine(StreamReader reader)
     {
         ArgumentNullException.ThrowIfNull(reader, nameof(reader));
 

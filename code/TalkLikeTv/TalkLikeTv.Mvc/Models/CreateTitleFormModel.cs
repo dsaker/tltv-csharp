@@ -1,7 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 using TalkLikeTv.EntityModels;
+using TalkLikeTv.Mvc.Models.Validation;
 
 namespace TalkLikeTv.Mvc.Models;
+
 
 public record CreateTitleFormModel(
     [Required]
@@ -24,5 +26,6 @@ public record CreateTitleFormModel(
     string? Description,
     [Required]
     [Display(Name = "Upload File")] 
+    [MaxFileSize(8192 * 8)] // Limit file size to 64 KB
     IFormFile? File
 );
