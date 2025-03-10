@@ -7,7 +7,7 @@ namespace TalkLikeTv.Scripts;
 
 public class VoicesUploader(TalkliketvContext db)
 {
-    private const string JsonFilePath = "/Users/dustysaker/Documents/csharp-repos/tltv-net9/code/TalkLikeTv/TalkLikeTv.Scripts/json/voices.json";
+    private const string JsonFilePath = "/Users/dustysaker/Documents/csharp-repos/tltv-net9/code/TalkLikeTv/TalkLikeTv.Scripts/json/azurevoices.json";
     
     // Define the structure of the JSON file for desearlization
     private class JsonVoice

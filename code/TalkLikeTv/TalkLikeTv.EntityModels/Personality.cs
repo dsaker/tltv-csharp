@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace TalkLikeTv.EntityModels;
 
-[Index("PersonalityName", Name = "UQ__Personal__6DD1E1737165B708", IsUnique = true)]
+[Index("PersonalityName", Name = "UQ__Personal__6DD1E173CBB571F5", IsUnique = true)]
 public partial class Personality
 {
     [Key]

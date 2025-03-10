@@ -6,8 +6,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace TalkLikeTv.EntityModels;
 
-[Index("Name", Name = "UQ__Language__737584F60B894BDB", IsUnique = true)]
-[Index("Tag", Name = "UQ__Language__C4516413919B6BE1", IsUnique = true)]
+[Index("Name", Name = "UQ__Language__737584F60620E8D3", IsUnique = true)]
+[Index("Tag", Name = "UQ__Language__C4516413E29C3320", IsUnique = true)]
 public partial class Language
 {
     [Key]

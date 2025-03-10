@@ -29,8 +29,12 @@ public class AudioController : Controller
     [HttpGet]
     public IActionResult CreateTitle(Voice toVoice, Voice fromVoice, int? pauseDuration, string? pattern)
     {
-        var formModel = new CreateTitleFormModel(toVoice, fromVoice, pauseDuration, pattern, null, null, null, null);
-        var model = new CreateTitleViewModel(formModel, false, Enumerable.Empty<string>());
+        var formModel = new CreateTitleFormModel(toVoice, fromVoice, pauseDuration, pattern, null, null, null,null, null);
+        var model = new CreateTitleViewModel(
+            _db.Languages.OrderBy(l => l.Name).ThenBy(l => l.NativeName),
+            formModel, 
+            false, 
+            Enumerable.Empty<string>());
         return View("CreateTitle", model);
     }
 
@@ -41,7 +45,11 @@ public class AudioController : Controller
         if (!int.TryParse(form["PauseDuration"], out var pauseDuration))
         {
             ModelState.AddModelError("", "Invalid pause duration.");
-            return View("Error");
+        }
+        
+        if (!int.TryParse(form["FileLangId"], out var fileLangId))
+        {
+            ModelState.AddModelError("", "Invalid file language.");
         }
 
         var toVoice = DeserializeVoice(form["ToVoice"]);
@@ -51,10 +59,17 @@ public class AudioController : Controller
             ModelState.AddModelError("", "Invalid voice data.");
         }
         
-        var formModel = new CreateTitleFormModel(toVoice, fromVoice, pauseDuration, form["Pattern"], form["Token"], form["TitleName"], form["Description"], form.Files["File"]);
+        var formModel = new CreateTitleFormModel(toVoice, fromVoice, pauseDuration, form["Pattern"], form["Token"], form["TitleName"], fileLangId, form["Description"], form.Files["File"]);
         if (!TryValidateModel(formModel) || !ModelState.IsValid)
         {
-            return ReturnErrorView(formModel);
+            return CreateTitleErrorView(formModel);
+        }
+
+        // Check if TitleName is unique
+        if (_db.Titles.Any(t => t.TitleName == formModel.TitleName))
+        {
+            ModelState.AddModelError("", "Title name must be unique.");
+            return CreateTitleErrorView(formModel);
         }
         
         try
@@ -62,22 +77,46 @@ public class AudioController : Controller
             var phraseStrings = ValidateTokenAndFile(formModel);
             if (phraseStrings == null || !ModelState.IsValid)
             {
-                return ReturnErrorView(formModel);
+                return CreateTitleErrorView(formModel);
             }
+            
+            var newTitle = new Title
+            {
+                TitleName = formModel.TitleName!,
+                Description = formModel.Description,
+                NumPhrases = phraseStrings.Count,
+                OriginalLanguageId = formModel.FileLangId
+            };
+
+           var dbtitle = _db.Titles.Add(newTitle);
+            _db.SaveChanges();
+
+            foreach (var phraseString in phraseStrings)
+            {
+                var phrase = new Phrase
+                {
+                    TitleId = newTitle.TitleId,
+                    Content = phraseString
+                };
+                _db.Phrases.Add(phrase);
+            }
+            _db.SaveChanges();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, ex.Message);
             ModelState.AddModelError("", ex.Message);
-            return ReturnErrorView(formModel);
+            // TODO change this to Error view
+            return CreateTitleErrorView(formModel);
         }
         
         return RedirectToAction("Index", "Home");    
     }
     
-    private IActionResult ReturnErrorView(CreateTitleFormModel formModel)
+    private ViewResult CreateTitleErrorView(CreateTitleFormModel formModel)
     {
         var model = new CreateTitleViewModel(
+            _db.Languages.OrderBy(l => l.Name).ThenBy(l => l.NativeName),
             CreateTitleFormModel: formModel,
             HasErrors: true,
             ValidationErrors: ModelState.Values
@@ -102,11 +141,11 @@ public class AudioController : Controller
         }
 
         var phraseStrings = GetPhraseStrings(formModel.File);
-        if (!ModelState.IsValid)
+        if (phraseStrings == null || !ModelState.IsValid)
         {
             return null;
         }
-        
+
         if (phraseStrings.Count > _sharedSettings.MaxPhrases)
         {
             ModelState.AddModelError("", $"Phrase count exceeds the maximum of {_sharedSettings.MaxPhrases}.");
@@ -131,22 +170,21 @@ public class AudioController : Controller
         }
     }
     
-    private List<string> GetPhraseStrings(IFormFile file)
+    private List<string>? GetPhraseStrings(IFormFile file)
     {
         ArgumentNullException.ThrowIfNull(file, nameof(file));
         
         var fileStream = file.OpenReadStream();
         if (fileStream == null)
         {
-            ModelState.AddModelError("", "Invalid file stream.");
             throw new Exception("Invalid file stream.");
         }
         
         // Check if the content is single line
         if (TextFormatDetector.DetectTextFormat(fileStream) != TextFormatDetector.TextFormat.OnePhrasePerLine)
         {
-            ModelState.AddModelError("", "Invalid file format.");
-            throw new Exception("Invalid file format. Please parse the file at the home page.");
+            ModelState.AddModelError("", "Invalid file format. Please parse the file at the home page.");
+            return null;
         }
 
         using var reader = new StreamReader(fileStream);
@@ -227,7 +265,8 @@ public class AudioController : Controller
             .Include(v => v.Scenarios)
             .Include(v => v.Personalities)
             .Where(v => v.LanguageId == request.SelectedLanguage)
-            .OrderBy(v => v.DisplayName);
+            .OrderBy(v => v.DisplayName)
+            .AsSplitQuery(); // Configure QuerySplittingBehavior to SplitQuery;
 
         var voiceData = dbVoices
             .Select(v => new {

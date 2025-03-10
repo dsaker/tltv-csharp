@@ -7,7 +7,7 @@ namespace TalkLikeTv.Scripts;
 
 public class LanguagesUploader(TalkliketvContext db)
 {
-    private const string JsonFilePath = "/Users/dustysaker/Documents/csharp-repos/tltv-net9/code/TalkLikeTv/TalkLikeTv.Scripts/json/languages.json";
+    private const string JsonFilePath = "/Users/dustysaker/Documents/csharp-repos/tltv-net9/code/TalkLikeTv/TalkLikeTv.Scripts/json/azurelanguages.json";
 
     public class Translation
     {

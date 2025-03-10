@@ -114,17 +114,32 @@
     <input type="hidden" name="PauseDuration" value="@Model.CreateTitleFormModel.PauseDuration" />
     <div class="form-group">
         <label for="token">Token</label>
-        <input name="token" class="form-control" type="text" id="token"/>
+        <input name="token" class="form-control" type="text" id="token" required/>
     </div>
     <div class="form-group">
         <label for="titleName">Title Name</label>
-        <input name="titleName" class="form-control" type="text" id="titleName"/>
+        <input name="titleName" class="form-control" type="text" id="titleName" required/>
     </div>
 
     <div class="form-group">
         <label for="description">Description</label>
-        <input name="description" class="form-control" type="text" id="description"/>
+        <input name="description" class="form-control" type="text" id="description" required/>
     </div>
+
+    <div class="form-group">
+        <label for="fileLangId">Language of file</label>
+        <select class="form-control" id="fileLangId" name="fileLangId" required>
+            <option disabled selected> -- select an option -- </option>
+            @if (Model is not null)
+            {
+                @foreach (Language l in @Model.Languages)
+                {
+                    <option value="@l.LanguageId">@l.Name</option>
+                }
+            }
+        </select>
+    </div>
+    
     <div class="form-group">
         <label for="file">File</label>
         <input name="file" class="form-control" type="file" id="file"/>

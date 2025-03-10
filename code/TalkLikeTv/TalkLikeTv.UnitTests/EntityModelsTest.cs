@@ -23,15 +23,14 @@ public class EntityModelTests
     }
 
     [Fact]
-    public void ProductId1IsChaiTest()
+    public void TitleIdMinus1IsNotATitle()
     {
         using TalkliketvContext db = new();
 
-        var expected = "Not a Title"
-            ;
+        var expected = "Not a Title";
 
         var title = db.Titles.Find(keyValues: -1);
-        var actual = title?.Title1 ?? string.Empty;
+        var actual = title?.TitleName ?? string.Empty;
 
         Assert.Equal(expected, actual);
     }

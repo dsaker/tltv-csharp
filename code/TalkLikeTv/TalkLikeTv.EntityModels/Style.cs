@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace TalkLikeTv.EntityModels;
 
-[Index("StyleName", Name = "UQ__Styles__23564EE6030F7D55", IsUnique = true)]
+[Index("StyleName", Name = "UQ__Styles__23564EE60ED94D48", IsUnique = true)]
 public partial class Style
 {
     [Key]
