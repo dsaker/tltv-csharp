@@ -3,6 +3,13 @@ using TalkLikeTv.EntityModels;
 using TalkLikeTv.Mvc.Configurations;
 using TalkLikeTv.Services;
 
+var azureKey = Environment.GetEnvironmentVariable("AZURE_TRANSLATE_KEY");
+var region = Environment.GetEnvironmentVariable("AZURE_REGION");
+if (string.IsNullOrWhiteSpace(azureKey) || string.IsNullOrWhiteSpace(region))
+{
+    throw new InvalidOperationException("AZURE_TRANSLATE_KEY or REGION environment variable is not set.");
+}
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.

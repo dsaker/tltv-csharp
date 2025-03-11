@@ -113,7 +113,7 @@ CREATE TABLE VoicePersonalities (
 GO
 CREATE TABLE "Titles" (
     "TitleID" INT IDENTITY PRIMARY KEY,
-    "Title" nvarchar (64) NOT NULL UNIQUE ,
+    "TitleName" nvarchar (64) NOT NULL UNIQUE ,
     "Description" nvarchar (256) ,
     "NumPhrases" int NOT NULL,
     "OriginalLanguageID" INT FOREIGN KEY REFERENCES Languages(LanguageID),
@@ -136,15 +136,13 @@ SET IDENTITY_INSERT "Languages" ON
 go
 ALTER TABLE "Languages" NOCHECK CONSTRAINT ALL
 go
-INSERT INTO "Languages" ("LanguageID", "Platform", "Name", "Tag", "NativeName") VALUES (-1, 'Not a Platform', 'Not a Language', 'NaL', 'Not a Language')
-go
 SET IDENTITY_INSERT "Languages" OFF
 go
 SET IDENTITY_INSERT "Titles" ON
 go
 ALTER TABLE "Titles" NOCHECK CONSTRAINT ALL
 go
-INSERT INTO "Titles" ("TitleID", "Title", "NumPhrases", "OriginalLanguageID")VALUES (-1, 'Not a Title', 0, '-1')
+INSERT INTO "Titles" ("TitleID", "TitleName", "NumPhrases", "OriginalLanguageID")VALUES (-1, 'Not a Title', 0, '-1')
 SET IDENTITY_INSERT "Titles" OFF
 
 

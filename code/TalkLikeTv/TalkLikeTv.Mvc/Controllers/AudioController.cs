@@ -29,7 +29,7 @@ public class AudioController : Controller
     [HttpGet]
     public IActionResult CreateTitle(Voice toVoice, Voice fromVoice, int? pauseDuration, string? pattern)
     {
-        var formModel = new CreateTitleFormModel(toVoice, fromVoice, pauseDuration, pattern, null, null, null,null, null);
+        var formModel = new CreateTitleFormModel(toVoice, fromVoice, pauseDuration, pattern, null, null, null,null);
         var model = new CreateTitleViewModel(
             _db.Languages.OrderBy(l => l.Name).ThenBy(l => l.NativeName),
             formModel, 
@@ -40,16 +40,11 @@ public class AudioController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult CreateTitle(IFormCollection form)
+    public async Task<IActionResult> CreateTitle(IFormCollection form)
     {
         if (!int.TryParse(form["PauseDuration"], out var pauseDuration))
         {
             ModelState.AddModelError("", "Invalid pause duration.");
-        }
-        
-        if (!int.TryParse(form["FileLangId"], out var fileLangId))
-        {
-            ModelState.AddModelError("", "Invalid file language.");
         }
 
         var toVoice = DeserializeVoice(form["ToVoice"]);
@@ -59,7 +54,7 @@ public class AudioController : Controller
             ModelState.AddModelError("", "Invalid voice data.");
         }
         
-        var formModel = new CreateTitleFormModel(toVoice, fromVoice, pauseDuration, form["Pattern"], form["Token"], form["TitleName"], fileLangId, form["Description"], form.Files["File"]);
+        var formModel = new CreateTitleFormModel(toVoice, fromVoice, pauseDuration, form["Pattern"], form["Token"], form["TitleName"], form["Description"], form.Files["File"]);
         if (!TryValidateModel(formModel) || !ModelState.IsValid)
         {
             return CreateTitleErrorView(formModel);
@@ -80,27 +75,38 @@ public class AudioController : Controller
                 return CreateTitleErrorView(formModel);
             }
             
+            var translator = new AzureTranslateService();
+            var detectedCode = await translator.DetectLanguageFromPhrasesAsync(phraseStrings);
+
+            var languageEntity = await _db.Languages
+                .SingleOrDefaultAsync(l => l.Tag == detectedCode);
+
+            if (languageEntity == null)
+            {
+                throw new Exception($"Language '{detectedCode}' not found.");
+            }
+
+            var languageId = languageEntity.LanguageId;            
             var newTitle = new Title
             {
                 TitleName = formModel.TitleName!,
                 Description = formModel.Description,
                 NumPhrases = phraseStrings.Count,
-                OriginalLanguageId = formModel.FileLangId
+                OriginalLanguageId = languageId,
             };
 
-           var dbtitle = _db.Titles.Add(newTitle);
-            _db.SaveChanges();
+            _db.Titles.Add(newTitle);
+            await _db.SaveChangesAsync();
 
             foreach (var phraseString in phraseStrings)
             {
                 var phrase = new Phrase
                 {
                     TitleId = newTitle.TitleId,
-                    Content = phraseString
                 };
                 _db.Phrases.Add(phrase);
             }
-            _db.SaveChanges();
+            await _db.SaveChangesAsync();
         }
         catch (Exception ex)
         {
@@ -186,10 +192,19 @@ public class AudioController : Controller
             ModelState.AddModelError("", "Invalid file format. Please parse the file at the home page.");
             return null;
         }
-
+        
+        fileStream.Seek(0, SeekOrigin.Begin);
         using var reader = new StreamReader(fileStream);
-        // Split the content into lines and return as a list of strings
-        return Parse.ParseOnePhrasePerLine(reader);
+        var parsedPhrases = Parse.ParseOnePhrasePerLine(reader);
+        
+        if (parsedPhrases.Count > 0)
+        {
+            return parsedPhrases;
+        }
+
+        ModelState.AddModelError("", "No phrases found in the file.");
+        return null;
+
     }
     
     [HttpGet]

@@ -18,7 +18,9 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "MY_SQL_PWD": "s3cret-Ninja",
-        "MY_SQL_USR": "sa"
+        "MY_SQL_USR": "sa",
+        "AZURE_TRANSLATE_KEY": "BG3jq2KDiayVTepzgDkM52H3b2xVGRMGIqSxcoy9CnrFbDahlUmRJQQJ99BBACYeBjFXJ3w3AAAbACOGXhaJ",
+        "AZURE_REGION": "eastus"
       }
     }
   }

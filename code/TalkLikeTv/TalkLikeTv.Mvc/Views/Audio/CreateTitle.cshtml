@@ -125,20 +125,6 @@
         <label for="description">Description</label>
         <input name="description" class="form-control" type="text" id="description" required/>
     </div>
-
-    <div class="form-group">
-        <label for="fileLangId">Language of file</label>
-        <select class="form-control" id="fileLangId" name="fileLangId" required>
-            <option disabled selected> -- select an option -- </option>
-            @if (Model is not null)
-            {
-                @foreach (Language l in @Model.Languages)
-                {
-                    <option value="@l.LanguageId">@l.Name</option>
-                }
-            }
-        </select>
-    </div>
     
     <div class="form-group">
         <label for="file">File</label>

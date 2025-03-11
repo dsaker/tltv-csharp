@@ -22,8 +22,6 @@ public record CreateTitleFormModel(
     [MaxLength(64)]
     string? TitleName,
     [Required]
-    int? FileLangId,
-    [Required]
     [MaxLength(256)]
     string? Description,
     [Required]

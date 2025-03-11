@@ -9,5 +9,8 @@
     <ItemGroup>
         <ProjectReference Include="..\TalkLikeTv.DataContext\TalkLikeTv.DataContext.csproj"/>
     </ItemGroup>
-    
+
+    <ItemGroup>
+        <PackageReference Include="Newtonsoft.Json" />
+    </ItemGroup>
 </Project>

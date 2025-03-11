@@ -41,6 +41,7 @@ public partial class TextFormatDetector
         {
             return TextFormat.OnePhrasePerLine;
         }
+        fileStream.Seek(0, SeekOrigin.Begin);
         return TextFormat.Paragraph;
     }
     

@@ -6,9 +6,13 @@ namespace TranslateTextArray;
 
 class Program
 {
-    private static readonly string subscriptionKey = "3XLM0vxYIJDZbfl8qbADbahTzS3t5T6OO2xfL1d74B4q4C8eV1nCJQQJ99BBACYeBjFXJ3w3AAAbACOGIGqK";
     private static readonly string endpoint = "https://api.cognitive.microsofttranslator.com/translate"; // e.g., "https://api.cognitive.microsofttranslator.com/translate"
-    private static readonly string region = "eastus"; // e.g., "eastus"
+	private readonly string? _subscriptionKey = Environment.GetEnvironmentVariable("AZURE_TRANSLATE_SUBSCRIPTION_KEY");
+    if (_subscriptionKey == null)
+    {
+        Console.Error.WriteLine("Error: AZURE_TRANSLATE_SUBSCRIPTION_KEY environment variable is not set.");
+        Environment.Exit(1);
+    }
 
     static async Task Main()
     {

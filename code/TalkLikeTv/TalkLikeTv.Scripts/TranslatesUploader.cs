@@ -10,11 +10,12 @@ public class TranslatesUploader(TalkliketvContext db)
 {
 
     private readonly TalkliketvContext _db = db ?? throw new ArgumentNullException(nameof(db));
-    private static readonly string SubscriptionKey = Environment.GetEnvironmentVariable("AZURE_TRANSLATOR_KEY") 
+    private static readonly string SubscriptionKey = Environment.GetEnvironmentVariable("AZURE_TRANSLATE_KEY") 
                                                      ?? throw new InvalidOperationException("AZURE_TRANSLATOR_KEY environment variable is not set.");
     private const string Endpoint = "https://api.cognitive.microsofttranslator.com/";
     private static readonly string Region = Environment.GetEnvironmentVariable("AZURE_REGION") 
                                      ?? throw new InvalidOperationException("AZURE_REGION environment variable is not set.");
+    private static readonly HttpClient HttpClient = new();
     
     public async Task UploadTranslates()
     {
@@ -36,7 +37,6 @@ public class TranslatesUploader(TalkliketvContext db)
                 object[] body = [new { Text = textToTranslate }];
                 var requestBody = JsonConvert.SerializeObject(body);
 
-                using (var client = new HttpClient())
                 using (var request = new HttpRequestMessage())
                 {
                     // Build the request.
@@ -48,7 +48,7 @@ public class TranslatesUploader(TalkliketvContext db)
                     request.Headers.Add("Ocp-Apim-Subscription-Region", Region);
 
                     // Send the request and get response.
-                    var response = await client.SendAsync(request).ConfigureAwait(false);
+                    var response = await HttpClient.SendAsync(request).ConfigureAwait(false);
                     // Read response as a string.
                     var result = await response.Content.ReadAsStringAsync();
                     //Console.WriteLine(result);
