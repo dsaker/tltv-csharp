@@ -26,62 +26,115 @@ DROP TABLE IF EXISTS "Phrases"
 GO
 DROP TABLE IF EXISTS "Titles"
 GO
+DROP TABLE IF EXISTS "VoiceStyles"
+GO
+DROP TABLE IF EXISTS "Styles"
+GO
+DROP TABLE IF EXISTS "VoicePersonalities"
+GO
+DROP TABLE IF EXISTS "Personalities"
+GO
+DROP TABLE IF EXISTS "VoiceScenarios"
+GO
+DROP TABLE IF EXISTS "Scenarios"
+GO
+DROP TABLE IF EXISTS "Voices"
+GO
 DROP TABLE IF EXISTS "Languages"
 GO
 CREATE TABLE "Tokens" (
-                        "TokenId" "int" IDENTITY (1, 1) NOT NULL,
-                        "Hash" nvarchar (64) NOT NULL ,
-                        "Created" "datetime" NOT NULL ,
-                        "Used" bit Not NULL default 0,
-                        CONSTRAINT "PK_Tokens" PRIMARY KEY CLUSTERED 
-                        (
-                            "TokenId"
-                        )
+    "TokenID" INT IDENTITY PRIMARY KEY ,
+    "Hash" nvarchar (64) NOT NULL ,
+    "Created" "datetime" NOT NULL ,
+    "Used" bit Not NULL default 0,
 
 )
 CREATE TABLE "Languages" (
-                            "LanguageId" "int" IDENTITY (1, 1) NOT NULL ,
-                            "Language" nvarchar (32) NOT NULL ,
-                            "Tag" nvarchar(8) NOT NULL
-                            CONSTRAINT "PK_Language" PRIMARY KEY  CLUSTERED
-                            (
-                               "LanguageId"
-                            )
+    "LanguageID" INT IDENTITY PRIMARY KEY ,
+    "Platform" nvarchar (16) NOT NULL ,
+    "Name" nvarchar (32) NOT NULL UNIQUE ,
+    "NativeName" nvarchar (32) NOT NULL ,
+    "Tag" nvarchar(8) NOT NULL UNIQUE ,
+)
+GO
+CREATE TABLE "Voices" (
+    "VoiceID" INT IDENTITY PRIMARY KEY ,
+    "Platform" nvarchar (16) NOT NULL ,
+    "LanguageID"  INT FOREIGN KEY REFERENCES Languages(LanguageID),
+    "DisplayName" nvarchar (32) NOT NULL ,
+    "LocalName" nvarchar (32) NOT NULL ,
+    "ShortName" nvarchar (64) NOT NULL UNIQUE ,
+    "Gender" nvarchar (8) NOT NULL ,
+    "Locale" nvarchar (16) NOT NULL ,
+    "LocaleName" nvarchar (32) NOT NULL ,
+    "SampleRateHertz" int NOT NULL ,
+    "VoiceType" nvarchar (8) NOT NULL ,
+    "Status" nvarchar(32) NOT NULL ,
+    "WordsPerMinute" INT NOT NULL,
+)
+GO
+CREATE TABLE Styles (
+                        StyleID INT IDENTITY PRIMARY KEY,
+                        StyleName NVARCHAR(32) NOT NULL UNIQUE
+);
+GO
+CREATE TABLE VoiceStyles (
+                             VoiceID INT NOT NULL FOREIGN KEY REFERENCES Voices(VoiceID) ON DELETE CASCADE,
+                             StyleID INT NOT NULL FOREIGN KEY REFERENCES Styles(StyleID) ON DELETE CASCADE,
+                             PRIMARY KEY (VoiceID, StyleID)  -- Composite PK ensures unique voice-style pairs
+);
+GO
+-- Table to store unique TailoredScenarios
+CREATE TABLE Scenarios (
+                                   ScenarioID INT IDENTITY PRIMARY KEY,
+                                   ScenarioName NVARCHAR(32) NOT NULL UNIQUE
+);
+GO
+-- Many-to-many relationship between Voices and TailoredScenarios
+CREATE TABLE VoiceScenarios (
+                                        VoiceID INT NOT NULL FOREIGN KEY REFERENCES Voices(VoiceID) ON DELETE CASCADE,
+                                        ScenarioID INT NOT NULL FOREIGN KEY REFERENCES Scenarios(ScenarioID) ON DELETE CASCADE,
+                                        PRIMARY KEY (VoiceID, ScenarioID)
+);
 
-)
+GO
+-- Table to store unique VoicePersonalities
+CREATE TABLE Personalities (
+                                    PersonalityID INT IDENTITY PRIMARY KEY,
+                                    PersonalityName NVARCHAR(32) NOT NULL UNIQUE
+);
+GO
+-- Many-to-many relationship between Voices and VoicePersonalities
+CREATE TABLE VoicePersonalities (
+                                         VoiceID INT NOT NULL FOREIGN KEY REFERENCES Voices(VoiceID) ON DELETE CASCADE,
+                                         PersonalityID INT NOT NULL FOREIGN KEY REFERENCES Personalities(PersonalityID) ON DELETE CASCADE,
+                                         PRIMARY KEY (VoiceID, PersonalityID)
+);
+GO
 CREATE TABLE "Titles" (
-                            "TitleId" "int" IDENTITY (1, 1) NOT NULL ,
-                            "Title" nvarchar (64) NOT NULL UNIQUE ,
-                            "NumPhrases" int NOT NULL,
-                            "OriginalLanguageId" int NOT NULL ,
-                            CONSTRAINT "PK_Titles" PRIMARY KEY  CLUSTERED
-                            (
-                                "TitleId"
-                            ),
-                            CONSTRAINT "FK_Titles_OriginalLanguage" FOREIGN KEY
-                            (
-                                "OriginalLanguageId"
-                            ) REFERENCES "dbo"."Languages" (
-                                "LanguageId"
-                            )
+    "TitleID" INT IDENTITY PRIMARY KEY,
+    "TitleName" nvarchar (64) NOT NULL UNIQUE ,
+    "Description" nvarchar (256) ,
+    "NumPhrases" int NOT NULL,
+    "OriginalLanguageID" INT FOREIGN KEY REFERENCES Languages(LanguageID),
 )
+GO
 CREATE TABLE "Phrases" (
-                            "PhraseId" "int" IDENTITY (1, 1) NOT NULL PRIMARY KEY ,
-                            "TitleId" "int" NOT NULL REFERENCES Titles ON DELETE CASCADE
+    "PhraseID" INT IDENTITY PRIMARY KEY,
+    "TitleID" INT FOREIGN KEY REFERENCES Titles(TitleID) ON DELETE CASCADE,
 )
+GO
 CREATE TABLE "Translates" (
-                              "PhraseId" int NOT NULL REFERENCES Phrases ON DELETE CASCADE,
-                              "LanguageId" int NOT NULL REFERENCES Languages ON DELETE CASCADE,
-                              "Phrase" nvarchar (128) NULL ,
-                              phrase_hint nvarchar (128) NULL ,
-                              PRIMARY KEY ("PhraseId", "LanguageId")
+    "PhraseID" INT FOREIGN KEY REFERENCES Phrases(PhraseID) ON DELETE CASCADE,
+    "LanguageID" INT FOREIGN KEY REFERENCES Languages(LanguageID) ON DELETE CASCADE,
+    "Phrase" nvarchar (128) NOT NULL ,
+    "PhraseHint" nvarchar (128) NOT NULL ,
+    PRIMARY KEY ("PhraseID", "LanguageID")
 )
 go
 SET IDENTITY_INSERT "Languages" ON
 go
 ALTER TABLE "Languages" NOCHECK CONSTRAINT ALL
-go
-INSERT INTO "Languages" ("LanguageId", "Language", "Tag") VALUES (-1, 'Not a Language', 'NaL')
 go
 SET IDENTITY_INSERT "Languages" OFF
 go
@@ -89,5 +142,7 @@ SET IDENTITY_INSERT "Titles" ON
 go
 ALTER TABLE "Titles" NOCHECK CONSTRAINT ALL
 go
-INSERT INTO "Titles" ("TitleId", "Title", "NumPhrases", "OriginalLanguageId")VALUES (-1, 'Not a Title', 0, '-1')
+INSERT INTO "Titles" ("TitleID", "TitleName", "NumPhrases", "OriginalLanguageID")VALUES (-1, 'Not a Title', 0, '-1')
 SET IDENTITY_INSERT "Titles" OFF
+
+

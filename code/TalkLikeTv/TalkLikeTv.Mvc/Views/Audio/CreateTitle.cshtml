@@ -1,0 +1,136 @@
+@using System.Text.Json
+@using System.Text.Json.Serialization
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model CreateTitleViewModel
+
+@{
+    ViewData["Title"] = "Create Title";
+}
+<h1>@ViewData["Title"]</h1>
+@if (Model.HasErrors)
+{
+    <div>
+        @foreach (string errorMessage in Model.ValidationErrors)
+        {
+            <div class="alert alert-danger" role="alert">@errorMessage</div>
+        }
+    </div>
+}
+<hr />
+<table class="table table-sm">
+    <tbody>
+        <tr>
+            <td>
+                <h1 class="smaller-heading">To Voice</h1>
+                <dl class="dl-horizontal">
+                    <dt>Display Name</dt>
+                    <dd>@Model.CreateTitleFormModel.ToVoice?.DisplayName</dd>
+                    <dt>Locale Name</dt>
+                    <dd>@Model.CreateTitleFormModel.ToVoice?.LocaleName</dd>
+                    <dt>Gender</dt>
+                    <dd>@Model.CreateTitleFormModel.ToVoice?.Gender</dd>
+                    @if (Model.CreateTitleFormModel.ToVoice?.Styles.Count > 0)
+                    {
+                        <dt>Styles</dt>
+                        foreach (var s in Model.CreateTitleFormModel.ToVoice.Styles)
+                        {
+                            <dd>@s.StyleName</dd>
+                        }
+                    }
+                    @if (Model.CreateTitleFormModel.ToVoice?.Scenarios.Count > 0)
+                    {
+                        <dt>Scenarios</dt>
+                        foreach (var s in Model.CreateTitleFormModel.ToVoice.Scenarios)
+                        {
+                            <dd>@s.ScenarioName</dd>
+                        }
+                    }
+                    @if (Model.CreateTitleFormModel.ToVoice?.Personalities.Count > 0)
+                    {
+                        <dt>Personalities</dt>
+                        foreach (var p in Model.CreateTitleFormModel.ToVoice.Personalities)
+                        {
+                            <dd>@p.PersonalityName</dd>
+                        }
+                    }
+                </dl>
+            </td>
+            <td>
+                <h1 class="smaller-heading">From Voice</h1>
+                <dl class="dl-horizontal">
+                    <dt>Display Name</dt>
+                    <dd>@Model.CreateTitleFormModel.FromVoice?.DisplayName</dd>
+                    <dt>Locale Name</dt>
+                    <dd>@Model.CreateTitleFormModel.FromVoice?.LocaleName</dd>
+                    <dt>Gender</dt>
+                    <dd>@Model.CreateTitleFormModel.FromVoice?.Gender</dd>
+                    @if (Model.CreateTitleFormModel.FromVoice?.Styles.Count > 0)
+                    {
+                        <dt>Styles</dt>
+                        foreach (var s in Model.CreateTitleFormModel.FromVoice.Styles)
+                        {
+                            <dd>@s.StyleName</dd>
+                        }
+                    }
+                    @if (Model.CreateTitleFormModel.FromVoice?.Scenarios.Count > 0)
+                    {
+                        <dt>Scenarios</dt>
+                        foreach (var s in Model.CreateTitleFormModel.FromVoice.Scenarios)
+                        {
+                            <dd>@s.ScenarioName</dd>
+                        }
+                    }
+                    @if (Model.CreateTitleFormModel.FromVoice?.Personalities.Count > 0)
+                    {
+                        <dt>Personalities</dt>
+                        foreach (var p in Model.CreateTitleFormModel.FromVoice.Personalities)
+                        {
+                            <dd>@p.PersonalityName</dd>
+                        }
+                    }
+                </dl>        
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <dl class="dl-horizontal">
+                    <dt>Pattern</dt>
+                    <dd>@Model.CreateTitleFormModel.Pattern</dd>
+                </dl>
+            </td>
+            <td>
+                <dt>Pause</dt>
+                <dd>@Model.CreateTitleFormModel.PauseDuration</dd>
+            </td>
+        </tr>
+    </tbody>
+</table>
+<br/>
+@Html.AntiForgeryToken()
+<form asp-action="CreateTitle" asp-controller="Audio" method="post" enctype="multipart/form-data">
+    <input type="hidden" name="ToVoice" value="@JsonSerializer.Serialize(Model.CreateTitleFormModel.ToVoice, new JsonSerializerOptions { ReferenceHandler = ReferenceHandler.Preserve })" />
+    <input type="hidden" name="FromVoice" value="@JsonSerializer.Serialize(Model.CreateTitleFormModel.FromVoice, new JsonSerializerOptions { ReferenceHandler = ReferenceHandler.Preserve })" />
+    <input type="hidden" name="Pattern" value="@Model.CreateTitleFormModel.Pattern" />
+    <input type="hidden" name="PauseDuration" value="@Model.CreateTitleFormModel.PauseDuration" />
+    <div class="form-group">
+        <label for="token">Token</label>
+        <input name="token" class="form-control" type="text" id="token" required/>
+    </div>
+    <div class="form-group">
+        <label for="titleName">Title Name</label>
+        <input name="titleName" class="form-control" type="text" id="titleName" required/>
+    </div>
+
+    <div class="form-group">
+        <label for="description">Description</label>
+        <input name="description" class="form-control" type="text" id="description" required/>
+    </div>
+    
+    <div class="form-group">
+        <label for="file">File</label>
+        <input name="file" class="form-control" type="file" id="file"/>
+    </div>
+    <div class="form-group">
+        <input type="submit" value="Create Title" class="btn btn-primary"/>
+    </div>
+</form>

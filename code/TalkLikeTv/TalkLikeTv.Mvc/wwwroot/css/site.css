@@ -1,31 +1,104 @@
 html {
-  font-size: 14px;
+    font-size: 14px;
 }
 
 @media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
+    html {
+        font-size: 16px;
+    }
 }
 
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
 }
 
 html {
-  position: relative;
-  min-height: 100%;
+    position: relative;
+    min-height: 100%;
 }
 
 body {
-  margin-bottom: 60px;
+    margin-bottom: 60px;
 }
 
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
-  color: var(--bs-secondary-color);
-  text-align: end;
+    color: var(--bs-secondary-color);
+    text-align: end;
 }
 
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
-  text-align: start;
+    text-align: start;
+}
+
+.three-columns {
+    column-count: 3;
+}
+
+.two-columns {
+    column-count: 2;
+}
+
+.voice-columns {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.voice-list-group {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    padding-bottom: 80px;
+}
+
+.voice-list-group .form-radio {
+    flex: 1 1 calc(33.333% - 10px); /* Adjust the width of each item */
+    margin: 5px; /* Add some margin between items */
+    box-sizing: border-box;
+}
+
+.upload-form {
+    display: flex;
+    flex-direction: column;
+    margin-top: 5px; /* Adds a small gap between the form and the upload button */
+}
+
+.upload-form .form-group {
+    margin-bottom: 10px; /* Adds a small gap between form groups */
+}
+
+.upload-form .btn {
+    width: 100px; /* Makes the upload button shorter */
+}
+
+.voice_info {
+    border-bottom: 1px dotted;
+    position: relative;
+    cursor: pointer;
+}
+
+.voice_info .title {
+    position: absolute;
+    top: 20px;
+    background: silver;
+    padding: 4px;
+    left: 0;
+    white-space: nowrap;
+    opacity: 1;
+    z-index: 10;
+}
+
+.play_sound {
+    cursor: default;
+}
+
+.smaller-heading {
+    font-size: 24px;
+}
+
+.float-right {
+    float: right;
+}
+
+.form-group {
+    margin-bottom: 15px; /* Adds margin between form groups */
 }

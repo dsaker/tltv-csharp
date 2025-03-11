@@ -6,14 +6,22 @@ using Microsoft.EntityFrameworkCore;
 
 namespace TalkLikeTv.EntityModels;
 
+[Index("Name", Name = "UQ__Language__737584F60620E8D3", IsUnique = true)]
+[Index("Tag", Name = "UQ__Language__C4516413E29C3320", IsUnique = true)]
 public partial class Language
 {
     [Key]
+    [Column("LanguageID")]
     public int LanguageId { get; set; }
 
-    [Column("Language")]
+    [StringLength(16)]
+    public string Platform { get; set; } = null!;
+
     [StringLength(32)]
-    public string Language1 { get; set; } = null!;
+    public string Name { get; set; } = null!;
+
+    [StringLength(32)]
+    public string NativeName { get; set; } = null!;
 
     [StringLength(8)]
     public string Tag { get; set; } = null!;
@@ -23,4 +31,7 @@ public partial class Language
 
     [InverseProperty("Language")]
     public virtual ICollection<Translate> Translates { get; set; } = new List<Translate>();
+
+    [InverseProperty("Language")]
+    public virtual ICollection<Voice> Voices { get; set; } = new List<Voice>();
 }

@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <RootNamespace>TalkLikeTv.Scripts</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Azure.AI.Translation.Text" />
+      <PackageReference Include="Microsoft.CognitiveServices.Speech" />
+      <PackageReference Include="Microsoft.Data.SqlClient" />
+      <PackageReference Include="Newtonsoft.Json" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\TalkLikeTv.DataContext\TalkLikeTv.DataContext.csproj" />
+    </ItemGroup>
+    
+</Project>

@@ -16,22 +16,21 @@ public class EntityModelTests
     {
         using TalkliketvContext db = new();
 
-        int expected = 1;
-        int actual = db.Languages.Count();
+        var expected = 1;
+        var actual = db.Languages.Count();
 
         Assert.Equal(expected, actual);
     }
 
     [Fact]
-    public void ProductId1IsChaiTest()
+    public void TitleIdMinus1IsNotATitle()
     {
         using TalkliketvContext db = new();
 
-        string expected = "Not a Title"
-            ;
+        var expected = "Not a Title";
 
-        Title? title = db.Titles.Find(keyValues: -1);
-        string actual = title?.Title1 ?? string.Empty;
+        var title = db.Titles.Find(keyValues: -1);
+        var actual = title?.TitleName ?? string.Empty;
 
         Assert.Equal(expected, actual);
     }

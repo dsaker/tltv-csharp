@@ -1,0 +1,392 @@
+[
+  {
+    "Tag": "af",
+    "Language": "Afrikaans",
+    "Translations": "Dit is hoe ek klink as ek in Afrikaans praat"
+  },
+  {
+    "Tag": "am",
+    "Language": "Amharic",
+    "Translations": "በአማርኛ ስናገር እንዲህ ነው የምሰማው"
+  },
+  {
+    "Tag": "ar",
+    "Language": "Arabic",
+    "Translations": "هذا ما أبدو عليه عندما أتحدث باللغة العربية"
+  },
+  {
+    "Tag": "as",
+    "Language": "Assamese",
+    "Translations": "যেতিয়া মই অসমত কথা কওঁ তেতিয়া মই এনেকুৱা শুনিছোঁ"
+  },
+  {
+    "Tag": "az",
+    "Language": "Azerbaijani",
+    "Translations": "Azərbaycan dilində danışanda belə səslənirəm"
+  },
+  {
+    "Tag": "bg",
+    "Language": "Bulgarian",
+    "Translations": "Така звуча, когато говоря на български език"
+  },
+  {
+    "Tag": "bn",
+    "Language": "Bangla",
+    "Translations": "আমি যখন বাংলায় কথা বলি তখন আমার শব্দ এমনই হয়"
+  },
+  {
+    "Tag": "bs",
+    "Language": "Bosnian",
+    "Translations": "Ovako zvučim kada govorim na bosanskom"
+  },
+  {
+    "Tag": "ca",
+    "Language": "Catalan",
+    "Translations": "Així és com sono quan parlo en català"
+  },
+  {
+    "Tag": "cs",
+    "Language": "Czech",
+    "Translations": "Takhle nějak zním, když mluvím česky"
+  },
+  {
+    "Tag": "cy",
+    "Language": "Welsh",
+    "Translations": "Dyma sut dwi'n swnio pan dwi'n siarad yn Gymraeg"
+  },
+  {
+    "Tag": "da",
+    "Language": "Danish",
+    "Translations": "Sådan lyder jeg, når jeg taler dansk"
+  },
+  {
+    "Tag": "de",
+    "Language": "German",
+    "Translations": "So klinge ich, wenn ich auf Deutsch spreche"
+  },
+  {
+    "Tag": "el",
+    "Language": "Greek",
+    "Translations": "Έτσι ακούγομαι όταν μιλάω στα ελληνικά"
+  },
+  {
+    "Tag": "en",
+    "Language": "English",
+    "Translations": "This is what I sound like when I am speaking in English"
+  },
+  {
+    "Tag": "es",
+    "Language": "Spanish",
+    "Translations": "Así es como sueno cuando hablo en español"
+  },
+  {
+    "Tag": "et",
+    "Language": "Estonian",
+    "Translations": "Nii kõlan ma, kui räägin eesti keeles"
+  },
+  {
+    "Tag": "eu",
+    "Language": "Basque",
+    "Translations": "Horrela mintzen naiz euskaraz hitz egiten dudanean"
+  },
+  {
+    "Tag": "fa",
+    "Language": "Persian",
+    "Translations": "وقتی به فارسی صحبت می کنم اینگونه به نظر می رسد"
+  },
+  {
+    "Tag": "fi",
+    "Language": "Finnish",
+    "Translations": "Tältä kuulostan, kun puhun suomeksi"
+  },
+  {
+    "Tag": "fil",
+    "Language": "Filipino",
+    "Translations": "Ito ang tunog ko kapag nagsasalita ako sa Filipino"
+  },
+  {
+    "Tag": "fr",
+    "Language": "French",
+    "Translations": "C’est à cela que je ressemble quand je parle en français"
+  },
+  {
+    "Tag": "fr-CA",
+    "Language": "French (Canada)",
+    "Translations": "Voici à quoi je ressemble lorsque je parle en français"
+  },
+  {
+    "Tag": "ga",
+    "Language": "Irish",
+    "Translations": "Is é seo an rud is maith liom nuair a bhím ag labhairt as Gaeilge"
+  },
+  {
+    "Tag": "gl",
+    "Language": "Galician",
+    "Translations": "Isto é o que soo cando falo en galego"
+  },
+  {
+    "Tag": "gu",
+    "Language": "Gujarati",
+    "Translations": "જ્યારે હું ગુજરાતીમાં બોલું છું ત્યારે મને આવો અવાજ આવે છે"
+  },
+  {
+    "Tag": "he",
+    "Language": "Hebrew",
+    "Translations": "ככה אני נשמע כשאני מדבר בעברית"
+  },
+  {
+    "Tag": "hi",
+    "Language": "Hindi",
+    "Translations": "जब मैं हिंदी में बोल रहा होता हूं तो मुझे ऐसा लगता है"
+  },
+  {
+    "Tag": "hr",
+    "Language": "Croatian",
+    "Translations": "Ovako zvučim kad govorim na hrvatskom jeziku"
+  },
+  {
+    "Tag": "hu",
+    "Language": "Hungarian",
+    "Translations": "Így hangzok, amikor magyarul beszélek"
+  },
+  {
+    "Tag": "hy",
+    "Language": "Armenian",
+    "Translations": "Ահա թե ինչ եմ հնչում, երբ հայերեն եմ խոսում"
+  },
+  {
+    "Tag": "id",
+    "Language": "Indonesian",
+    "Translations": "Inilah yang terdengar seperti saya ketika saya berbicara dalam bahasa Indonesia"
+  },
+  {
+    "Tag": "is",
+    "Language": "Icelandic",
+    "Translations": "Svona hljóma ég þegar ég tala íslensku"
+  },
+  {
+    "Tag": "it",
+    "Language": "Italian",
+    "Translations": "Questo è il mio suono quando parlo in italiano"
+  },
+  {
+    "Tag": "iu",
+    "Language": "Inuktitut",
+    "Translations": "ᑕᐃᒪᓐᓇ ᐃᓄᒃᑎᑐᑦ ᐅᖃᓪᓚᒃᑎᓪᓗᖓ"
+  },
+  {
+    "Tag": "ja",
+    "Language": "Japanese",
+    "Translations": "私が日本語で話すとき、こんな風に聞こえるんです"
+  },
+  {
+    "Tag": "ka",
+    "Language": "Georgian",
+    "Translations": "ასე ჟღერს, როცა ქართულ ენაზე ვსაუბრობ"
+  },
+  {
+    "Tag": "kk",
+    "Language": "Kazakh",
+    "Translations": "Қазақ тілінде сөйлегенде осылай естіледі"
+  },
+  {
+    "Tag": "km",
+    "Language": "Khmer",
+    "Translations": "នេះជាអ្វីដែលខ្ញុំសំឡេងដូចពេលដែលខ្ញុំនិយាយជាភាសាខ្មែរ"
+  },
+  {
+    "Tag": "kn",
+    "Language": "Kannada",
+    "Translations": "ನಾನು ಕನ್ನಡದಲ್ಲಿ ಮಾತನಾಡುವಾಗ ಹೀಗೆ ಧ್ವನಿಸುತ್ತೇನೆ"
+  },
+  {
+    "Tag": "ko",
+    "Language": "Korean",
+    "Translations": "제가 한국어로 말할 때 내는 목소리는 이렇습니다"
+  },
+  {
+    "Tag": "lo",
+    "Language": "Lao",
+    "Translations": "ນີ້ ຄື ສຽງ ຂອງ ຂ້າ ພະ ເຈົ້າ ເມື່ອ ຂ້າ ພະ ເຈົ້າ ເວົ້າ ພາ ສາ ລາ ໂອ"
+  },
+  {
+    "Tag": "lt",
+    "Language": "Lithuanian",
+    "Translations": "Taip man atrodo, kai kalbu lietuviškai"
+  },
+  {
+    "Tag": "lv",
+    "Language": "Latvian",
+    "Translations": "Tā es izklausos, kad runāju latviski"
+  },
+  {
+    "Tag": "mk",
+    "Language": "Macedonian",
+    "Translations": "Ова е она што звучам кога зборувам на македонски"
+  },
+  {
+    "Tag": "ml",
+    "Language": "Malayalam",
+    "Translations": "ഞാൻ മലയാളത്തിൽ സംസാരിക്കുമ്പോൾ ഇങ്ങനെയാണ് തോന്നുന്നത്"
+  },
+  {
+    "Tag": "mr",
+    "Language": "Marathi",
+    "Translations": "मराठीत बोलताना मला असंच वाटतं"
+  },
+  {
+    "Tag": "ms",
+    "Language": "Malay",
+    "Translations": "Inilah bunyi saya apabila saya bercakap dalam bahasa Melayu"
+  },
+  {
+    "Tag": "mt",
+    "Language": "Maltese",
+    "Translations": "Hekk ninstema' meta qed nitkellem bil-Malti"
+  },
+  {
+    "Tag": "my",
+    "Language": "Myanmar (Burmese)",
+    "Translations": "မြန်မာနိုင်ငံမှာ ကျွန်တော်ပြောနေချိန်မှာ ဒီလိုအသံထွက်ပါတယ်"
+  },
+  {
+    "Tag": "nb",
+    "Language": "Norwegian",
+    "Translations": "Slik høres jeg ut når jeg snakker norsk"
+  },
+  {
+    "Tag": "ne",
+    "Language": "Nepali",
+    "Translations": "नेपालीमा बोल्दा मलाई यस्तो लाग्छ"
+  },
+  {
+    "Tag": "nl",
+    "Language": "Dutch",
+    "Translations": "Dit is hoe ik klink als ik in het Nederlands spreek"
+  },
+  {
+    "Tag": "or",
+    "Language": "Odia",
+    "Translations": "ଯେତେବେଳେ ମୁଁ ଓଡ଼ିଆରେ କଥା ବାର୍ତ୍ତା କରୁଛି ସେତେବେଳେ ମୋତେ ଏହା ହିଁ ଲାଗୁଛି"
+  },
+  {
+    "Tag": "pa",
+    "Language": "Punjabi",
+    "Translations": "ਜਦੋਂ ਮੈਂ ਪੰਜਾਬੀ ਵਿੱਚ ਬੋਲ ਰਿਹਾ ਹੁੰਦਾ ਹਾਂ ਤਾਂ ਮੈਨੂੰ ਅਜਿਹਾ ਲੱਗਦਾ ਹੈ"
+  },
+  {
+    "Tag": "pl",
+    "Language": "Polish",
+    "Translations": "Tak właśnie brzmię, gdy mówię po polsku"
+  },
+  {
+    "Tag": "ps",
+    "Language": "Pashto",
+    "Translations": "د افغانستان د کرکټ ملی لوبډله د افغانستان د کرکټ ملی لوبډلی ته د افغانستان د کرکټ ملی لوبډلی ته د پاملرنې په موخه د افغانستان د کرکټ ملی لوبډ"
+  },
+  {
+    "Tag": "pt",
+    "Language": "Portuguese (Brazil)",
+    "Translations": "É assim que eu soo quando estou falando em português"
+  },
+  {
+    "Tag": "pt-PT",
+    "Language": "Portuguese (Portugal)",
+    "Translations": "É assim que soo quando falo em português"
+  },
+  {
+    "Tag": "ro",
+    "Language": "Romanian",
+    "Translations": "Așa sună când vorbesc în română"
+  },
+  {
+    "Tag": "ru",
+    "Language": "Russian",
+    "Translations": "Вот как я звучу, когда говорю по-русски"
+  },
+  {
+    "Tag": "si",
+    "Language": "Sinhala",
+    "Translations": "මම සිංහලෙන් කතා කරන කොට මට ඇහෙන්නේ මෙහෙමයි"
+  },
+  {
+    "Tag": "sk",
+    "Language": "Slovak",
+    "Translations": "Takto zniem, keď hovorím po slovensky"
+  },
+  {
+    "Tag": "sl",
+    "Language": "Slovenian",
+    "Translations": "Tako zvenim, ko govorim v slovenščini"
+  },
+  {
+    "Tag": "so",
+    "Language": "Somali",
+    "Translations": "waa sidan aan ugu dhawaaqay marka aan ku hadlayo afka soomaaliga"
+  },
+  {
+    "Tag": "sq",
+    "Language": "Albanian",
+    "Translations": "Kështu dukem kur flas në shqip"
+  },
+  {
+    "Tag": "sv",
+    "Language": "Swedish",
+    "Translations": "Så här låter jag när jag pratar på svenska"
+  },
+  {
+    "Tag": "sw",
+    "Language": "Swahili",
+    "Translations": "Ndivyo ninavyojisikia wakati ninazungumza kwa Kiswahili"
+  },
+  {
+    "Tag": "ta",
+    "Language": "Tamil",
+    "Translations": "நான் தமிழில் பேசும் போது இப்படித்தான் ஒலிக்கிறேன்"
+  },
+  {
+    "Tag": "te",
+    "Language": "Telugu",
+    "Translations": "నేను తెలుగులో మాట్లాడుతున్నప్పుడు ఇలానే అనిపిస్తోంది."
+  },
+  {
+    "Tag": "th",
+    "Language": "Thai",
+    "Translations": "นี่คือสิ่งที่ฉันฟังดูเหมือนเมื่อฉันพูดภาษาไทย"
+  },
+  {
+    "Tag": "tr",
+    "Language": "Turkish",
+    "Translations": "Türkçe konuşurken sesim böyle çıkıyor"
+  },
+  {
+    "Tag": "uk",
+    "Language": "Ukrainian",
+    "Translations": "Ось так я звучить, коли говорю українською"
+  },
+  {
+    "Tag": "ur",
+    "Language": "Urdu",
+    "Translations": "جب میں اردو میں بات کر رہا ہوتا ہوں تو مجھے یہی لگتا ہے"
+  },
+  {
+    "Tag": "uz",
+    "Language": "Uzbek (Latin)",
+    "Translations": "Men o'zbek tilida gaplashayotganimda shunday ovozga o'xshaydi"
+  },
+  {
+    "Tag": "vi",
+    "Language": "Vietnamese",
+    "Translations": "Đây là những gì tôi nghe như thế nào khi tôi nói bằng tiếng Việt"
+  },
+  {
+    "Tag": "yue",
+    "Language": "Cantonese (Traditional)",
+    "Translations": "係我用粵語講話時嘅聲"
+  },
+  {
+    "Tag": "zu",
+    "Language": "Zulu",
+    "Translations": "Yilokhu engizwakala ngakho uma ngikhuluma ngesiZulu"
+  }
+]
