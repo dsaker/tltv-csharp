@@ -1,5 +1,3 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -7,6 +5,7 @@ using TalkLikeTv.EntityModels;
 using TalkLikeTv.Mvc.Configurations;
 using TalkLikeTv.Mvc.Models;
 using TalkLikeTv.Services;
+using TalkLikeTv.Utilities;
 using Exception = System.Exception;
 
 namespace TalkLikeTv.Mvc.Controllers;
@@ -17,14 +16,25 @@ public class AudioController : Controller
     private readonly TalkliketvContext _db;
     private readonly TokenService _tokenService;
     private readonly SharedSettings _sharedSettings;
+    private readonly TranslationService _translationService;
+    private readonly PhraseService _phraseService;
 
-    public AudioController(ILogger<AudioController> logger, TalkliketvContext db, TokenService tokenService, IOptions<SharedSettings> sharedSettings)
+    public AudioController(
+        ILogger<AudioController> logger,
+        TalkliketvContext db,
+        TokenService tokenService,
+        IOptions<SharedSettings> sharedSettings,
+        TranslationService translationService,
+        PhraseService phraseService)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _db = db ?? throw new ArgumentNullException(nameof(db));
         _tokenService = tokenService ?? throw new ArgumentNullException(nameof(tokenService));
         _sharedSettings = sharedSettings.Value ?? throw new ArgumentNullException(nameof(sharedSettings));
+        _translationService = translationService ?? throw new ArgumentNullException(nameof(translationService));
+        _phraseService = phraseService ?? throw new ArgumentNullException(nameof(phraseService));
     }
+
     
     [HttpGet]
     public IActionResult CreateTitle(Voice toVoice, Voice fromVoice, int? pauseDuration, string? pattern)
@@ -42,29 +52,10 @@ public class AudioController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateTitle(IFormCollection form)
     {
-        if (!int.TryParse(form["PauseDuration"], out var pauseDuration))
+        var (formModel, errorResult) = ValidateCreateTitleFormModel(form);
+        if (errorResult != null)
         {
-            ModelState.AddModelError("", "Invalid pause duration.");
-        }
-
-        var toVoice = DeserializeVoice(form["ToVoice"]);
-        var fromVoice = DeserializeVoice(form["FromVoice"]);
-        if (toVoice == null || fromVoice == null )
-        {
-            ModelState.AddModelError("", "Invalid voice data.");
-        }
-        
-        var formModel = new CreateTitleFormModel(toVoice, fromVoice, pauseDuration, form["Pattern"], form["Token"], form["TitleName"], form["Description"], form.Files["File"]);
-        if (!TryValidateModel(formModel) || !ModelState.IsValid)
-        {
-            return CreateTitleErrorView(formModel);
-        }
-
-        // Check if TitleName is unique
-        if (_db.Titles.Any(t => t.TitleName == formModel.TitleName))
-        {
-            ModelState.AddModelError("", "Title name must be unique.");
-            return CreateTitleErrorView(formModel);
+            return errorResult;
         }
         
         try
@@ -78,15 +69,16 @@ public class AudioController : Controller
             var translator = new AzureTranslateService();
             var detectedCode = await translator.DetectLanguageFromPhrasesAsync(phraseStrings);
 
-            var languageEntity = await _db.Languages
+            var detectedLanguage = await _db.Languages
                 .SingleOrDefaultAsync(l => l.Tag == detectedCode);
 
-            if (languageEntity == null)
+            if (detectedLanguage == null)
             {
-                throw new Exception($"Language '{detectedCode}' not found.");
+                ModelState.AddModelError("", $"Language '{detectedCode}' not found.");
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, ModelState);
             }
 
-            var languageId = languageEntity.LanguageId;            
+            var languageId = detectedLanguage.LanguageId;            
             var newTitle = new Title
             {
                 TitleName = formModel.TitleName!,
@@ -98,15 +90,31 @@ public class AudioController : Controller
             _db.Titles.Add(newTitle);
             await _db.SaveChangesAsync();
 
-            foreach (var phraseString in phraseStrings)
+            var phrases = phraseStrings.Select(_ => new Phrase
             {
-                var phrase = new Phrase
-                {
-                    TitleId = newTitle.TitleId,
-                };
-                _db.Phrases.Add(phrase);
-            }
+                TitleId = newTitle.TitleId,
+            }).ToList();
+
+            _db.Phrases.AddRange(phrases);
             await _db.SaveChangesAsync();
+            
+            var (success, errors) = await _translationService.ProcessTranslations(newTitle, phraseStrings, formModel.FromVoice, formModel.ToVoice, detectedCode, ModelState);
+
+            if (!success)
+            {
+                foreach (var error in errors)
+                {
+                    ModelState.AddModelError("", error);
+                }
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, ModelState);
+            }
+            
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "An error occurred while saving changes to the database.");
+            ModelState.AddModelError("", "An error occurred while saving changes to the database.");
+            return CreateTitleErrorView(formModel);
         }
         catch (Exception ex)
         {
@@ -132,6 +140,41 @@ public class AudioController : Controller
         return View(model);
     }
     
+    private (CreateTitleFormModel? formModel, IActionResult? errorResult) ValidateCreateTitleFormModel(IFormCollection form)
+    {
+        if (!int.TryParse(form["PauseDuration"], out var pauseDuration))
+        {
+            ModelState.AddModelError("", "Invalid pause duration.");
+        }
+
+        var toVoiceResult = JsonUtils.DeserializeVoice(form["ToVoice"]!, _logger);
+        var fromVoiceResult = JsonUtils.DeserializeVoice(form["FromVoice"]!, _logger);
+
+        if (toVoiceResult.Result == null || fromVoiceResult.Result == null)
+        {
+            foreach (var error in toVoiceResult.Errors.Concat(fromVoiceResult.Errors))
+            {
+                ModelState.AddModelError("", error);
+            }
+            return (null, BadRequest(ModelState));
+        }
+
+        var formModel = new CreateTitleFormModel(toVoiceResult.Result, fromVoiceResult.Result, pauseDuration, form["Pattern"], form["Token"], form["TitleName"], form["Description"], form.Files["File"]);
+        if (!TryValidateModel(formModel) || !ModelState.IsValid)
+        {
+            return (null, CreateTitleErrorView(formModel));
+        }
+
+        // Check if TitleName is unique
+        if (_db.Titles.Any(t => t.TitleName == formModel.TitleName))
+        {
+            ModelState.AddModelError("", "Title name must be unique.");
+            return (null, CreateTitleErrorView(formModel));
+        }
+
+        return (formModel, null);
+    }
+    
     private List<string>? ValidateTokenAndFile(CreateTitleFormModel formModel)
     {
         if (formModel.Token == null || !_tokenService.CheckTokenStatus(formModel.Token))
@@ -146,65 +189,27 @@ public class AudioController : Controller
             return null;
         }
 
-        var phraseStrings = GetPhraseStrings(formModel.File);
-        if (phraseStrings == null || !ModelState.IsValid)
-        {
-            return null;
-        }
-
-        if (phraseStrings.Count > _sharedSettings.MaxPhrases)
-        {
-            ModelState.AddModelError("", $"Phrase count exceeds the maximum of {_sharedSettings.MaxPhrases}.");
-            return null;
-        }
-
-        return phraseStrings;
-    }
-    
-    private Voice? DeserializeVoice(string voiceJson)
-    {
         try
         {
-            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true, ReferenceHandler = ReferenceHandler.Preserve };
-            return JsonSerializer.Deserialize<Voice>(voiceJson, options);
+            var phraseStrings = _phraseService.GetPhraseStrings(formModel.File);
+            if (phraseStrings == null || !ModelState.IsValid)
+            {
+                return null;
+            }
+
+            if (phraseStrings.Count > _sharedSettings.MaxPhrases)
+            {
+                ModelState.AddModelError("", $"Phrase count exceeds the maximum of {_sharedSettings.MaxPhrases}.");
+                return null;
+            }
+
+            return phraseStrings;
         }
-        catch (JsonException ex)
+        catch (InvalidDataException ex)
         {
-            _logger.LogError(ex, "Failed to deserialize voice JSON.");
-            ModelState.AddModelError("", "Invalid voice data.");
+            ModelState.AddModelError("", ex.Message);
             return null;
         }
-    }
-    
-    private List<string>? GetPhraseStrings(IFormFile file)
-    {
-        ArgumentNullException.ThrowIfNull(file, nameof(file));
-        
-        var fileStream = file.OpenReadStream();
-        if (fileStream == null)
-        {
-            throw new Exception("Invalid file stream.");
-        }
-        
-        // Check if the content is single line
-        if (TextFormatDetector.DetectTextFormat(fileStream) != TextFormatDetector.TextFormat.OnePhrasePerLine)
-        {
-            ModelState.AddModelError("", "Invalid file format. Please parse the file at the home page.");
-            return null;
-        }
-        
-        fileStream.Seek(0, SeekOrigin.Begin);
-        using var reader = new StreamReader(fileStream);
-        var parsedPhrases = Parse.ParseOnePhrasePerLine(reader);
-        
-        if (parsedPhrases.Count > 0)
-        {
-            return parsedPhrases;
-        }
-
-        ModelState.AddModelError("", "No phrases found in the file.");
-        return null;
-
     }
     
     [HttpGet]

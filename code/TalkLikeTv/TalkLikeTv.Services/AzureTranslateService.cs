@@ -72,4 +72,36 @@ public class AzureTranslateService
 
         return languageGroups.First().Key;
     }
+    
+    public async Task<List<string>> TranslatePhrasesAsync(List<string> phrases, string fromLanguage, string toLanguage)
+    {
+        const string route = "/translate?api-version=3.0";
+        var uri = $"{Endpoint}{route}&from={fromLanguage}&to={toLanguage}";
+
+        var requestBody = JsonConvert.SerializeObject(phrases.Select(phrase => new { Text = phrase }).ToArray());
+
+        var request = new HttpRequestMessage
+        {
+            Method = HttpMethod.Post,
+            RequestUri = new Uri(uri),
+            Content = new StringContent(requestBody, Encoding.UTF8, "application/json")
+        };
+        request.Headers.Add("Ocp-Apim-Subscription-Key", SubscriptionKey);
+        request.Headers.Add("Ocp-Apim-Subscription-Region", Region);
+
+        var response = await HttpClient.SendAsync(request).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new Exception($"Failed to translate phrases. Status code: {response.StatusCode}");
+        }
+
+        var jsonResponse = await response.Content.ReadAsStringAsync();
+        var resultDocument = JsonDocument.Parse(jsonResponse);
+        var translations = resultDocument.RootElement
+            .EnumerateArray()
+            .Select(element => element.GetProperty("translations")[0].GetProperty("text").GetString())
+            .ToList();
+
+        return translations!;
+    }
 }

@@ -2,6 +2,7 @@ using Microsoft.Data.SqlClient;
 using TalkLikeTv.EntityModels;
 using TalkLikeTv.Mvc.Configurations;
 using TalkLikeTv.Services;
+using AspNetCoreRateLimit;
 
 var azureKey = Environment.GetEnvironmentVariable("AZURE_TRANSLATE_KEY");
 var region = Environment.GetEnvironmentVariable("AZURE_REGION");
@@ -18,6 +19,12 @@ builder.Services.AddControllersWithViews();
 // Register TokenService
 builder.Services.AddScoped<TokenService>();
 builder.Services.Configure<SharedSettings>(builder.Configuration.GetSection("SharedSettings"));
+
+// Add rate limiting services
+builder.Services.AddMemoryCache();
+builder.Services.Configure<IpRateLimitOptions>(builder.Configuration.GetSection("IpRateLimiting"));
+builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
+builder.Services.AddInMemoryRateLimiting();
 
 var sqlServerConnection = builder.Configuration
     .GetConnectionString("TalkliketvConnection");

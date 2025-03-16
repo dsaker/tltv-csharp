@@ -9,13 +9,5 @@
     <ItemGroup>
         <ProjectReference Include="..\TalkLikeTv.DataContext\TalkLikeTv.DataContext.csproj"/>
     </ItemGroup>
-
-    <ItemGroup>
-        <ProjectReference Include="..\TalkLikeTv.Utilities\TalkLikeTv.Utilities.csproj"/>
-    </ItemGroup>
-
-    <ItemGroup>
-        <PackageReference Include="Newtonsoft.Json" />
-        <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.2.0" />
-    </ItemGroup>
+    
 </Project>
