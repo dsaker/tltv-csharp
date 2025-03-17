@@ -1,6 +1,6 @@
 namespace TalkLikeTv.Services;
 
-public static class ZipDir
+public static class ZipDirService
 {
     public static FileInfo ZipStringsList(List<string> stringList, int max, string txtPath, string filename)
     {

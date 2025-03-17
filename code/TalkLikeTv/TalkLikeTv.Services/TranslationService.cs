@@ -11,13 +11,14 @@ public class TranslationService
 {
     private readonly TalkliketvContext _db;
     private readonly ILogger<TranslationService> _logger;
-    private readonly string _baseDirectory;
+    private readonly string _baseDir;
 
     public TranslationService(TalkliketvContext db, ILogger<TranslationService> logger, IConfiguration configuration)
     {
         _db = db;
         _logger = logger;
-        _baseDirectory = configuration["BaseDirectory"];
+        _baseDir = configuration["BaseDir"] ?? throw new ArgumentNullException(configuration["BaseDir"], "BaseDir is not configured.");
+
     }
 
 
@@ -114,18 +115,18 @@ public class TranslationService
     private async Task GenerateSpeechFilesAsync(Voice voice, Language voiceLanguage, Title newTitle, List<Translate> dbTranslates)
     {
         var azureTtsService = new AzureTextToSpeechService();
-        var titleDirectory = Path.Combine(_baseDirectory, newTitle.TitleName, voiceLanguage.Tag, voice.ShortName);
+        var wavDir = Path.Combine(_baseDir, newTitle.TitleName, voiceLanguage.Tag, voice.ShortName);
 
         try
         {
-            if (!Directory.Exists(titleDirectory))
+            if (!Directory.Exists(wavDir))
             {
-                Directory.CreateDirectory(titleDirectory);
+                Directory.CreateDirectory(wavDir);
             }
 
             foreach (var translate in dbTranslates)
             {
-                var audioFilePath = Path.Combine(titleDirectory, $"{translate.PhraseId}");
+                var audioFilePath = Path.Combine(wavDir, $"{translate.PhraseId}");
                 await azureTtsService.GenerateSpeechToFileAsync(translate.Phrase, voice, audioFilePath);
             }
         }

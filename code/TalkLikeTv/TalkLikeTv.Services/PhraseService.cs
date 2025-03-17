@@ -22,7 +22,7 @@ public class PhraseService
 
         fileStream.Seek(0, SeekOrigin.Begin);
         using var reader = new StreamReader(fileStream);
-        var parsedPhrases = Parse.ParseOnePhrasePerLine(reader);
+        var parsedPhrases = ParseService.ParseOnePhrasePerLine(reader);
 
         if (parsedPhrases.Count > 0)
         {

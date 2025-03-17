@@ -18,6 +18,7 @@ public class AudioController : Controller
     private readonly SharedSettings _sharedSettings;
     private readonly TranslationService _translationService;
     private readonly PhraseService _phraseService;
+    private readonly AudioFileService _audioFileService;
 
     public AudioController(
         ILogger<AudioController> logger,
@@ -25,7 +26,8 @@ public class AudioController : Controller
         TokenService tokenService,
         IOptions<SharedSettings> sharedSettings,
         TranslationService translationService,
-        PhraseService phraseService)
+        PhraseService phraseService,
+        AudioFileService audioFileService)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _db = db ?? throw new ArgumentNullException(nameof(db));
@@ -33,6 +35,7 @@ public class AudioController : Controller
         _sharedSettings = sharedSettings.Value ?? throw new ArgumentNullException(nameof(sharedSettings));
         _translationService = translationService ?? throw new ArgumentNullException(nameof(translationService));
         _phraseService = phraseService ?? throw new ArgumentNullException(nameof(phraseService));
+        _audioFileService = audioFileService ?? throw new ArgumentNullException(nameof(audioFileService));
     }
 
     
@@ -60,10 +63,10 @@ public class AudioController : Controller
 
         try
         {
-            var phraseStrings = ValidateTokenAndFile(formModel);
+            var phraseStrings = ValidateTokenAndFile(formModel!);
             if (phraseStrings == null || !ModelState.IsValid)
             {
-                return CreateTitleErrorView(formModel);
+                return CreateTitleErrorView(formModel!);
             }
 
             var translator = new AzureTranslateService();
@@ -78,20 +81,29 @@ public class AudioController : Controller
                 return StatusCode(StatusCodes.Status503ServiceUnavailable, ModelState);
             }
 
-            var newTitle = await ProcessTitleAsync(formModel, phraseStrings, detectedLanguage);
-            var (success, errors) = await _translationService.ProcessTranslations(newTitle, phraseStrings, formModel.FromVoice, formModel.ToVoice, detectedCode, ModelState);
+            var newTitle = await ProcessTitleAsync(formModel!, phraseStrings, detectedLanguage);
+            var processTranslationsResult = await _translationService.ProcessTranslations(newTitle, phraseStrings, formModel.FromVoice, formModel.ToVoice, detectedCode, ModelState);
 
-            if (!success)
+            if (!processTranslationsResult.Success)
             {
-                foreach (var error in errors)
+                foreach (var error in processTranslationsResult.Errors)
                 {
                     ModelState.AddModelError("", error);
                 }
                 return StatusCode(StatusCodes.Status503ServiceUnavailable, ModelState);
             }
             
-            
+            var audioFileResult = await _audioFileService.BuildAudioFilesAsync(newTitle, formModel);
 
+            if (!audioFileResult.Success)
+            {
+                foreach (var error in audioFileResult.Errors)
+                {
+                    ModelState.AddModelError("", error);
+                }
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, ModelState);
+            }
+            
             return RedirectToAction("Index", "Home");
         }
         catch (DbUpdateException ex)

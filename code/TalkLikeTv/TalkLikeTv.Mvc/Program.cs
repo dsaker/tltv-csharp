@@ -45,6 +45,9 @@ else
 
 var app = builder.Build();
 
+// Call LoadPatterns method
+PatternService.LoadPatterns();
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {

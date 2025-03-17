@@ -4,8 +4,6 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup Label="For EF Core.">
-    <PackageVersion Include="Azure.AI.Translation.Text" Version="1.0.0" />
-    <PackageVersion Include="Microsoft.CognitiveServices.Speech" Version="1.42.0" />
     <PackageVersion Include="Microsoft.Data.SqlClient" Version="6.0.1" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.2" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.2" />
@@ -58,6 +56,8 @@
     <PackageVersion Include="Microsoft.ICU.ICU4C.Runtime" Version="72.1.0.3" />
   </ItemGroup>
   <ItemGroup Label="For Translation and TTS.">
+    <PackageVersion Include="Azure.AI.Translation.Text" Version="1.0.0" />
     <PackageVersion Include="Microsoft.CognitiveServices.Speech" Version="1.42.0" />
+    <PackageVersion Include="NAudio" Version="2.0.0" /> 
   </ItemGroup>
 </Project>
