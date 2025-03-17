@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using TalkLikeTv.EntityModels;
 using TalkLikeTv.Utilities;
@@ -10,12 +11,15 @@ public class TranslationService
 {
     private readonly TalkliketvContext _db;
     private readonly ILogger<TranslationService> _logger;
+    private readonly string _baseDirectory;
 
-    public TranslationService(TalkliketvContext db, ILogger<TranslationService> logger)
+    public TranslationService(TalkliketvContext db, ILogger<TranslationService> logger, IConfiguration configuration)
     {
         _db = db;
         _logger = logger;
+        _baseDirectory = configuration["BaseDirectory"];
     }
+
 
     public async Task<(bool Success, List<string> Errors)> ProcessTranslations(
         Title newTitle, 
@@ -70,7 +74,7 @@ public class TranslationService
                 PhraseId = phrase.PhraseId,
                 LanguageId = fromVoiceLanguage.LanguageId,
                 Phrase = phraseStrings[index],
-                PhraseHint = Utilities.StringUtils.MakeHintString(phraseStrings[index])
+                PhraseHint = StringUtils.MakeHintString(phraseStrings[index])
             }).ToList();
 
             _db.Translates.AddRange(dbFromTranslates);
@@ -100,6 +104,36 @@ public class TranslationService
         _db.Translates.AddRange(dbToTranslates);
         await _db.SaveChangesAsync();
 
+        // Generate TTS audio files and save them to the specified directory
+        await GenerateSpeechFilesAsync(toVoice, toVoiceLanguage, newTitle, dbToTranslates);
+        await GenerateSpeechFilesAsync(fromVoice, fromVoiceLanguage, newTitle, dbFromTranslates);
+        
         return (true, new List<string>());
     }
+    
+    private async Task GenerateSpeechFilesAsync(Voice voice, Language voiceLanguage, Title newTitle, List<Translate> dbTranslates)
+    {
+        var azureTtsService = new AzureTextToSpeechService();
+        var titleDirectory = Path.Combine(_baseDirectory, newTitle.TitleName, voiceLanguage.Tag, voice.ShortName);
+
+        try
+        {
+            if (!Directory.Exists(titleDirectory))
+            {
+                Directory.CreateDirectory(titleDirectory);
+            }
+
+            foreach (var translate in dbTranslates)
+            {
+                var audioFilePath = Path.Combine(titleDirectory, $"{translate.PhraseId}");
+                await azureTtsService.GenerateSpeechToFileAsync(translate.Phrase, voice, audioFilePath);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred while generating speech files.");
+            throw;
+        }
+    }
 }
+

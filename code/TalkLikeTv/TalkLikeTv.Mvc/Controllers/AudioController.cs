@@ -57,7 +57,7 @@ public class AudioController : Controller
         {
             return errorResult;
         }
-        
+
         try
         {
             var phraseStrings = ValidateTokenAndFile(formModel);
@@ -65,7 +65,7 @@ public class AudioController : Controller
             {
                 return CreateTitleErrorView(formModel);
             }
-            
+
             var translator = new AzureTranslateService();
             var detectedCode = await translator.DetectLanguageFromPhrasesAsync(phraseStrings);
 
@@ -78,26 +78,7 @@ public class AudioController : Controller
                 return StatusCode(StatusCodes.Status503ServiceUnavailable, ModelState);
             }
 
-            var languageId = detectedLanguage.LanguageId;            
-            var newTitle = new Title
-            {
-                TitleName = formModel.TitleName!,
-                Description = formModel.Description,
-                NumPhrases = phraseStrings.Count,
-                OriginalLanguageId = languageId,
-            };
-
-            _db.Titles.Add(newTitle);
-            await _db.SaveChangesAsync();
-
-            var phrases = phraseStrings.Select(_ => new Phrase
-            {
-                TitleId = newTitle.TitleId,
-            }).ToList();
-
-            _db.Phrases.AddRange(phrases);
-            await _db.SaveChangesAsync();
-            
+            var newTitle = await ProcessTitleAsync(formModel, phraseStrings, detectedLanguage);
             var (success, errors) = await _translationService.ProcessTranslations(newTitle, phraseStrings, formModel.FromVoice, formModel.ToVoice, detectedCode, ModelState);
 
             if (!success)
@@ -109,6 +90,9 @@ public class AudioController : Controller
                 return StatusCode(StatusCodes.Status503ServiceUnavailable, ModelState);
             }
             
+            
+
+            return RedirectToAction("Index", "Home");
         }
         catch (DbUpdateException ex)
         {
@@ -120,11 +104,33 @@ public class AudioController : Controller
         {
             _logger.LogError(ex, ex.Message);
             ModelState.AddModelError("", ex.Message);
-            // TODO change this to Error view
             return CreateTitleErrorView(formModel);
         }
-        
-        return RedirectToAction("Index", "Home");    
+    }
+    
+    private async Task<Title> ProcessTitleAsync(CreateTitleFormModel formModel, List<string> phraseStrings, Language detectedLanguage)
+    {
+        var languageId = detectedLanguage.LanguageId;
+        var newTitle = new Title
+        {
+            TitleName = formModel.TitleName!,
+            Description = formModel.Description,
+            NumPhrases = phraseStrings.Count,
+            OriginalLanguageId = languageId,
+        };
+
+        _db.Titles.Add(newTitle);
+        await _db.SaveChangesAsync();
+
+        var phrases = phraseStrings.Select(_ => new Phrase
+        {
+            TitleId = newTitle.TitleId,
+        }).ToList();
+
+        _db.Phrases.AddRange(phrases);
+        await _db.SaveChangesAsync();
+
+        return newTitle;
     }
     
     private ViewResult CreateTitleErrorView(CreateTitleFormModel formModel)

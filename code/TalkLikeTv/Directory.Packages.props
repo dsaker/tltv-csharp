@@ -48,6 +48,7 @@
     <PackageVersion Include="NSwag.MSBuild" Version="14.2.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.2" />
     <PackageVersion Include="Microsoft.AspNetCore.OData" Version="9.2.0" />
+    <PackageReference Include="AspNetCoreRateLimit" Version="5.0.0" />
   </ItemGroup>
   <ItemGroup Label="For FastEndpoints web services.">
     <PackageVersion Include="FastEndpoints" Version="5.34.0" />
@@ -55,5 +56,8 @@
   <ItemGroup Label="For Umbraco CMS.">
     <PackageVersion Include="Umbraco.Cms" Version="14.3.2" />
     <PackageVersion Include="Microsoft.ICU.ICU4C.Runtime" Version="72.1.0.3" />
+  </ItemGroup>
+  <ItemGroup Label="For Translation and TTS.">
+    <PackageVersion Include="Microsoft.CognitiveServices.Speech" Version="1.42.0" />
   </ItemGroup>
 </Project>
