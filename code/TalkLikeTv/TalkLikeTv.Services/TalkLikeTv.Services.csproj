@@ -14,7 +14,6 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.CognitiveServices.Speech" />
         <PackageReference Include="Newtonsoft.Json" />
-        <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.2.0" />
-        <PackageReference Include="NAudio.Lame" Version="2.0.0" />
+        <PackageReference Include="Naudio" />
     </ItemGroup>
 </Project>

@@ -3,15 +3,12 @@ using TalkLikeTv.EntityModels;
 using TalkLikeTv.Mvc.Configurations;
 using TalkLikeTv.Services;
 using AspNetCoreRateLimit;
-
-var azureKey = Environment.GetEnvironmentVariable("AZURE_TRANSLATE_KEY");
-var region = Environment.GetEnvironmentVariable("AZURE_REGION");
-if (string.IsNullOrWhiteSpace(azureKey) || string.IsNullOrWhiteSpace(region))
-{
-    throw new InvalidOperationException("AZURE_TRANSLATE_KEY or REGION environment variable is not set.");
-}
+using DotEnv.Core;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Load environment variables from .env file
+new EnvLoader().Load();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
@@ -19,6 +16,14 @@ builder.Services.AddControllersWithViews();
 // Register TokenService
 builder.Services.AddScoped<TokenService>();
 builder.Services.Configure<SharedSettings>(builder.Configuration.GetSection("SharedSettings"));
+
+// Register Services
+builder.Services.AddSingleton<PatternService>();
+builder.Services.AddSingleton<TranslationService>();
+builder.Services.AddSingleton<PhraseService>();
+builder.Services.AddSingleton<AzureTextToSpeechService>();
+builder.Services.AddSingleton<AzureTranslateService>();
+builder.Services.AddSingleton<AudioFileService>();
 
 // Add rate limiting services
 builder.Services.AddMemoryCache();
@@ -44,9 +49,6 @@ else
 }
 
 var app = builder.Build();
-
-// Call LoadPatterns method
-PatternService.LoadPatterns();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

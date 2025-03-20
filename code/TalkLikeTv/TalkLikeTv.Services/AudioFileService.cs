@@ -1,5 +1,5 @@
+using System.Collections.Concurrent;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using TalkLikeTv.EntityModels;
 
@@ -12,13 +12,12 @@ public class AudioFileService
     private readonly string _audioOutputDir;
     private readonly TalkliketvContext _db;
 
-    public AudioFileService(ILogger<AudioFileService> logger, TalkliketvContext db, IConfiguration configuration)
+    public AudioFileService(ILogger<AudioFileService> logger, TalkliketvContext db)
     {
         _logger = logger;
         _db = db;
-        _baseDir = configuration["BaseDir"] ?? throw new ArgumentNullException(configuration["BaseDir"], "BaseDir is not configured.");
-        _audioOutputDir = configuration["AudioOutputDir"] ?? throw new ArgumentNullException(configuration["AudioOutputDir"], "AudioOutputDir is not configured.");
-
+        _baseDir = Environment.GetEnvironmentVariable("BASE_DIR") ?? throw new InvalidOperationException("BASE_DIR is not configured.");
+        _audioOutputDir = Environment.GetEnvironmentVariable("AUDIO_OUTPUT_DIR") ?? throw new InvalidOperationException("AUDIO_OUTPUT_DIR is not configured.");
     }
     
     public class AudioFileResult
@@ -29,106 +28,119 @@ public class AudioFileService
     
     private Dictionary<int, string> PauseFilePaths => new ()
     {
-        { 3, $"{_baseDir}pause/3SecSilence.mp3" },
-        { 4, $"{_baseDir}pause/4SecSilence.mp3" },
-        { 5, $"{_baseDir}pause/5SecSilence.mp3" },
-        { 6, $"{_baseDir}pause/6SecSilence.mp3" },
-        { 7, $"{_baseDir}pause/7SecSilence.mp3" },
-        { 8, $"{_baseDir}pause/8SecSilence.mp3" },
-        { 9, $"{_baseDir}pause/9SecSilence.mp3" },
-        { 10, $"{_baseDir}pause/10SecSilence.mp3" }
+        { 3, $"{_baseDir}pause/3SecondsOfSilence.wav" },
+        { 4, $"{_baseDir}pause/4SecondsOfSilence.wav" },
+        { 5, $"{_baseDir}pause/5SecondsOfSilence.wav" },
+        { 6, $"{_baseDir}pause/6SecondsOfSilence.wav" },
+        { 7, $"{_baseDir}pause/7SecondsOfSilence.wav" },
+        { 8, $"{_baseDir}pause/8SecondsOfSilence.wav" },
+        { 9, $"{_baseDir}pause/9SecondsOfSilence.wav" },
+        { 10, $"{_baseDir}pause/10SecondsOfSilence.wav" }
     };
     
-    public async Task<AudioFileResult> BuildAudioFilesAsync(Title title, Language toLang, Language fromLang, Voice toVoice, Voice fromVoice, int pause, string p)
+    public class BuildAudioFilesParams
+    {
+        public required Title Title { get; set; }
+        public required Voice ToVoice { get; set; }
+        public required Voice FromVoice { get; set; }
+        public required Language ToLang { get; set; }
+        public required Language FromLang { get; set; }
+        public required int Pause { get; set; }
+        public required string Pattern { get; set; }
+    }
+    public async Task<AudioFileResult> BuildAudioFilesAsync(BuildAudioFilesParams parameters)
     {
         var result = new AudioFileResult();
-        var maxP = title.NumPhrases - 1;
-
-        var pattern = PatternService.GetPattern(p);
-        if (pattern is null)
+        try
         {
-            _logger.LogError("Pattern not found: {Pattern}", p);
-            result.Errors.Add($"Pattern not found: {p}");
-            return result;
-        }
-
-        // Retrieve all phrases for the title and map their PhraseId starting from zero
-        var phrases = await _db.Phrases.Where(ph => ph.TitleId == title.TitleId).ToListAsync();
-        var phraseIdMapping = phrases.Select((phrase, index) => new { phrase.PhraseId, Index = index })
-            .ToDictionary(x => x.PhraseId, x => x.Index);
-
-        var chunkedSlice = Chunk(pattern, 125);
-        var last = false;
-
-        if (!PauseFilePaths.TryGetValue(pause, out var pauseFilePath))
-        {
-            _logger.LogError("Invalid pause value: {Pause}", pause);
-            result.Errors.Add($"Invalid pause value: {pause}");
-            return result;
-        }
-
-        foreach (var chunk in chunkedSlice)
-        {
-            var inputFilePaths = new List<string>();
-            try
+            var pattern = PatternService.GetPattern(parameters.Pattern);
+            if (pattern is null)
             {
-                inputFilePaths.Add(pauseFilePath);
-
-                foreach (var audioFloat in chunk)
-                {
-                    var stringFloat = audioFloat.ToString("F1");
-                    var phraseNative = stringFloat.Split('.');
-                    var native = phraseNative.Length == 2;
-                    var originalPhraseId = int.Parse(phraseNative[0]);
-
-                    if (!phraseIdMapping.TryGetValue(originalPhraseId, out var mappedPhraseId))
-                    {
-                        _logger.LogError("PhraseId not found in mapping: {PhraseId}", originalPhraseId);
-                        result.Errors.Add($"PhraseId not found in mapping: {originalPhraseId}");
-                        return result;
-                    }
-
-                    if (mappedPhraseId == maxP)
-                    {
-                        last = true;
-                    }
-                    var toPath = Path.Combine(_baseDir, title.TitleName, toLang.Tag, toVoice.ShortName, mappedPhraseId.ToString());
-                    var fromPath = Path.Combine(_baseDir, title.TitleName, fromLang.Tag, fromVoice.ShortName, mappedPhraseId.ToString());
-                    var audioFilePath = native ? toPath : fromPath;
-                    inputFilePaths.Add(audioFilePath);
-                    inputFilePaths.Add(pauseFilePath);
-                }
-
-                inputFilePaths.Add(pauseFilePath);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error creating audio input file");
-                result.Errors.Add($"Error creating audio input file: {ex.Message}");
+                _logger.LogError("Pattern not found: {Pattern}", parameters.Pattern);
+                result.Errors.Add($"Pattern not found: {parameters.Pattern}");
                 return result;
             }
 
-            // Call ConcatenateWavFiles for each chunk
-            var outputFilePath = Path.Combine(_audioOutputDir, $"{title.TitleName}_chunk_{chunkedSlice.IndexOf(chunk)}.wav");
-            WavConcatenator.ConcatenateWavFiles(inputFilePaths, outputFilePath);
+            var phrases = await _db.Phrases.Where(ph => ph.TitleId == parameters.Title.TitleId).ToListAsync();
+            var phraseIdMapping = new Dictionary<int, int>();
 
-            if (last)
+            for (var i = 1; i < phrases.Count + 1; i++)
             {
-                break;
+                phraseIdMapping.Add(i, phrases[i - 1].PhraseId);
             }
+
+            var chunkedSlice = Utilities.ChunkUtils.Chunk(pattern, 125);
+
+            if (!PauseFilePaths.TryGetValue(parameters.Pause, out var pauseFilePath))
+            {
+                _logger.LogError("Invalid pause value: {Pause}", parameters.Pause);
+                result.Errors.Add($"Invalid pause value: {parameters.Pause}");
+                return result;
+            }
+
+            var titleOutputPath = Path.Combine(_audioOutputDir, parameters.Title.TitleName, parameters.FromVoice.ShortName, parameters.ToVoice.ShortName);
+
+            var last = false;
+            var count = 1;
+            foreach (var chunk in chunkedSlice)
+            {
+                var inputFilePaths = new List<string> { pauseFilePath };
+
+                foreach (var audioToken in chunk)
+                {
+                    var (phraseIdKey, native) = SplitShortString(audioToken.ToString());
+                    var phraseIdKeyInt = int.Parse(phraseIdKey);
+                    if (phraseIdMapping.TryGetValue(phraseIdKeyInt, out var mappedPhraseId))
+                    {
+                        var toPath = Path.Combine(_baseDir, parameters.Title.TitleName, parameters.ToLang.Tag, parameters.ToVoice.ShortName, mappedPhraseId.ToString());
+                        var fromPath = Path.Combine(_baseDir, parameters.Title.TitleName, parameters.FromLang.Tag, parameters.FromVoice.ShortName, mappedPhraseId.ToString());
+                        var audioFilePath = int.Parse(native) == 0 ? toPath : fromPath;
+                        inputFilePaths.Add(audioFilePath);
+                        inputFilePaths.Add(pauseFilePath);
+
+                        if (phraseIdKeyInt == parameters.Title.NumPhrases)
+                        {
+                            last = true;
+                        }
+                    }
+                }
+
+                if (!Directory.Exists(titleOutputPath))
+                {
+                    Directory.CreateDirectory(titleOutputPath);
+                }
+                
+                var outputFilePath = Path.Combine(titleOutputPath, $"{parameters.Title.TitleName}_{count:D2}.wav");
+                count++;
+                WavConcatenator.ConcatenateWavFiles(inputFilePaths, outputFilePath);
+                if (last)
+                {
+                    break;
+                }
+            }
+
+            result.Success = true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An unexpected exception occurred.");
+            result.Errors.Add(ex.Message);
         }
 
-        result.Success = true;
         return result;
-    }
-
-    private List<List<float>> Chunk(List<float> source, int chunkSize)
+    }   
+    
+    private static (string, string) SplitShortString(string? input)
     {
-        return source
-            .Select((x, i) => new { Index = i, Value = x })
-            .GroupBy(x => x.Index / chunkSize)
-            .Select(x => x.Select(v => v.Value).ToList())
-            .ToList();
+        if (string.IsNullOrEmpty(input) || input.Length < 2)
+        {
+            throw new ArgumentException("Input string must have at least two characters.", nameof(input));
+        }
+
+        var lastDigit = input[^1].ToString();
+        var remainingDigits = input.Substring(0, input.Length - 1);
+
+        return (remainingDigits, lastDigit);
     }
 }
 

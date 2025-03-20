@@ -93,7 +93,26 @@ public class AudioController : Controller
                 return StatusCode(StatusCodes.Status503ServiceUnavailable, ModelState);
             }
             
-            var audioFileResult = await _audioFileService.BuildAudioFilesAsync(newTitle, formModel);
+            var toLang = await _db.Languages.SingleOrDefaultAsync(l => l.LanguageId == formModel.ToVoice.LanguageId);
+            var fromLang = await _db.Languages.SingleOrDefaultAsync(l => l.LanguageId == formModel.FromVoice.LanguageId);
+            if (toLang == null || fromLang == null)
+            {
+                ModelState.AddModelError("", "Invalid language selection.");
+                return CreateTitleErrorView(formModel);
+            }
+            
+            var audioFileParams = new AudioFileService.BuildAudioFilesParams
+            {
+                Title = newTitle,
+                ToVoice = formModel.ToVoice,
+                FromVoice = formModel.FromVoice,
+                ToLang = toLang,
+                FromLang = fromLang, 
+                Pause = formModel.PauseDuration ?? 0,
+                Pattern = formModel.Pattern ?? ""
+            };
+            
+            var audioFileResult = await _audioFileService.BuildAudioFilesAsync(audioFileParams);
 
             if (!audioFileResult.Success)
             {

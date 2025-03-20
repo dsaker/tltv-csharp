@@ -4,25 +4,19 @@ namespace TalkLikeTv.Services;
 
 public class WavConcatenator
 {
-    public static void ConcatenateWavFiles(IEnumerable<string> inputFilePaths, string outputFilePath)
+    public static void ConcatenateWavFiles(List<string> inputFiles, string outputFile)
     {
-        using (var outputStream = new WaveFileWriter(outputFilePath, new WaveFormat()))
+        using (var writer = new WaveFileWriter(outputFile, new WaveFormat(16000, 16, 1))) // Assuming 44.1kHz, 16-bit stereo
         {
-            foreach (var inputFilePath in inputFilePaths)
+            foreach (var file in inputFiles)
             {
-                using (var inputReader = new WaveFileReader(inputFilePath))
+                using (var reader = new WaveFileReader(file))
                 {
-                    if (outputStream.WaveFormat.SampleRate != inputReader.WaveFormat.SampleRate ||
-                        outputStream.WaveFormat.Channels != inputReader.WaveFormat.Channels)
-                    {
-                        throw new InvalidOperationException("All WAV files must have the same format.");
-                    }
-
-                    var buffer = new byte[inputReader.Length];
+                    byte[] buffer = new byte[reader.WaveFormat.AverageBytesPerSecond];
                     int bytesRead;
-                    while ((bytesRead = inputReader.Read(buffer, 0, buffer.Length)) > 0)
+                    while ((bytesRead = reader.Read(buffer, 0, buffer.Length)) > 0)
                     {
-                        outputStream.Write(buffer, 0, bytesRead);
+                        writer.Write(buffer, 0, bytesRead);
                     }
                 }
             }

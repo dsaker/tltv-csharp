@@ -17,8 +17,7 @@ public class TranslationService
     {
         _db = db;
         _logger = logger;
-        _baseDir = configuration["BaseDir"] ?? throw new ArgumentNullException(configuration["BaseDir"], "BaseDir is not configured.");
-
+        _baseDir = Environment.GetEnvironmentVariable("BASE_DIR") ?? throw new InvalidOperationException("BASE_DIR is not configured.");
     }
 
 
@@ -55,7 +54,7 @@ public class TranslationService
 
         if (fromVoiceLanguage.Tag != detectedCode)
         {
-            var fromTranslates = await new AzureTranslateService().TranslatePhrasesAsync(phraseStrings, fromVoiceLanguage.Tag, detectedCode);
+            var fromTranslates = await new AzureTranslateService().TranslatePhrasesAsync(phraseStrings, detectedCode, fromVoiceLanguage.Tag);
 
             dbFromTranslates = dbPhrases.Select((phrase, index) => new Translate
             {
@@ -92,7 +91,7 @@ public class TranslationService
             return (false, new List<string> { "toVoiceLanguage is null." });
         }
 
-        var toTranslates = await new AzureTranslateService().TranslatePhrasesAsync(phraseStrings, toVoiceLanguage.Tag, detectedCode);
+        var toTranslates = await new AzureTranslateService().TranslatePhrasesAsync(phraseStrings, detectedCode, toVoiceLanguage.Tag);
 
         var dbToTranslates = dbPhrases.Select((phrase, index) => new Translate
         {
@@ -124,11 +123,15 @@ public class TranslationService
                 Directory.CreateDirectory(wavDir);
             }
 
+            var tasks = new List<Task>();
+
             foreach (var translate in dbTranslates)
             {
                 var audioFilePath = Path.Combine(wavDir, $"{translate.PhraseId}");
-                await azureTtsService.GenerateSpeechToFileAsync(translate.Phrase, voice, audioFilePath);
+                tasks.Add(azureTtsService.GenerateSpeechToFileAsync(translate.Phrase, voice, audioFilePath));
             }
+
+            await Task.WhenAll(tasks);
         }
         catch (Exception ex)
         {

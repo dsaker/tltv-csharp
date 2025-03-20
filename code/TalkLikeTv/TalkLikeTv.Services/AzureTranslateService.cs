@@ -9,12 +9,21 @@ public class AzureTranslateService
 {
     private const string Endpoint = "https://api.cognitive.microsofttranslator.com";
     private static readonly HttpClient HttpClient = new();
-    private static readonly string SubscriptionKey = Environment.GetEnvironmentVariable("AZURE_TRANSLATE_KEY") 
-                                                     ?? throw new InvalidOperationException("AZURE_TRANSLATE_KEY environment variable is not set.");
-    private static readonly string Region = Environment.GetEnvironmentVariable("AZURE_REGION") 
-                                            ?? throw new InvalidOperationException("AZURE_REGION environment variable is not set.");    
+    private readonly string? _subscriptionKey;
+    private readonly string? _region;
 
-    private static async Task<string> DetectLanguageAsync(string textToDetect)
+    public AzureTranslateService()
+    {
+        _subscriptionKey = Environment.GetEnvironmentVariable("AZURE_TRANSLATE_KEY");
+        _region = Environment.GetEnvironmentVariable("AZURE_REGION");
+
+        if (string.IsNullOrEmpty(_subscriptionKey) || string.IsNullOrEmpty(_region))
+        {
+            throw new InvalidOperationException("Azure subscription key and region must be set in environment variables.");
+        }
+
+    }
+    private async Task<string> DetectLanguageAsync(string textToDetect)
     {
         const string route = "/detect?api-version=3.0";
         // Input and output languages are defined as parameters.
@@ -28,9 +37,9 @@ public class AzureTranslateService
             RequestUri = new Uri(Endpoint + route),
             Content = new StringContent(requestBody, Encoding.UTF8, "application/json")
         };
-        request.Headers.Add("Ocp-Apim-Subscription-Key", SubscriptionKey);
+        request.Headers.Add("Ocp-Apim-Subscription-Key", _subscriptionKey);
         // location required if you're using a multi-service or regional (not global) resource.
-        request.Headers.Add("Ocp-Apim-Subscription-Region", Region);
+        request.Headers.Add("Ocp-Apim-Subscription-Region", _region);
         //var requestBody = JsonSerializer.Serialize(new object[] { new { Text = textToDetect } });
         var response = await HttpClient.SendAsync(request).ConfigureAwait(false);
         // Read response as a string.
@@ -86,8 +95,8 @@ public class AzureTranslateService
             RequestUri = new Uri(uri),
             Content = new StringContent(requestBody, Encoding.UTF8, "application/json")
         };
-        request.Headers.Add("Ocp-Apim-Subscription-Key", SubscriptionKey);
-        request.Headers.Add("Ocp-Apim-Subscription-Region", Region);
+        request.Headers.Add("Ocp-Apim-Subscription-Key", _subscriptionKey);
+        request.Headers.Add("Ocp-Apim-Subscription-Region", _region);
 
         var response = await HttpClient.SendAsync(request).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)

@@ -6,28 +6,27 @@ namespace TalkLikeTv.Services;
 
 public class AzureTextToSpeechService
 {
-    private readonly SpeechConfig _speechConfig;
+    private readonly string?  _subscriptionKey;
+    private readonly string? _region;
 
     public AzureTextToSpeechService()
     {
-        var subscriptionKey = Environment.GetEnvironmentVariable("AZURE_TTS_KEY");
-        var region = Environment.GetEnvironmentVariable("AZURE_REGION");
+        _subscriptionKey = Environment.GetEnvironmentVariable("AZURE_TTS_KEY");
+        _region = Environment.GetEnvironmentVariable("AZURE_REGION");
 
-        if (string.IsNullOrEmpty(subscriptionKey) || string.IsNullOrEmpty(region))
+        if (string.IsNullOrEmpty(_subscriptionKey) || string.IsNullOrEmpty(_region))
         {
             throw new InvalidOperationException("Azure subscription key and region must be set in environment variables.");
         }
-
-        _speechConfig = SpeechConfig.FromSubscription(subscriptionKey, region);
     }
 
     public async Task GenerateSpeechToFileAsync(string text, Voice voice, string filePath)
     {
-        var audioConfig = AudioConfig.FromWavFileOutput(filePath);
-        var synthesizer = new SpeechSynthesizer(_speechConfig, audioConfig);
+        var speechConfig = SpeechConfig.FromSubscription(_subscriptionKey, _region);
+        speechConfig.SpeechSynthesisVoiceName = voice.ShortName;
 
-        var voiceName = $"{voice.LocaleName}-{voice.ShortName}";
-        _speechConfig.SpeechSynthesisVoiceName = voiceName;
+        using var audioConfig = AudioConfig.FromWavFileOutput(filePath);
+        using var synthesizer = new SpeechSynthesizer(speechConfig, audioConfig);
 
         var result = await synthesizer.SpeakTextAsync(text);
 

@@ -30,6 +30,10 @@ public partial class TextFormatDetector
             }
         }
         
+        // Seek back to the beginning of the file
+        fileStream.Seek(0, SeekOrigin.Begin);
+        reader = new StreamReader(fileStream);
+        
         var lines = reader.ReadToEnd().Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
         var lineCount = lines.Length;
         var averageLineLength = lines.Sum(l => l.Length) / (double)lineCount;

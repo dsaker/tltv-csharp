@@ -16,12 +16,7 @@
       "launchBrowser": false,
       "applicationUrl": "https://localhost:7099;http://localhost:5271",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development",
-        "MY_SQL_PWD": "s3cret-Ninja",
-        "MY_SQL_USR": "sa",
-        "AZURE_TRANSLATE_KEY": "BG3jq2KDiayVTepzgDkM52H3b2xVGRMGIqSxcoy9CnrFbDahlUmRJQQJ99BBACYeBjFXJ3w3AAAbACOGXhaJ",
-        "AZURE_TTS_KEY": "B4sL315PmVDDqNW2KYMq0iNNjrKPcLg5bR7Ctv0DSoutmhVDLTJIJQQJ99BBACYeBjFXJ3w3AAAAACOGl4GS",
-        "AZURE_REGION": "eastus"
+        "ASPNETCORE_ENVIRONMENT": "Development"
       }
     }
   }
