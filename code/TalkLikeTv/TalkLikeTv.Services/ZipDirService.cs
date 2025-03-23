@@ -1,6 +1,6 @@
 namespace TalkLikeTv.Services;
 
-public static class ZipDir
+public static class ZipDirService
 {
     public static FileInfo ZipStringsList(List<string> stringList, int max, string txtPath, string filename)
     {
@@ -35,12 +35,12 @@ public static class ZipDir
         }
     }
 
-    private static FileInfo CreateZipFile(string sourceDir, string filename)
+    public static FileInfo CreateZipFile(string sourceDir, string filename)
     {
         // create a directory to hold the zip file
         Directory.CreateDirectory("/tmp/CreateZipFile/");
 
-        var zipFilePath = Path.Combine("/tmp/CreateZipFile/", $"{filename}.zip");
+        var zipFilePath = Path.Combine("/tmp/CreateZipFile/", $"{filename}");
 
         try
         {

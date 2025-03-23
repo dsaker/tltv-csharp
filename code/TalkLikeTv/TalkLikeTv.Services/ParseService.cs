@@ -2,7 +2,7 @@ using System.Text.RegularExpressions;
 
 namespace TalkLikeTv.Services;
 
-public partial class Parse
+public partial class ParseService
 {
     [GeneratedRegex(@"\[.*?\]|\{.*?\}|<.*?>|♪|-|\""")]
     private static partial Regex ReplaceFmt();
@@ -16,7 +16,7 @@ public partial class Parse
     private static partial Regex SplitOnEndingPunctuation();
     private static string[] _splitOnEndingPunctuation(string input) => SplitOnEndingPunctuation().Split(input);
 
-    public static FileInfo ParseFile(Stream fileStream,string fileName, int maxPhrases)
+    public static FileInfo ParseFile(Stream fileStream, string fileName, int maxPhrases)
     {
         ArgumentNullException.ThrowIfNull(fileStream, nameof(fileStream));
 
@@ -57,7 +57,7 @@ public partial class Parse
             }
         }
 
-        var file = ZipDir.ZipStringsList(stringsList, maxPhrases, txtPath, fileName);
+        var file = ZipDirService.ZipStringsList(stringsList, maxPhrases, txtPath, fileName);
 
         return file;
     }

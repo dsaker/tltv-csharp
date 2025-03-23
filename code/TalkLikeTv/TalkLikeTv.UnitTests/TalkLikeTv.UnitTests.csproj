@@ -12,10 +12,14 @@
         <PackageReference Include="Microsoft.NET.Test.Sdk"/>
         <PackageReference Include="xunit"/>
         <PackageReference Include="xunit.runner.visualstudio"/>
+        <PackageReference Include="Moq"/>
+        <PackageReference Include="DotEnv.Core"/>
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\TalkLikeTv.DataContext\TalkLikeTv.DataContext.csproj"/>
+        <ProjectReference Include="..\TalkLikeTv.Services\TalkLikeTv.Services.csproj"/>
+
     </ItemGroup>
 
     <ItemGroup>

@@ -2,15 +2,13 @@ using Microsoft.Data.SqlClient;
 using TalkLikeTv.EntityModels;
 using TalkLikeTv.Mvc.Configurations;
 using TalkLikeTv.Services;
-
-var azureKey = Environment.GetEnvironmentVariable("AZURE_TRANSLATE_KEY");
-var region = Environment.GetEnvironmentVariable("AZURE_REGION");
-if (string.IsNullOrWhiteSpace(azureKey) || string.IsNullOrWhiteSpace(region))
-{
-    throw new InvalidOperationException("AZURE_TRANSLATE_KEY or REGION environment variable is not set.");
-}
+using AspNetCoreRateLimit;
+using DotEnv.Core;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Load environment variables from .env file
+new EnvLoader().Load();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
@@ -18,6 +16,20 @@ builder.Services.AddControllersWithViews();
 // Register TokenService
 builder.Services.AddScoped<TokenService>();
 builder.Services.Configure<SharedSettings>(builder.Configuration.GetSection("SharedSettings"));
+
+// Register Services
+builder.Services.AddSingleton<PatternService>();
+builder.Services.AddSingleton<TranslationService>();
+builder.Services.AddSingleton<PhraseService>();
+builder.Services.AddSingleton<AzureTextToSpeechService>();
+builder.Services.AddSingleton<AzureTranslateService>();
+builder.Services.AddSingleton<AudioFileService>();
+
+// Add rate limiting services
+builder.Services.AddMemoryCache();
+builder.Services.Configure<IpRateLimitOptions>(builder.Configuration.GetSection("IpRateLimiting"));
+builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
+builder.Services.AddInMemoryRateLimiting();
 
 var sqlServerConnection = builder.Configuration
     .GetConnectionString("TalkliketvConnection");

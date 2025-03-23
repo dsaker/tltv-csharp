@@ -34,14 +34,14 @@ public class HomeController : Controller
                 //using var fileStream = model.File.OpenReadStream() as FileStream;
                 await using (var fileStream = model.File.OpenReadStream())
                 {
-                    var fileInfo = Parse.ParseFile(fileStream, model.File.FileName, _sharedSettings.MaxPhrases);
+                    var fileInfo = ParseService.ParseFile(fileStream, model.File.FileName, _sharedSettings.MaxPhrases);
 
                     // Read the file content
                     var fileBytes = await System.IO.File.ReadAllBytesAsync(fileInfo.FullName);
                     var fileName = Path.GetFileName(fileInfo.FullName);
 
                     // Return the file as a response
-                    return File(fileBytes, "application/zip", fileName);
+                    return File(fileBytes, "application/zip", fileName + ".zip");
                 }
             }
             catch (Exception ex)
