@@ -2,8 +2,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TalkLikeTv.EntityModels", "TalkLikeTv.EntityModels\TalkLikeTv.EntityModels.csproj", "{5A5400E3-73CB-4B68-B162-6A6E8A491BE3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TalkLikeTv.DataContext", "TalkLikeTv.DataContext\TalkLikeTv.DataContext.csproj", "{A45356BF-7404-4E5C-8B38-6422AC949149}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TalkLikeTv.UnitTests", "TalkLikeTv.UnitTests\TalkLikeTv.UnitTests.csproj", "{73C33D11-5428-4BE6-8135-F1AF12F70099}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TalkLikeTv.Mvc", "TalkLikeTv.Mvc\TalkLikeTv.Mvc.csproj", "{E24EB3AA-EE99-4453-A474-6EDA76EAC62E}"
@@ -24,10 +22,6 @@ Global
 		{5A5400E3-73CB-4B68-B162-6A6E8A491BE3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5A5400E3-73CB-4B68-B162-6A6E8A491BE3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5A5400E3-73CB-4B68-B162-6A6E8A491BE3}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A45356BF-7404-4E5C-8B38-6422AC949149}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A45356BF-7404-4E5C-8B38-6422AC949149}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A45356BF-7404-4E5C-8B38-6422AC949149}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A45356BF-7404-4E5C-8B38-6422AC949149}.Release|Any CPU.Build.0 = Release|Any CPU
 		{73C33D11-5428-4BE6-8135-F1AF12F70099}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{73C33D11-5428-4BE6-8135-F1AF12F70099}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{73C33D11-5428-4BE6-8135-F1AF12F70099}.Release|Any CPU.ActiveCfg = Release|Any CPU

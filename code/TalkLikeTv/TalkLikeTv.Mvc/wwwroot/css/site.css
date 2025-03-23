@@ -102,3 +102,7 @@ body {
 .form-group {
     margin-bottom: 15px; /* Adds margin between form groups */
 }
+
+.short-input {
+    width: 200px;
+}

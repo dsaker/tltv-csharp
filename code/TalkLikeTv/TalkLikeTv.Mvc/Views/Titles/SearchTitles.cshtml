@@ -1,0 +1,96 @@
+@model TalkLikeTv.Mvc.Models.SearchTitlesViewModel
+
+@{
+    ViewData["Title"] = "Search Titles";
+}
+
+<div class="row">
+    <h1>Search Titles</h1>
+    <form id="search-form" method="POST" action="/Titles/SearchTitles">
+        @Html.AntiForgeryToken()
+        <div class="form-group">
+            <label>
+                <input type="radio" name="SearchType" value="Language" checked="checked" onclick="toggleSearchType()" />
+                Search by Language
+            </label>
+            <label>
+                <input type="radio" name="SearchType" value="Keyword" onclick="toggleSearchType()" />
+                Search by Keyword
+            </label>
+            <label>
+                <input type="radio" name="SearchType" value="Both" onclick="toggleSearchType()" />
+                Search by Both
+            </label>
+        </div>
+        <div id="languageSearch" class="form-group" style="display: block;">
+            <label asp-for="OriginalLanguageId">Original Language</label>
+            <select asp-for="OriginalLanguageId" class="form-control short-input" asp-items="@(new SelectList(Model.TitleLanguages, "LanguageId", "Name"))">
+                <option value="">-- Select Language --</option>
+            </select>
+        </div>
+        <div id="keywordSearch" class="form-group" style="display: none;">
+            <label asp-for="Keyword">Keyword</label>
+            <input asp-for="Keyword" class="form-control short-input" />
+        </div>
+        <button type="submit" class="btn btn-primary float-right">Search</button>
+    </form>
+</div>
+
+@if (Model.Results != null && Model.Results.Any())
+{
+    <h2>Results</h2>
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Title Name</th>
+            <th>Description</th>
+            <th>Original Language</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var title in Model.Results)
+        {
+            <tr>
+                <td>@title.TitleName</td>
+                <td>@title.Description</td>
+                <td>@title.OriginalLanguage?.Name</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+
+    <nav aria-label="Page navigation">
+        <ul class="pagination">
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                    <a class="page-link" href="javascript:void(0);" onclick="submitPage(@i)">@i</a>
+                </li>
+            }
+        </ul>
+    </nav>
+}
+else if (Model.Results != null)
+{
+    <p>No results found.</p>
+}
+
+@section Scripts {
+    <script>
+        function toggleSearchType() {
+            var searchType = document.querySelector('input[name="SearchType"]:checked').value;
+            document.getElementById('languageSearch').style.display = searchType === 'Language' || searchType === 'Both' ? 'block' : 'none';
+            document.getElementById('keywordSearch').style.display = searchType === 'Keyword' || searchType === 'Both' ? 'block' : 'none';
+        }
+
+        function submitPage(pageNumber) {
+            var form = document.getElementById('search-form');
+            var input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'PageNumber';
+            input.value = pageNumber;
+            form.appendChild(input);
+            form.submit();
+        }
+    </script>
+}
