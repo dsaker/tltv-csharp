@@ -41,7 +41,7 @@ public class HomeController : Controller
                     var fileName = Path.GetFileName(fileInfo.FullName);
 
                     // Return the file as a response
-                    return File(fileBytes, "application/zip", fileName);
+                    return File(fileBytes, "application/zip", fileName + ".zip");
                 }
             }
             catch (Exception ex)

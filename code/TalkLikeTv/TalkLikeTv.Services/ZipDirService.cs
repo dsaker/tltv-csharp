@@ -35,12 +35,12 @@ public static class ZipDirService
         }
     }
 
-    private static FileInfo CreateZipFile(string sourceDir, string filename)
+    public static FileInfo CreateZipFile(string sourceDir, string filename)
     {
         // create a directory to hold the zip file
         Directory.CreateDirectory("/tmp/CreateZipFile/");
 
-        var zipFilePath = Path.Combine("/tmp/CreateZipFile/", $"{filename}.zip");
+        var zipFilePath = Path.Combine("/tmp/CreateZipFile/", $"{filename}");
 
         try
         {

@@ -1,4 +1,3 @@
-using System.IO;
 using System.Text.RegularExpressions;
 
 namespace TalkLikeTv.Services;
@@ -17,7 +16,7 @@ public partial class ParseService
     private static partial Regex SplitOnEndingPunctuation();
     private static string[] _splitOnEndingPunctuation(string input) => SplitOnEndingPunctuation().Split(input);
 
-    public static FileInfo ParseFile(Stream fileStream,string fileName, int maxPhrases)
+    public static FileInfo ParseFile(Stream fileStream, string fileName, int maxPhrases)
     {
         ArgumentNullException.ThrowIfNull(fileStream, nameof(fileStream));
 

@@ -19,7 +19,9 @@ public class AudioController : Controller
     private readonly TranslationService _translationService;
     private readonly PhraseService _phraseService;
     private readonly AudioFileService _audioFileService;
-
+    private readonly string _audioOutputDir;
+    private readonly IWebHostEnvironment _env;
+    
     public AudioController(
         ILogger<AudioController> logger,
         TalkliketvContext db,
@@ -27,7 +29,8 @@ public class AudioController : Controller
         IOptions<SharedSettings> sharedSettings,
         TranslationService translationService,
         PhraseService phraseService,
-        AudioFileService audioFileService)
+        AudioFileService audioFileService,
+        IWebHostEnvironment env)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _db = db ?? throw new ArgumentNullException(nameof(db));
@@ -36,6 +39,8 @@ public class AudioController : Controller
         _translationService = translationService ?? throw new ArgumentNullException(nameof(translationService));
         _phraseService = phraseService ?? throw new ArgumentNullException(nameof(phraseService));
         _audioFileService = audioFileService ?? throw new ArgumentNullException(nameof(audioFileService));
+        _audioOutputDir = Environment.GetEnvironmentVariable("AUDIO_OUTPUT_DIR") ?? throw new InvalidOperationException("AUDIO_OUTPUT_DIR is not configured.");
+        _env = env ?? throw new ArgumentNullException(nameof(env));
     }
 
     
@@ -109,7 +114,8 @@ public class AudioController : Controller
                 ToLang = toLang,
                 FromLang = fromLang, 
                 Pause = formModel.PauseDuration ?? 0,
-                Pattern = formModel.Pattern ?? ""
+                Pattern = formModel.Pattern ?? "",
+                TitleOutputPath = Path.Combine(_audioOutputDir, newTitle.TitleName, formModel.FromVoice.ShortName, formModel.ToVoice.ShortName)
             };
             
             var audioFileResult = await _audioFileService.BuildAudioFilesAsync(audioFileParams);
@@ -123,7 +129,25 @@ public class AudioController : Controller
                 return StatusCode(StatusCodes.Status503ServiceUnavailable, ModelState);
             }
             
-            return RedirectToAction("Index", "Home");
+            var zipFileName = $"{newTitle.TitleName}_{fromLang.Tag}_{toLang.Tag}.zip";
+            var zipFilePath = ZipDirService.CreateZipFile(audioFileParams.TitleOutputPath, zipFileName);
+
+            if (_env.IsDevelopment())
+            {
+                return PhysicalFile(zipFilePath.FullName, "application/zip", zipFileName);
+            }
+
+            var token = await _db.Tokens.SingleOrDefaultAsync(t => t.Hash == formModel.Token);
+            if (token == null)
+            {
+                ModelState.AddModelError("", "token is null");
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, ModelState);
+            }
+
+            token.Used = true;
+            await _db.SaveChangesAsync();
+
+            return PhysicalFile(zipFilePath.FullName, "application/zip", zipFileName);
         }
         catch (DbUpdateException ex)
         {

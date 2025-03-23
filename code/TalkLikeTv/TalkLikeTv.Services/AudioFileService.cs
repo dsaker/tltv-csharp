@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using TalkLikeTv.EntityModels;
@@ -9,7 +8,6 @@ public class AudioFileService
 {
     private readonly ILogger<AudioFileService> _logger;
     private readonly string _baseDir;
-    private readonly string _audioOutputDir;
     private readonly TalkliketvContext _db;
 
     public AudioFileService(ILogger<AudioFileService> logger, TalkliketvContext db)
@@ -17,7 +15,6 @@ public class AudioFileService
         _logger = logger;
         _db = db;
         _baseDir = Environment.GetEnvironmentVariable("BASE_DIR") ?? throw new InvalidOperationException("BASE_DIR is not configured.");
-        _audioOutputDir = Environment.GetEnvironmentVariable("AUDIO_OUTPUT_DIR") ?? throw new InvalidOperationException("AUDIO_OUTPUT_DIR is not configured.");
     }
     
     public class AudioFileResult
@@ -47,7 +44,9 @@ public class AudioFileService
         public required Language FromLang { get; set; }
         public required int Pause { get; set; }
         public required string Pattern { get; set; }
+        public required string TitleOutputPath { get; set; }
     }
+    
     public async Task<AudioFileResult> BuildAudioFilesAsync(BuildAudioFilesParams parameters)
     {
         var result = new AudioFileResult();
@@ -77,9 +76,7 @@ public class AudioFileService
                 result.Errors.Add($"Invalid pause value: {parameters.Pause}");
                 return result;
             }
-
-            var titleOutputPath = Path.Combine(_audioOutputDir, parameters.Title.TitleName, parameters.FromVoice.ShortName, parameters.ToVoice.ShortName);
-
+            
             var last = false;
             var count = 1;
             foreach (var chunk in chunkedSlice)
@@ -105,12 +102,12 @@ public class AudioFileService
                     }
                 }
 
-                if (!Directory.Exists(titleOutputPath))
+                if (!Directory.Exists(parameters.TitleOutputPath))
                 {
-                    Directory.CreateDirectory(titleOutputPath);
+                    Directory.CreateDirectory(parameters.TitleOutputPath);
                 }
                 
-                var outputFilePath = Path.Combine(titleOutputPath, $"{parameters.Title.TitleName}_{count:D2}.wav");
+                var outputFilePath = Path.Combine(parameters.TitleOutputPath, $"{parameters.Title.TitleName}_{count:D2}.wav");
                 count++;
                 WavConcatenator.ConcatenateWavFiles(inputFilePaths, outputFilePath);
                 if (last)
