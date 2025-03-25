@@ -2,10 +2,11 @@ using TalkLikeTv.EntityModels;
 
 namespace TalkLikeTv.Mvc.Models;
 
-public record CreateTitleViewModel(
-    Voice? ToVoice,
+public record AudioFromTitleViewModel(
+    Title? Title,
     Voice? FromVoice,
-    string? Pattern,
+    Voice? ToVoice,
     int? PauseDuration,
+    string? Pattern,
     bool HasErrors,
     IEnumerable<string> ValidationErrors);

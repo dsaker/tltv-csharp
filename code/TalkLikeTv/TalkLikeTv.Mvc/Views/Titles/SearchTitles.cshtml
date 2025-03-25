@@ -45,6 +45,7 @@
             <th>Title Name</th>
             <th>Description</th>
             <th>Original Language</th>
+            <th>Action</th>
         </tr>
         </thead>
         <tbody>
@@ -54,6 +55,12 @@
                 <td>@title.TitleName</td>
                 <td>@title.Description</td>
                 <td>@title.OriginalLanguage?.Name</td>
+                <td>
+                    <form method="get" action="/Audio/CreateAudio">
+                        <input type="hidden" name="titleId" value="@title.TitleId" />
+                        <button type="submit" class="btn btn-primary">Choose</button>
+                    </form>
+                </td>
             </tr>
         }
         </tbody>

@@ -5,7 +5,6 @@ using TalkLikeTv.EntityModels;
 using TalkLikeTv.Mvc.Configurations;
 using TalkLikeTv.Mvc.Models;
 using TalkLikeTv.Services;
-using TalkLikeTv.Utilities;
 using Exception = System.Exception;
 
 namespace TalkLikeTv.Mvc.Controllers;
@@ -16,10 +15,8 @@ public class AudioController : Controller
     private readonly TalkliketvContext _db;
     private readonly TokenService _tokenService;
     private readonly SharedSettings _sharedSettings;
-    private readonly TranslationService _translationService;
     private readonly PhraseService _phraseService;
-    private readonly AudioFileService _audioFileService;
-    private readonly string _audioOutputDir;
+    private readonly AudioProcessingService _audioProcessingService;
     private readonly IWebHostEnvironment _env;
     
     public AudioController(
@@ -27,30 +24,27 @@ public class AudioController : Controller
         TalkliketvContext db,
         TokenService tokenService,
         IOptions<SharedSettings> sharedSettings,
-        TranslationService translationService,
         PhraseService phraseService,
-        AudioFileService audioFileService,
+        AudioProcessingService audioProcessingService,
         IWebHostEnvironment env)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _db = db ?? throw new ArgumentNullException(nameof(db));
         _tokenService = tokenService ?? throw new ArgumentNullException(nameof(tokenService));
         _sharedSettings = sharedSettings.Value ?? throw new ArgumentNullException(nameof(sharedSettings));
-        _translationService = translationService ?? throw new ArgumentNullException(nameof(translationService));
         _phraseService = phraseService ?? throw new ArgumentNullException(nameof(phraseService));
-        _audioFileService = audioFileService ?? throw new ArgumentNullException(nameof(audioFileService));
-        _audioOutputDir = Environment.GetEnvironmentVariable("AUDIO_OUTPUT_DIR") ?? throw new InvalidOperationException("AUDIO_OUTPUT_DIR is not configured.");
+        _audioProcessingService = audioProcessingService ?? throw new ArgumentNullException(nameof(audioProcessingService));
         _env = env ?? throw new ArgumentNullException(nameof(env));
     }
-
     
     [HttpGet]
     public IActionResult CreateTitle(Voice toVoice, Voice fromVoice, int? pauseDuration, string? pattern)
     {
-        var formModel = new CreateTitleFormModel(toVoice, fromVoice, pauseDuration, pattern, null, null, null,null);
         var model = new CreateTitleViewModel(
-            _db.Languages.OrderBy(l => l.Name).ThenBy(l => l.NativeName),
-            formModel, 
+            toVoice,
+            fromVoice,
+            pattern ?? "",
+            pauseDuration,
             false, 
             Enumerable.Empty<string>());
         return View("CreateTitle", model);
@@ -63,136 +57,88 @@ public class AudioController : Controller
         var (formModel, errorResult) = ValidateCreateTitleFormModel(form);
         if (errorResult != null)
         {
-            return errorResult;
+            return await errorResult;
         }
 
         try
         {
+            // Validate token and file, get phrases
             var phraseStrings = ValidateTokenAndFile(formModel!);
             if (phraseStrings == null || !ModelState.IsValid)
             {
-                return CreateTitleErrorView(formModel!);
+                return await CreateTitleErrorView(formModel!);
             }
 
-            var translator = new AzureTranslateService();
-            var detectedCode = await translator.DetectLanguageFromPhrasesAsync(phraseStrings);
-
-            var detectedLanguage = await _db.Languages
-                .SingleOrDefaultAsync(l => l.Tag == detectedCode);
-
+            // Detect language
+            var detectedLanguage = await _audioProcessingService.DetectLanguageAsync(phraseStrings, ModelState);
             if (detectedLanguage == null)
             {
-                ModelState.AddModelError("", $"Language '{detectedCode}' not found.");
                 return StatusCode(StatusCodes.Status503ServiceUnavailable, ModelState);
             }
 
-            var newTitle = await ProcessTitleAsync(formModel!, phraseStrings, detectedLanguage);
-            var processTranslationsResult = await _translationService.ProcessTranslations(newTitle, phraseStrings, formModel.FromVoice, formModel.ToVoice, detectedCode, ModelState);
+            // Process title and create DB objects
+            var newTitle = await _audioProcessingService.ProcessTitleAsync(
+                formModel.TitleName!, formModel.Description, phraseStrings, detectedLanguage);
 
-            if (!processTranslationsResult.Success)
+            // Process audio
+            var (zipFilePath, errors) = await _audioProcessingService.ProcessAudioRequestAsync(
+                formModel.ToVoiceId ?? -99,
+                formModel.FromVoiceId ?? -99,
+                newTitle,
+                formModel.PauseDuration ?? -99,
+                formModel.Pattern ?? "");
+
+            if (errors.Count > 0)
             {
-                foreach (var error in processTranslationsResult.Errors)
+                foreach (var error in errors)
                 {
                     ModelState.AddModelError("", error);
                 }
                 return StatusCode(StatusCodes.Status503ServiceUnavailable, ModelState);
             }
-            
-            var toLang = await _db.Languages.SingleOrDefaultAsync(l => l.LanguageId == formModel.ToVoice.LanguageId);
-            var fromLang = await _db.Languages.SingleOrDefaultAsync(l => l.LanguageId == formModel.FromVoice.LanguageId);
-            if (toLang == null || fromLang == null)
-            {
-                ModelState.AddModelError("", "Invalid language selection.");
-                return CreateTitleErrorView(formModel);
-            }
-            
-            var audioFileParams = new AudioFileService.BuildAudioFilesParams
-            {
-                Title = newTitle,
-                ToVoice = formModel.ToVoice,
-                FromVoice = formModel.FromVoice,
-                ToLang = toLang,
-                FromLang = fromLang, 
-                Pause = formModel.PauseDuration ?? 0,
-                Pattern = formModel.Pattern ?? "",
-                TitleOutputPath = Path.Combine(_audioOutputDir, newTitle.TitleName, formModel.FromVoice.ShortName, formModel.ToVoice.ShortName)
-            };
-            
-            var audioFileResult = await _audioFileService.BuildAudioFilesAsync(audioFileParams);
-
-            if (!audioFileResult.Success)
-            {
-                foreach (var error in audioFileResult.Errors)
-                {
-                    ModelState.AddModelError("", error);
-                }
-                return StatusCode(StatusCodes.Status503ServiceUnavailable, ModelState);
-            }
-            
-            var zipFileName = $"{newTitle.TitleName}_{fromLang.Tag}_{toLang.Tag}.zip";
-            var zipFilePath = ZipDirService.CreateZipFile(audioFileParams.TitleOutputPath, zipFileName);
 
             if (_env.IsDevelopment())
             {
-                return PhysicalFile(zipFilePath.FullName, "application/zip", zipFileName);
+                return PhysicalFile(zipFilePath.FullName, "application/zip", zipFilePath.Name);
             }
-
-            var token = await _db.Tokens.SingleOrDefaultAsync(t => t.Hash == formModel.Token);
-            if (token == null)
+            
+            // Mark token as used
+            if (!await _audioProcessingService.ValidateAndMarkTokenAsync(formModel.Token, ModelState))
             {
-                ModelState.AddModelError("", "token is null");
                 return StatusCode(StatusCodes.Status503ServiceUnavailable, ModelState);
             }
 
-            token.Used = true;
-            await _db.SaveChangesAsync();
-
-            return PhysicalFile(zipFilePath.FullName, "application/zip", zipFileName);
+            return PhysicalFile(zipFilePath.FullName, "application/zip", zipFilePath.Name);
         }
         catch (DbUpdateException ex)
         {
             _logger.LogError(ex, "An error occurred while saving changes to the database.");
             ModelState.AddModelError("", "An error occurred while saving changes to the database.");
-            return CreateTitleErrorView(formModel);
+            return await CreateTitleErrorView(formModel!);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, ex.Message);
             ModelState.AddModelError("", ex.Message);
-            return CreateTitleErrorView(formModel);
+            return await CreateTitleErrorView(formModel!);
         }
     }
     
-    private async Task<Title> ProcessTitleAsync(CreateTitleFormModel formModel, List<string> phraseStrings, Language detectedLanguage)
+    private async Task<ViewResult> CreateTitleErrorView(CreateTitleFormModel formModel)
     {
-        var languageId = detectedLanguage.LanguageId;
-        var newTitle = new Title
+        var toVoice = await _db.Voices.SingleOrDefaultAsync(v => v.VoiceId == formModel.ToVoiceId);
+        var fromVoice = await _db.Voices.SingleOrDefaultAsync(v => v.VoiceId == formModel.FromVoiceId);
+        
+        if (toVoice == null || fromVoice == null)
         {
-            TitleName = formModel.TitleName!,
-            Description = formModel.Description,
-            NumPhrases = phraseStrings.Count,
-            OriginalLanguageId = languageId,
-        };
+            ModelState.AddModelError("", "Invalid voice id.");
+        }
 
-        _db.Titles.Add(newTitle);
-        await _db.SaveChangesAsync();
-
-        var phrases = phraseStrings.Select(_ => new Phrase
-        {
-            TitleId = newTitle.TitleId,
-        }).ToList();
-
-        _db.Phrases.AddRange(phrases);
-        await _db.SaveChangesAsync();
-
-        return newTitle;
-    }
-    
-    private ViewResult CreateTitleErrorView(CreateTitleFormModel formModel)
-    {
         var model = new CreateTitleViewModel(
-            _db.Languages.OrderBy(l => l.Name).ThenBy(l => l.NativeName),
-            CreateTitleFormModel: formModel,
+            ToVoice: toVoice,
+            FromVoice: fromVoice,
+            Pattern: formModel.Pattern,
+            PauseDuration: formModel.PauseDuration,
             HasErrors: true,
             ValidationErrors: ModelState.Values
                 .SelectMany(state => state.Errors)
@@ -201,26 +147,24 @@ public class AudioController : Controller
         return View(model);
     }
     
-    private (CreateTitleFormModel? formModel, IActionResult? errorResult) ValidateCreateTitleFormModel(IFormCollection form)
+    private (CreateTitleFormModel? formModel, Task<ViewResult>? errorResult) ValidateCreateTitleFormModel(IFormCollection form)
     {
         if (!int.TryParse(form["PauseDuration"], out var pauseDuration))
         {
             ModelState.AddModelError("", "Invalid pause duration.");
         }
-
-        var toVoiceResult = JsonUtils.DeserializeVoice(form["ToVoice"]!, _logger);
-        var fromVoiceResult = JsonUtils.DeserializeVoice(form["FromVoice"]!, _logger);
-
-        if (toVoiceResult.Result == null || fromVoiceResult.Result == null)
+        
+        if (!int.TryParse(form["ToVoiceId"], out var toVoiceId))
         {
-            foreach (var error in toVoiceResult.Errors.Concat(fromVoiceResult.Errors))
-            {
-                ModelState.AddModelError("", error);
-            }
-            return (null, BadRequest(ModelState));
+            ModelState.AddModelError("", "Invalid toVoiceId.");
+        }
+        
+        if (!int.TryParse(form["FromVoiceId"], out var fromVoiceId))
+        {
+            ModelState.AddModelError("", "Invalid fromVoiceId.");
         }
 
-        var formModel = new CreateTitleFormModel(toVoiceResult.Result, fromVoiceResult.Result, pauseDuration, form["Pattern"], form["Token"], form["TitleName"], form["Description"], form.Files["File"]);
+        var formModel = new CreateTitleFormModel(toVoiceId, fromVoiceId, pauseDuration, form["Pattern"], form["Token"], form["TitleName"], form["Description"], form.Files["File"]);
         if (!TryValidateModel(formModel) || !ModelState.IsValid)
         {
             return (null, CreateTitleErrorView(formModel));
@@ -274,11 +218,11 @@ public class AudioController : Controller
     }
     
     [HttpGet]
-    public IActionResult CreateAudio()
+    public IActionResult ChooseAudio(int? titleId)
     {
-        var model = new CreateAudioViewModel(
+        var model = new ChooseAudioViewModel(
             _db.Languages.OrderBy(l => l.Name).ThenBy(l => l.NativeName),
-            new CreateAudioFormModel(null, null, null, null),
+            new ChooseAudioFormModel(titleId, null, null, null, null),
             HasErrors: false,
             ValidationErrors: []
         );
@@ -287,7 +231,7 @@ public class AudioController : Controller
     
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> CreateAudio(CreateAudioFormModel modelIn)
+    public async Task<IActionResult> ChooseAudio(ChooseAudioFormModel modelIn)
     {
         if (ModelState.IsValid)
         {
@@ -305,7 +249,7 @@ public class AudioController : Controller
             if (dbToVoice == null || dbFromVoice == null)
             {
                 ModelState.AddModelError("", "Invalid voice selection.");
-                var errorModel = new CreateAudioViewModel(
+                var errorModel = new ChooseAudioViewModel(
                     _db.Languages.OrderBy(l => l.Name).ThenBy(l => l.NativeName),
                     modelIn,
                    !ModelState.IsValid,
@@ -316,10 +260,15 @@ public class AudioController : Controller
                 return View(errorModel);
             }
             
+            if (modelIn.TitleId != null)
+            {
+                return RedirectToAction("AudioFromTitle", "Titles", new { titleId = modelIn.TitleId, toVoice = dbToVoice, fromVoice = dbFromVoice, pauseDuration = modelIn.PauseDuration, pattern = modelIn.Pattern });
+            }
+            
             return CreateTitle(dbToVoice, dbFromVoice, modelIn.PauseDuration, modelIn.Pattern);
         }
 
-        var model = new CreateAudioViewModel(
+        var model = new ChooseAudioViewModel(
             _db.Languages.OrderBy(l => l.Name).ThenBy(l => l.NativeName),
             modelIn,
             !ModelState.IsValid,
