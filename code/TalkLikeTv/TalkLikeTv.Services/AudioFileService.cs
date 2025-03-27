@@ -24,7 +24,7 @@ public class AudioFileService
         _db = db;
         _phraseService = phraseService;
         _maxPhrases = configuration.GetValue<int>("SharedSettings:MaxPhrases");
-        _baseDir = Environment.GetEnvironmentVariable("BASE_DIR") ?? throw new InvalidOperationException("BASE_DIR is not configured.");
+        _baseDir = configuration.GetValue<string>("SharedSettings:BaseDir") ?? throw new InvalidOperationException("BaseDir is not configured.");
     }
     
     private Dictionary<int, string> PauseFilePaths => new ()

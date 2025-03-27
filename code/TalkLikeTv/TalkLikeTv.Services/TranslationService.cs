@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using TalkLikeTv.EntityModels;
 using TalkLikeTv.Utilities;
@@ -11,11 +12,11 @@ public class TranslationService
     private readonly ILogger<TranslationService> _logger;
     private readonly string _baseDir;
 
-    public TranslationService(TalkliketvContext db, ILogger<TranslationService> logger)
+    public TranslationService(TalkliketvContext db, ILogger<TranslationService> logger, IConfiguration configuration)
     {
         _db = db;
         _logger = logger;
-        _baseDir = Environment.GetEnvironmentVariable("BASE_DIR") ?? throw new InvalidOperationException("BASE_DIR is not configured.");
+        _baseDir = configuration.GetValue<string>("SharedSettings:BaseDir") ?? throw new InvalidOperationException("BaseDir is not configured.");
     }
     
     public class ProcessTranslationsParams

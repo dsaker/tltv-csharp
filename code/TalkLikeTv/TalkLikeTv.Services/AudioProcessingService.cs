@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using TalkLikeTv.EntityModels;
 using TalkLikeTv.Utilities;
@@ -12,22 +13,20 @@ public class AudioProcessingService
     private readonly ILogger<AudioProcessingService> _logger;
     private readonly TranslationService _translationService;
     private readonly AudioFileService _audioFileService;
-    private readonly TokenService _tokenService;
     private readonly string _audioOutputDir;
 
     public AudioProcessingService(
         TalkliketvContext db,
         ILogger<AudioProcessingService> logger,
         TranslationService translationService,
-        TokenService tokenService,
-        AudioFileService audioFileService)
+        AudioFileService audioFileService,
+        IConfiguration configuration)
     {
         _db = db;
         _logger = logger;
         _translationService = translationService;
         _audioFileService = audioFileService;
-        _tokenService = tokenService;
-        _audioOutputDir = Environment.GetEnvironmentVariable("AUDIO_OUTPUT_DIR") ?? throw new InvalidOperationException("AUDIO_OUTPUT_DIR is not configured.");
+        _audioOutputDir = configuration.GetValue<string>("SharedSettings:AudioOutputDir") ?? throw new InvalidOperationException("AudioOutputdir is not configured.");
     }
 
     private async Task<(Voice?, Voice?)> GetVoicesAsync(int toVoiceId, int fromVoiceId)
