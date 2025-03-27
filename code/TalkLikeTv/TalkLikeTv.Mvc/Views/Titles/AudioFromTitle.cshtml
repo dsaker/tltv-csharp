@@ -111,7 +111,7 @@
                 <dd>@Model.Title?.TitleName</dd>
                 <dt>Description</dt>
                 <dd>@Model.Title?.Description</dd>
-                @if (Model.Title?.OriginalLanguage != null)
+                @if (Model.Title?.OriginalLanguage?.Name != null)
                 {
                     <dt>Original Language</dt>
                     <dd>@Model.Title.OriginalLanguage.Name</dd>
@@ -123,29 +123,15 @@
 </table>
 <br/>
 @Html.AntiForgeryToken()
-<form asp-action="AudioFromTitle" asp-controller="Audio" method="post" enctype="multipart/form-data">
-    <input type="hidden" name="ToVoice" value="@Model.ToVoice?.VoiceId ?? -99" />
-    <input type="hidden" name="FromVoice" value="@Model.FromVoice?.VoiceId ?? -99" />
+<form asp-action="AudioFromTitle" asp-controller="Titles" method="post" enctype="multipart/form-data">
+    <input type="hidden" name="ToVoiceId" value="@Model.ToVoice?.VoiceId" />
+    <input type="hidden" name="FromVoiceId" value="@Model.FromVoice?.VoiceId" />
     <input type="hidden" name="Pattern" value="@Model.Pattern" />
     <input type="hidden" name="PauseDuration" value="@Model.PauseDuration" />
-    <input type="hidden" name="TitleId" value="@Model.Title?.TitleId ?? -99" />
+    <input type="hidden" name="TitleId" value="@Model.Title?.TitleId" />
     <div class="form-group">
         <label for="token">Token</label>
         <input name="token" class="form-control" type="text" id="token" required/>
-    </div>
-    <div class="form-group">
-        <label for="titleName">Title Name</label>
-        <input name="titleName" class="form-control" type="text" id="titleName" required/>
-    </div>
-
-    <div class="form-group">
-        <label for="description">Description</label>
-        <input name="description" class="form-control" type="text" id="description" required/>
-    </div>
-
-    <div class="form-group">
-        <label for="file">File</label>
-        <input name="file" class="form-control" type="file" id="file"/>
     </div>
     <div class="form-group">
         <input type="submit" value="Create Title" class="btn btn-primary"/>

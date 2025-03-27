@@ -1,5 +1,3 @@
-@using System.Text.Json
-@using System.Text.Json.Serialization
 @using Microsoft.AspNetCore.Mvc.TagHelpers
 @model CreateTitleViewModel
 
@@ -32,12 +30,12 @@
                     @if (Model.ToVoice?.Styles.Count > 0)
                     {
                         <dt>Styles</dt>
-                        foreach (var s in Model.ToVoice.Styles)
+                        foreach (var s in Model.ToVoice?.Styles)
                         {
                             <dd>@s.StyleName</dd>
                         }
                     }
-                    @if (Model.ToVoice?.Scenarios.Count > 0)
+                    @if (Model.ToVoice?.Scenarios?.Count > 0)
                     {
                         <dt>Scenarios</dt>
                         foreach (var s in Model.ToVoice.Scenarios)
@@ -45,7 +43,7 @@
                             <dd>@s.ScenarioName</dd>
                         }
                     }
-                    @if (Model.ToVoice?.Personalities.Count > 0)
+                    @if (Model.ToVoice?.Personalities?.Count > 0)
                     {
                         <dt>Personalities</dt>
                         foreach (var p in Model.ToVoice.Personalities)
@@ -108,8 +106,8 @@
 <br/>
 @Html.AntiForgeryToken()
 <form asp-action="CreateTitle" asp-controller="Audio" method="post" enctype="multipart/form-data" onsubmit="clearErrorMessages()">
-    <input type="hidden" name="ToVoiceId" value="@Model.ToVoice?.VoiceId ?? -99" />
-    <input type="hidden" name="FromVoiceId" value="@Model.FromVoice?.VoiceId ?? -99" />
+    <input type="hidden" name="ToVoiceId" value="@Model.ToVoice?.VoiceId" />
+    <input type="hidden" name="FromVoiceId" value="@Model.FromVoice?.VoiceId" />
     <input type="hidden" name="Pattern" value="@Model.Pattern" />
     <input type="hidden" name="PauseDuration" value="@Model.PauseDuration" />
     <div class="form-group">

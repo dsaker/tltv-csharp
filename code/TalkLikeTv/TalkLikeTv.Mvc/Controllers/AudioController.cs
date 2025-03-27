@@ -14,36 +14,33 @@ public class AudioController : Controller
     private readonly ILogger<AudioController> _logger;
     private readonly TalkliketvContext _db;
     private readonly TokenService _tokenService;
-    private readonly SharedSettings _sharedSettings;
-    private readonly PhraseService _phraseService;
     private readonly AudioProcessingService _audioProcessingService;
+    private readonly AudioFileService _audioFileService;
     private readonly IWebHostEnvironment _env;
     
     public AudioController(
         ILogger<AudioController> logger,
         TalkliketvContext db,
         TokenService tokenService,
-        IOptions<SharedSettings> sharedSettings,
-        PhraseService phraseService,
         AudioProcessingService audioProcessingService,
+        AudioFileService audioFileService,
         IWebHostEnvironment env)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _db = db ?? throw new ArgumentNullException(nameof(db));
         _tokenService = tokenService ?? throw new ArgumentNullException(nameof(tokenService));
-        _sharedSettings = sharedSettings.Value ?? throw new ArgumentNullException(nameof(sharedSettings));
-        _phraseService = phraseService ?? throw new ArgumentNullException(nameof(phraseService));
         _audioProcessingService = audioProcessingService ?? throw new ArgumentNullException(nameof(audioProcessingService));
+        _audioFileService = audioFileService ?? throw new ArgumentNullException(nameof(audioFileService));
         _env = env ?? throw new ArgumentNullException(nameof(env));
     }
     
     [HttpGet]
-    public IActionResult CreateTitle(Voice toVoice, Voice fromVoice, int? pauseDuration, string? pattern)
+    public IActionResult CreateTitle(Voice toVoice, Voice fromVoice, int pauseDuration, string pattern)
     {
         var model = new CreateTitleViewModel(
             toVoice,
             fromVoice,
-            pattern ?? "",
+            pattern,
             pauseDuration,
             false, 
             Enumerable.Empty<string>());
@@ -63,10 +60,27 @@ public class AudioController : Controller
         try
         {
             // Validate token and file, get phrases
-            var phraseStrings = ValidateTokenAndFile(formModel!);
+            if (!_tokenService.CheckTokenStatus(formModel!.Token!))
+            {
+                ModelState.AddModelError("", "Invalid token.");
+                return await CreateTitleErrorView(formModel);
+            }
+
+            // Get the result object from ExtractAndValidatePhraseStrings
+            var result = _audioFileService.ExtractAndValidatePhraseStrings(formModel!.File!);
+            if (result.Errors.Count > 0)
+            {
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError("", error);
+                }
+                return await CreateTitleErrorView(formModel);
+            }
+
+            var phraseStrings = result.PhraseStrings;
             if (phraseStrings == null || !ModelState.IsValid)
             {
-                return await CreateTitleErrorView(formModel!);
+                return await CreateTitleErrorView(formModel);
             }
 
             // Detect language
@@ -78,7 +92,7 @@ public class AudioController : Controller
 
             // Process title and create DB objects
             var newTitle = await _audioProcessingService.ProcessTitleAsync(
-                formModel.TitleName!, formModel.Description, phraseStrings, detectedLanguage);
+                formModel!.TitleName!, formModel.Description, phraseStrings, detectedLanguage);
 
             // Process audio
             var (zipFilePath, errors) = await _audioProcessingService.ProcessAudioRequestAsync(
@@ -103,12 +117,17 @@ public class AudioController : Controller
             }
             
             // Mark token as used
-            if (!await _audioProcessingService.ValidateAndMarkTokenAsync(formModel.Token, ModelState))
+            var (markSuccess, markErrors) = await _audioProcessingService.MarkTokenAsUsedAsync(formModel.Token!);
+            if (markSuccess)
             {
-                return StatusCode(StatusCodes.Status503ServiceUnavailable, ModelState);
+                return PhysicalFile(zipFilePath.FullName, "application/zip", zipFilePath.Name);
             }
 
-            return PhysicalFile(zipFilePath.FullName, "application/zip", zipFilePath.Name);
+            foreach (var error in markErrors)
+            {
+                ModelState.AddModelError("", error);
+            }
+            return await CreateTitleErrorView(formModel);
         }
         catch (DbUpdateException ex)
         {
@@ -133,11 +152,16 @@ public class AudioController : Controller
         {
             ModelState.AddModelError("", "Invalid voice id.");
         }
+        
+        if(formModel.PauseDuration == null)
+        {
+            ModelState.AddModelError("", "Invalid pause duration.");
+        }
 
         var model = new CreateTitleViewModel(
-            ToVoice: toVoice,
-            FromVoice: fromVoice,
-            Pattern: formModel.Pattern,
+            ToVoice: toVoice!,
+            FromVoice: fromVoice!,
+            Pattern: formModel.Pattern!,
             PauseDuration: formModel.PauseDuration,
             HasErrors: true,
             ValidationErrors: ModelState.Values
@@ -176,45 +200,8 @@ public class AudioController : Controller
             ModelState.AddModelError("", "Title name must be unique.");
             return (null, CreateTitleErrorView(formModel));
         }
-
+        
         return (formModel, null);
-    }
-    
-    private List<string>? ValidateTokenAndFile(CreateTitleFormModel formModel)
-    {
-        if (formModel.Token == null || !_tokenService.CheckTokenStatus(formModel.Token))
-        {
-            ModelState.AddModelError("", "Invalid token.");
-            return null;
-        }
-
-        if (formModel.File == null)
-        {
-            ModelState.AddModelError("", "File is invalid");
-            return null;
-        }
-
-        try
-        {
-            var phraseStrings = _phraseService.GetPhraseStrings(formModel.File);
-            if (phraseStrings == null || !ModelState.IsValid)
-            {
-                return null;
-            }
-
-            if (phraseStrings.Count > _sharedSettings.MaxPhrases)
-            {
-                ModelState.AddModelError("", $"Phrase count exceeds the maximum of {_sharedSettings.MaxPhrases}.");
-                return null;
-            }
-
-            return phraseStrings;
-        }
-        catch (InvalidDataException ex)
-        {
-            ModelState.AddModelError("", ex.Message);
-            return null;
-        }
     }
     
     [HttpGet]
@@ -233,6 +220,11 @@ public class AudioController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ChooseAudio(ChooseAudioFormModel modelIn)
     {
+        if (modelIn.TitleId != null)
+        {
+            return RedirectToAction("AudioFromTitle", "Titles", new { titleId = modelIn.TitleId, toVoiceId = modelIn.ToVoice, fromVoiceId = modelIn.FromVoice, pauseDuration = modelIn.PauseDuration, pattern = modelIn.Pattern });
+        }
+        
         if (ModelState.IsValid)
         {
             var dbToVoice = await _db.Voices
@@ -260,12 +252,7 @@ public class AudioController : Controller
                 return View(errorModel);
             }
             
-            if (modelIn.TitleId != null)
-            {
-                return RedirectToAction("AudioFromTitle", "Titles", new { titleId = modelIn.TitleId, toVoice = dbToVoice, fromVoice = dbFromVoice, pauseDuration = modelIn.PauseDuration, pattern = modelIn.Pattern });
-            }
-            
-            return CreateTitle(dbToVoice, dbFromVoice, modelIn.PauseDuration, modelIn.Pattern);
+            return CreateTitle(dbToVoice, dbFromVoice, modelIn.PauseDuration ?? 0, modelIn.Pattern ?? "");
         }
 
         var model = new ChooseAudioViewModel(

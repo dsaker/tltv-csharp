@@ -6,7 +6,6 @@ using TalkLikeTv.Utilities;
 
 namespace TalkLikeTv.Services;
 
-// TalkLikeTv.Services/AudioProcessingService.cs
 public class AudioProcessingService
 {
     private readonly TalkliketvContext _db;
@@ -273,27 +272,5 @@ public class AudioProcessingService
             errors.Add("An error occurred while processing the audio request.");
             return (null, errors);
         }
-    }
- 
-    public async Task<bool> ValidateAndMarkTokenAsync(string tokenHash, ModelStateDictionary modelState)
-    {
-        // Check if the token is valid
-        if (string.IsNullOrEmpty(tokenHash) || !_tokenService.CheckTokenStatus(tokenHash))
-        {
-            modelState.AddModelError("", "Invalid token.");
-            return false;
-        }
-
-        var (success, errors) = await MarkTokenAsUsedAsync(tokenHash);
-        if (success)
-        {
-            return true;
-        }
-        
-        foreach (var error in errors)
-        {
-            modelState.AddModelError("", error);
-        }
-        return false;
     }
 }
