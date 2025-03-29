@@ -1,3 +1,4 @@
+using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -87,7 +88,7 @@ public class AudioController : Controller
             var detectedLanguage = await _audioProcessingService.DetectLanguageAsync(phraseStrings, ModelState);
             if (detectedLanguage == null)
             {
-                return StatusCode(StatusCodes.Status503ServiceUnavailable, ModelState);
+                return Problem(detail: "Language detection failed.", statusCode: StatusCodes.Status500InternalServerError);
             }
 
             // Process title and create DB objects
@@ -108,7 +109,8 @@ public class AudioController : Controller
                 {
                     ModelState.AddModelError("", error);
                 }
-                return StatusCode(StatusCodes.Status503ServiceUnavailable, ModelState);
+                return StatusCode(StatusCodes.Status500InternalServerError, ModelState);
+
             }
 
             if (_env.IsDevelopment())
@@ -278,12 +280,12 @@ public class AudioController : Controller
     public IActionResult GetVoices([FromBody] GetVoicesRequest request)
     {
         var dbVoices = _db.Voices
+            .AsSplitQuery()
             .Include(v => v.Styles)
             .Include(v => v.Scenarios)
             .Include(v => v.Personalities)
             .Where(v => v.LanguageId == request.SelectedLanguage)
-            .OrderBy(v => v.DisplayName)
-            .AsSplitQuery(); // Configure QuerySplittingBehavior to SplitQuery;
+            .OrderBy(v => v.DisplayName); // Configure QuerySplittingBehavior to SplitQuery;
 
         var voiceData = dbVoices
             .Select(v => new {
@@ -299,23 +301,35 @@ public class AudioController : Controller
             })
             .ToList();
 
+        
+        // In your GetVoices method
         var modelVoices = voiceData
-            .Select(v => new VoiceViewModel(
-                v.VoiceId,
-                v.DisplayName,
-                v.LocaleName,
-                v.ShortName,
-                string.Join("<br>", new List<string?> {
-                    "Gender:&nbsp;" + v.Gender,
-                    "Type:&nbsp;" + v.VoiceType,
-                    v.Styles.Count > 0 ? "Styles:&nbsp;" + string.Join(",&nbsp;", v.Styles) : null,
-                    v.Scenarios.Count > 0 ? "Scenarios:&nbsp;" + string.Join(",&nbsp;", v.Scenarios) : null,
-                    v.Personalities.Count > 0 ? "Personalities:&nbsp;" + string.Join(",&nbsp;", v.Personalities) : null
-                }.Where(s => !string.IsNullOrEmpty(s)))
-            ))
+            .Select(v => {
+                var encoder = HtmlEncoder.Default;
+        
+                var descriptionLines = new List<string>();
+                descriptionLines.Add($"<span class='voice-label'>Gender:</span> {encoder.Encode(v.Gender)}");
+                descriptionLines.Add($"<span class='voice-label'>Type:</span> {encoder.Encode(v.VoiceType)}");
+        
+                if (v.Styles.Count > 0)
+                    descriptionLines.Add($"<span class='voice-label'>Styles:</span> {string.Join(", ", v.Styles.Select(s => encoder.Encode(s)))}");
+                if (v.Scenarios.Count > 0)
+                    descriptionLines.Add($"<span class='voice-label'>Scenarios:</span> {string.Join(", ", v.Scenarios.Select(s => encoder.Encode(s)))}");
+                if (v.Personalities.Count > 0)
+                    descriptionLines.Add($"<span class='voice-label'>Personalities:</span> {string.Join(", ", v.Personalities.Select(p => encoder.Encode(p)))}");
+        
+                return new VoiceViewModel(
+                    v.VoiceId,
+                    v.DisplayName,
+                    v.LocaleName,
+                    v.ShortName,
+                    string.Join("<br>", descriptionLines)
+                );
+            })
             .ToList();
 
         var partialViewName = request.IsFromLanguage ? "_FromVoiceSelection" : "_ToVoiceSelection";
         return PartialView(partialViewName, modelVoices);
     }
+    
 }
