@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -17,98 +16,96 @@ public class TranslationService
     {
         _db = db;
         _logger = logger;
-        _baseDir = Environment.GetEnvironmentVariable("BASE_DIR") ?? throw new InvalidOperationException("BASE_DIR is not configured.");
+        _baseDir = configuration.GetValue<string>("SharedSettings:BaseDir") ?? throw new InvalidOperationException("BaseDir is not configured.");
     }
-
-
-    public async Task<(bool Success, List<string> Errors)> ProcessTranslations(
-        Title newTitle, 
-        List<string> phraseStrings, 
-        Voice fromVoice, 
-        Voice toVoice, 
-        string detectedCode, 
-        ModelStateDictionary modelState)
+    
+    public class ProcessTranslationsParams
     {
-        var dbPhrases = await _db.Phrases
-            .AsNoTracking()
-            .Where(p => p.TitleId == newTitle.TitleId)
+        public required Title Title { get; set; }
+        public required Voice ToVoice { get; set; }
+        public required Voice FromVoice { get; set; }
+        public required Language ToLang { get; set; }
+        public required Language FromLang { get; set; }
+    }
+    
+    public async Task<(bool Success, List<string> Errors)> ProcessTranslations(ProcessTranslationsParams p)
+    {
+        var errors = new List<string>();
+    
+        try
+        {
+            var dbPhrases = await _db.Phrases
+                .AsNoTracking()
+                .Where(phrase => phrase.TitleId == p.Title.TitleId)
+                .ToListAsync();
+
+            if (dbPhrases.Count != p.Title.NumPhrases)
+            {
+                errors.Add("Phrases count must equal title.NumPhrases.");
+                return (false, errors);
+            }
+
+            var originalLanguageTranslations = await _db.Translates
+                .Where(t => t.LanguageId == p.Title.OriginalLanguageId && dbPhrases.Select(p => p.PhraseId).Contains(t.PhraseId))
+                .ToListAsync();
+
+            if (originalLanguageTranslations.Count != p.Title.NumPhrases)
+            {
+                errors.Add("Phrases count must equal title.NumPhrases.");
+                return (false, errors);
+            }
+
+            if (p.Title.OriginalLanguage == null)
+            {
+                errors.Add("Title.OriginalLanguage is null.");
+                return (false, errors);
+            }
+
+            var dbFromTranslates = await GetOrCreateTranslationsAsync(dbPhrases, p.Title.OriginalLanguage.Tag, p.FromLang, originalLanguageTranslations);
+
+            var dbToTranslates = await GetOrCreateTranslationsAsync(dbPhrases, p.FromLang.Tag, p.ToLang, dbFromTranslates);
+
+            // Generate TTS audio files and save them to the specified directory
+            await GenerateSpeechFilesAsync(p.ToVoice, p.ToLang, p.Title, dbToTranslates);
+            await GenerateSpeechFilesAsync(p.FromVoice, p.FromLang, p.Title, dbFromTranslates);
+
+            return (true, errors);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing translations for title {TitleName}", p.Title.TitleName);
+            errors.Add("An error occurred while processing translations.");
+            return (false, errors);
+        }
+    }
+    
+    private async Task<List<Translate>> GetOrCreateTranslationsAsync(List<Phrase> dbPhrases, string fromLanguageTag, Language toLanguage, List<Translate> fromTranslates)
+    {
+        var existingTranslations = await _db.Translates
+            .Where(t => t.LanguageId == toLanguage.LanguageId && dbPhrases.Select(p => p.PhraseId).Contains(t.PhraseId))
             .ToListAsync();
 
-        if (dbPhrases.Count != phraseStrings.Count)
+        if (existingTranslations.Count == dbPhrases.Count)
         {
-            modelState.AddModelError("", "Create title failed at dbPhrases.Count.");
-            return (false, new List<string> { "Create title failed at dbPhrases.Count." });
+            return existingTranslations;
         }
+        
+        var translateStrings = fromTranslates.Select(t => t.Phrase).ToList();
+        
+        var translatedPhrases = await new AzureTranslateService().TranslatePhrasesAsync(translateStrings, fromLanguageTag, toLanguage.Tag);
 
-        var fromVoiceLanguage = await _db.Languages
-            .AsNoTracking()
-            .SingleOrDefaultAsync(l => l.LanguageId == fromVoice.LanguageId);
-
-        if (fromVoiceLanguage == null)
-        {
-            modelState.AddModelError("", "fromVoiceLanguage is null.");
-            return (false, new List<string> { "fromVoiceLanguage is null." });
-        }
-
-        List<Translate>? dbFromTranslates;
-
-        if (fromVoiceLanguage.Tag != detectedCode)
-        {
-            var fromTranslates = await new AzureTranslateService().TranslatePhrasesAsync(phraseStrings, detectedCode, fromVoiceLanguage.Tag);
-
-            dbFromTranslates = dbPhrases.Select((phrase, index) => new Translate
-            {
-                PhraseId = phrase.PhraseId,
-                LanguageId = fromVoiceLanguage.LanguageId,
-                Phrase = fromTranslates[index],
-                PhraseHint = StringUtils.MakeHintString(fromTranslates[index])
-            }).ToList();
-
-            _db.Translates.AddRange(dbFromTranslates);
-            await _db.SaveChangesAsync();
-        }
-        else
-        {
-            dbFromTranslates = dbPhrases.Select((phrase, index) => new Translate
-            {
-                PhraseId = phrase.PhraseId,
-                LanguageId = fromVoiceLanguage.LanguageId,
-                Phrase = phraseStrings[index],
-                PhraseHint = StringUtils.MakeHintString(phraseStrings[index])
-            }).ToList();
-
-            _db.Translates.AddRange(dbFromTranslates);
-            await _db.SaveChangesAsync();
-        }
-
-        var toVoiceLanguage = await _db.Languages
-            .AsNoTracking()
-            .SingleOrDefaultAsync(l => l.LanguageId == toVoice.LanguageId);
-
-        if (toVoiceLanguage == null)
-        {
-            modelState.AddModelError("", "toVoiceLanguage is null.");
-            return (false, new List<string> { "toVoiceLanguage is null." });
-        }
-
-        var toTranslates = await new AzureTranslateService().TranslatePhrasesAsync(phraseStrings, detectedCode, toVoiceLanguage.Tag);
-
-        var dbToTranslates = dbPhrases.Select((phrase, index) => new Translate
+        var newTranslations = dbPhrases.Select((phrase, index) => new Translate
         {
             PhraseId = phrase.PhraseId,
-            LanguageId = toVoiceLanguage.LanguageId,
-            Phrase = toTranslates[index],
-            PhraseHint = StringUtils.MakeHintString(toTranslates[index])
+            LanguageId = toLanguage.LanguageId,
+            Phrase = translatedPhrases[index],
+            PhraseHint = StringUtils.MakeHintString(translatedPhrases[index])
         }).ToList();
 
-        _db.Translates.AddRange(dbToTranslates);
+        _db.Translates.AddRange(newTranslations);
         await _db.SaveChangesAsync();
 
-        // Generate TTS audio files and save them to the specified directory
-        await GenerateSpeechFilesAsync(toVoice, toVoiceLanguage, newTitle, dbToTranslates);
-        await GenerateSpeechFilesAsync(fromVoice, fromVoiceLanguage, newTitle, dbFromTranslates);
-        
-        return (true, new List<string>());
+        return newTranslations;
     }
     
     private async Task GenerateSpeechFilesAsync(Voice voice, Language voiceLanguage, Title newTitle, List<Translate> dbTranslates)
@@ -116,28 +113,18 @@ public class TranslationService
         var azureTtsService = new AzureTextToSpeechService();
         var wavDir = Path.Combine(_baseDir, newTitle.TitleName, voiceLanguage.Tag, voice.ShortName);
 
-        try
+        if (Directory.Exists(wavDir))
         {
-            if (!Directory.Exists(wavDir))
-            {
-                Directory.CreateDirectory(wavDir);
-            }
-
-            var tasks = new List<Task>();
-
-            foreach (var translate in dbTranslates)
-            {
-                var audioFilePath = Path.Combine(wavDir, $"{translate.PhraseId}");
-                tasks.Add(azureTtsService.GenerateSpeechToFileAsync(translate.Phrase, voice, audioFilePath));
-            }
-
-            await Task.WhenAll(tasks);
+            return;
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "An error occurred while generating speech files.");
-            throw;
-        }
+
+        Directory.CreateDirectory(wavDir);
+
+        var tasks = dbTranslates.Select(translate =>
+            azureTtsService.GenerateSpeechToFileAsync(translate.Phrase, voice, Path.Combine(wavDir, $"{translate.PhraseId}"))
+        ).ToList();
+
+        await Task.WhenAll(tasks);
     }
 }
 

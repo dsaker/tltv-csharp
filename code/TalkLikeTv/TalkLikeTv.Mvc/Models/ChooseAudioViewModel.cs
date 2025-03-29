@@ -9,8 +9,8 @@ public record VoiceViewModel(
     string ShortName,
     string Details);
 
-public record CreateAudioViewModel(
+public record ChooseAudioViewModel(
     IEnumerable<Language>? Languages,
-    CreateAudioFormModel CreateAudioFormModel,
+    ChooseAudioFormModel ChooseAudioFormModel,
     bool HasErrors,
     IEnumerable<string> ValidationErrors);

@@ -106,3 +106,8 @@ body {
 .short-input {
     width: 200px;
 }
+
+.voice-label {
+    font-weight: 500;
+    margin-right: 5px;
+}

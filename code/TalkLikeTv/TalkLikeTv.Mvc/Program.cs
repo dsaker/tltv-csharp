@@ -19,11 +19,12 @@ builder.Services.Configure<SharedSettings>(builder.Configuration.GetSection("Sha
 
 // Register Services
 builder.Services.AddSingleton<PatternService>();
-builder.Services.AddSingleton<TranslationService>();
+builder.Services.AddScoped<TranslationService>();
 builder.Services.AddSingleton<PhraseService>();
 builder.Services.AddSingleton<AzureTextToSpeechService>();
 builder.Services.AddSingleton<AzureTranslateService>();
-builder.Services.AddSingleton<AudioFileService>();
+builder.Services.AddScoped<AudioFileService>();
+builder.Services.AddScoped<AudioProcessingService>();
 
 // Add rate limiting services
 builder.Services.AddMemoryCache();

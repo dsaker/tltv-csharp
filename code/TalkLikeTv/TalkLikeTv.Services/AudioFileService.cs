@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using TalkLikeTv.EntityModels;
+using Microsoft.Extensions.Configuration;
 
 namespace TalkLikeTv.Services;
 
@@ -9,18 +11,20 @@ public class AudioFileService
     private readonly ILogger<AudioFileService> _logger;
     private readonly string _baseDir;
     private readonly TalkliketvContext _db;
+    private readonly PhraseService _phraseService;
+    private readonly int _maxPhrases;
 
-    public AudioFileService(ILogger<AudioFileService> logger, TalkliketvContext db)
+    public AudioFileService(
+        ILogger<AudioFileService> logger, 
+        TalkliketvContext db, 
+        PhraseService phraseService,
+        IConfiguration configuration)
     {
         _logger = logger;
         _db = db;
-        _baseDir = Environment.GetEnvironmentVariable("BASE_DIR") ?? throw new InvalidOperationException("BASE_DIR is not configured.");
-    }
-    
-    public class AudioFileResult
-    {
-        public bool Success { get; set; }
-        public List<string> Errors { get; set; } = [];
+        _phraseService = phraseService;
+        _maxPhrases = configuration.GetValue<int>("SharedSettings:MaxPhrases");
+        _baseDir = configuration.GetValue<string>("SharedSettings:BaseDir") ?? throw new InvalidOperationException("BaseDir is not configured.");
     }
     
     private Dictionary<int, string> PauseFilePaths => new ()
@@ -47,6 +51,47 @@ public class AudioFileService
         public required string TitleOutputPath { get; set; }
     }
     
+    public class ExtractAndValidateResult
+    {
+        public List<string>? PhraseStrings { get; set; }
+        public List<string> Errors { get; set; } = new();
+    }
+    
+    public ExtractAndValidateResult ExtractAndValidatePhraseStrings(IFormFile file)
+    {
+        var result = new ExtractAndValidateResult();
+
+        try
+        {
+            var phraseStrings = _phraseService.GetPhraseStrings(file);
+            if (phraseStrings == null)
+            {
+                result.Errors.Add("Failed to extract phrases from the file.");
+                return result;
+            }
+
+            if (phraseStrings.Count > _maxPhrases)
+            {
+                result.Errors.Add($"Phrase count exceeds the maximum of {_maxPhrases}.");
+                return result;
+            }
+
+            result.PhraseStrings = phraseStrings;
+        }
+        catch (InvalidDataException ex)
+        {
+            result.Errors.Add(ex.Message);
+        }
+
+        return result;
+    }
+    
+    public class AudioFileResult
+    {
+        public bool Success { get; set; }
+        public List<string> Errors { get; set; } = [];
+    }
+
     public async Task<AudioFileResult> BuildAudioFilesAsync(BuildAudioFilesParams parameters)
     {
         var result = new AudioFileResult();

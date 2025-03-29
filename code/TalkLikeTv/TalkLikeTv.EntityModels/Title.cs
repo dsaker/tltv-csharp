@@ -20,6 +20,8 @@ public partial class Title
     public string? Description { get; set; }
 
     public int NumPhrases { get; set; }
+    
+    public int Popularity { get; set; } = 0;
 
     [Column("OriginalLanguageID")]
     public int? OriginalLanguageId { get; set; }

@@ -7,9 +7,9 @@ namespace TalkLikeTv.Mvc.Models;
 
 public record CreateTitleFormModel(
     [Required]
-    Voice? ToVoice,
+    int? ToVoiceId,
     [Required]
-    Voice? FromVoice,
+    int? FromVoiceId,
     [Required]
     [Range(3, 10)]
     int? PauseDuration,
