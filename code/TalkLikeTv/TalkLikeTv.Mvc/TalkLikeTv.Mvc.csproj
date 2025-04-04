@@ -6,10 +6,6 @@
         <ImplicitUsings>enable</ImplicitUsings>
     </PropertyGroup>
 
-    <ItemGroup>
-        <None Update="app.db" CopyToOutputDirectory="PreserveNewest" ExcludeFromSingleFile="true"/>
-    </ItemGroup>
-
     <ItemGroup Label="To simplify use of WriteLine.">
         <Using Include="System.Console" Static="true"/>
     </ItemGroup>
@@ -18,9 +14,11 @@
         <ProjectReference Include="..\TalkLikeTv.Services\TalkLikeTv.Services.csproj"/>
         <ProjectReference Include="..\TalkLikeTv.Utilities\TalkLikeTv.Utilities.csproj"/>
         <ProjectReference Include="..\TalkLikeTv.EntityModels\TalkLikeTv.EntityModels.csproj"/>
+        <ProjectReference Include="..\TalkLikeTv.Repositories\TalkLikeTv.Repositories.csproj"/>
     </ItemGroup>
     
     <ItemGroup>
         <PackageReference Include="DotEnv.Core"/>
+        <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" />
     </ItemGroup>
 </Project>

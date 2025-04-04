@@ -1,40 +1,54 @@
-using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using TalkLikeTv.EntityModels;
+using TalkLikeTv.Repositories;
 using TalkLikeTv.Utilities;
 
 namespace TalkLikeTv.Services;
 
 public class AudioProcessingService
 {
-    private readonly TalkliketvContext _db;
     private readonly ILogger<AudioProcessingService> _logger;
     private readonly TranslationService _translationService;
     private readonly AudioFileService _audioFileService;
     private readonly string _audioOutputDir;
+    private readonly IVoiceRepository _voiceRepository;
+    private readonly ILanguageRepository _languageRepository;
+    private readonly ITokenRepository _tokenRepository;
+    private readonly ITitleRepository _titleRepository;
+    private readonly IPhraseRepository _phraseRepository;
+    private readonly ITranslateRepository _translateRepository;
 
     public AudioProcessingService(
-        TalkliketvContext db,
         ILogger<AudioProcessingService> logger,
         TranslationService translationService,
         AudioFileService audioFileService,
+        IVoiceRepository voiceRepository,
+        ILanguageRepository languageRepository,
+        ITokenRepository tokenRepository,
+        ITitleRepository titleRepository,
+        IPhraseRepository phraseRepository,
+        ITranslateRepository translateRepository,
         IConfiguration configuration)
     {
-        _db = db;
         _logger = logger;
         _translationService = translationService;
         _audioFileService = audioFileService;
+        _voiceRepository = voiceRepository;
+        _languageRepository = languageRepository;
+        _tokenRepository = tokenRepository;
+        _titleRepository = titleRepository;
+        _phraseRepository = phraseRepository;
+        _translateRepository = translateRepository;
         _audioOutputDir = configuration.GetValue<string>("SharedSettings:AudioOutputDir") ?? throw new InvalidOperationException("AudioOutputdir is not configured.");
     }
 
-    private async Task<(Voice?, Voice?)> GetVoicesAsync(int toVoiceId, int fromVoiceId)
+    private async Task<(Voice?, Voice?)> GetVoicesAsync(int toVoiceId, int fromVoiceId, CancellationToken token = default)
     {
         try
         {
-            var toVoice = await _db.Voices.SingleOrDefaultAsync(v => v.VoiceId == toVoiceId);
-            var fromVoice = await _db.Voices.SingleOrDefaultAsync(v => v.VoiceId == fromVoiceId);
+            var toVoice = await _voiceRepository.RetrieveAsync(toVoiceId.ToString(), token);
+            var fromVoice = await _voiceRepository.RetrieveAsync(fromVoiceId.ToString(), token);
             return (toVoice, fromVoice);
         }
         catch (Exception ex)
@@ -44,41 +58,67 @@ public class AudioProcessingService
         }
     }
 
-    public async Task<Language?> DetectLanguageAsync(List<string> phraseStrings, ModelStateDictionary modelState)
+    public async Task<(Language? Language, List<string> Errors)> DetectLanguageAsync(
+        List<string> phraseStrings, 
+        CancellationToken token = default)
     {
+        var errors = new List<string>();
+    
         try
         {
             var translator = new AzureTranslateService();
             var detectedCode = await translator.DetectLanguageFromPhrasesAsync(phraseStrings);
 
-            var detectedLanguage = await _db.Languages.SingleOrDefaultAsync(l => l.Tag == detectedCode);
+            var detectedLanguage = await _languageRepository.RetrieveByTagAsync(detectedCode, token);
             if (detectedLanguage == null)
             {
-                modelState.AddModelError("", $"Language '{detectedCode}' not found.");
+                errors.Add($"Language '{detectedCode}' not found.");
             }
-            return detectedLanguage;
+            return (detectedLanguage, errors);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error detecting language from phrases");
-            modelState.AddModelError("", "An error occurred while detecting the language.");
-            return null;
+            errors.Add("An error occurred while detecting the language.");
+            return (null, errors);
         }
     }
     
-    private async Task<(Language?, Language?)> GetLanguagesAsync(Voice toVoice, Voice fromVoice)
+    private async Task<(Language? ToLanguage, Language? FromLanguage, List<string> Errors)> GetLanguagesAsync(
+        Voice toVoice,
+        Voice fromVoice,
+        CancellationToken token = default)
     {
+        var errors = new List<string>();
+    
         try
         {
-            var toLang = await _db.Languages.SingleOrDefaultAsync(l => l.LanguageId == toVoice.LanguageId);
-            var fromLang = await _db.Languages.SingleOrDefaultAsync(l => l.LanguageId == fromVoice.LanguageId);
-            return (toLang, fromLang);
+            var toLangIdString = toVoice.LanguageId.ToString();
+            var fromLangIdString = fromVoice.LanguageId.ToString();
+        
+            if (toLangIdString == null || fromLangIdString == null)
+            {
+                errors.Add($"Language ID is null for voices {toVoice.ShortName} and {fromVoice.ShortName}");
+                return (null, null, errors);
+            }
+        
+            var toLang = await _languageRepository.RetrieveAsync(toLangIdString, token);
+            var fromLang = await _languageRepository.RetrieveAsync(fromLangIdString, token);
+        
+            if (toLang == null)
+                errors.Add($"Language for voice {toVoice.ShortName} not found.");
+            
+            if (fromLang == null)
+                errors.Add($"Language for voice {fromVoice.ShortName} not found.");
+        
+            return (toLang, fromLang, errors);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error fetching languages for voices {ToVoice} and {FromVoice}", 
+            _logger.LogError(ex, "Error fetching languages for voices {ToVoice} and {FromVoice}",
                 toVoice.ShortName, fromVoice.ShortName);
-            return (null, null);
+            errors.Add("An error occurred while retrieving languages.");
+            return (null, null, errors);
         }
     }
 
@@ -148,7 +188,7 @@ public class AudioProcessingService
                 return (false, errors);
             }
         
-            var token = await _db.Tokens.SingleOrDefaultAsync(t => t.Hash == tokenHash);
+            var token = await _tokenRepository.RetrieveByHashAsync(tokenHash);
             if (token == null)
             {
                 errors.Add("Invalid token.");
@@ -156,7 +196,7 @@ public class AudioProcessingService
             }
 
             token.Used = true;
-            await _db.SaveChangesAsync();
+            await _tokenRepository.UpdateAsync(token.TokenId.ToString(), token);
             return (true, errors);
         }
         catch (Exception ex)
@@ -167,7 +207,12 @@ public class AudioProcessingService
         }
     }
 
-    public async Task<Title> ProcessTitleAsync(string titleName, string? description, List<string> phraseStrings, Language detectedLanguage)
+    public async Task<Title> ProcessTitleAsync(
+        string titleName, 
+        string? description, 
+        List<string> phraseStrings, 
+        Language detectedLanguage,
+        CancellationToken token = default)
     {
         try
         {
@@ -180,16 +225,14 @@ public class AudioProcessingService
                 OriginalLanguageId = languageId,
             };
 
-            _db.Titles.Add(newTitle);
-            await _db.SaveChangesAsync();
+            var dbTitle = await _titleRepository.CreateAsync(newTitle, token);
 
             var phrases = phraseStrings.Select(_ => new Phrase
             {
                 TitleId = newTitle.TitleId,
             }).ToList();
 
-            _db.Phrases.AddRange(phrases);
-            await _db.SaveChangesAsync();
+            phrases = await _phraseRepository.CreateManyAsync(phrases, token);
 
             var phraseTranslates = phrases.Select((phrase, index) => new Translate
             {
@@ -199,10 +242,9 @@ public class AudioProcessingService
                 PhraseHint = StringUtils.MakeHintString(phraseStrings[index])
             }).ToList();
 
-            _db.Translates.AddRange(phraseTranslates);
-            await _db.SaveChangesAsync();
+            await _translateRepository.CreateManyAsync(phraseTranslates, token);
 
-            return newTitle;
+            return dbTitle;
         }
         catch (Exception ex)
         {
@@ -216,14 +258,15 @@ public class AudioProcessingService
         int fromVoiceId,
         Title title,
         int pauseDuration,
-        string pattern)
+        string pattern,
+        CancellationToken token = default)
     {
         var errors = new List<string>();
     
         try
         {
             // Get voices and validate them
-            var (toVoice, fromVoice) = await GetVoicesAsync(toVoiceId, fromVoiceId);
+            var (toVoice, fromVoice) = await GetVoicesAsync(toVoiceId, fromVoiceId, token);
             if (toVoice == null || fromVoice == null)
             {
                 errors.Add("Invalid voice selection.");
@@ -231,16 +274,16 @@ public class AudioProcessingService
             }
 
             // Get languages
-            var (toLang, fromLang) = await GetLanguagesAsync(toVoice, fromVoice);
-            if (toLang == null || fromLang == null)
+            var (toLang, fromLang, languageErrors) = await GetLanguagesAsync(toVoice, fromVoice, token);
+            if (languageErrors.Any())
             {
-                errors.Add("Invalid language selection.");
+                errors.AddRange(languageErrors);
                 return (null, errors);
             }
 
             // Process translations
             var (translationSuccess, translationErrors) = await ProcessTranslationsAsync(
-                title, toVoice, fromVoice, toLang, fromLang);
+                title, toVoice, fromVoice, toLang!, fromLang!);
 
             if (!translationSuccess)
             {

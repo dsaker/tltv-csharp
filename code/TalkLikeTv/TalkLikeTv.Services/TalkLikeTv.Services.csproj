@@ -9,6 +9,7 @@
     <ItemGroup>
         <ProjectReference Include="..\TalkLikeTv.Utilities\TalkLikeTv.Utilities.csproj"/>
         <ProjectReference Include="..\TalkLikeTv.EntityModels\TalkLikeTv.EntityModels.csproj"/>
+        <ProjectReference Include="..\TalkLikeTv.Repositories\TalkLikeTv.Repositories.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

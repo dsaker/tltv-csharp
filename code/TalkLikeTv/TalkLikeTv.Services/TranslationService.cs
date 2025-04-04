@@ -54,14 +54,18 @@ public class TranslationService
                 errors.Add("Phrases count must equal title.NumPhrases.");
                 return (false, errors);
             }
+            
+            var originalLanguage = await _db.Languages
+                .AsNoTracking()
+                .FirstOrDefaultAsync(l => l.LanguageId == p.Title.OriginalLanguageId);
 
-            if (p.Title.OriginalLanguage == null)
+            if (originalLanguage == null)
             {
-                errors.Add("Title.OriginalLanguage is null.");
+                errors.Add("Original language not found.");
                 return (false, errors);
             }
 
-            var dbFromTranslates = await GetOrCreateTranslationsAsync(dbPhrases, p.Title.OriginalLanguage.Tag, p.FromLang, originalLanguageTranslations);
+            var dbFromTranslates = await GetOrCreateTranslationsAsync(dbPhrases, originalLanguage.Tag, p.FromLang, originalLanguageTranslations);
 
             var dbToTranslates = await GetOrCreateTranslationsAsync(dbPhrases, p.FromLang.Tag, p.ToLang, dbFromTranslates);
 

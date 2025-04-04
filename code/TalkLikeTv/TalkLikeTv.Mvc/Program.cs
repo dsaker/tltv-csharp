@@ -4,6 +4,9 @@ using TalkLikeTv.Mvc.Configurations;
 using TalkLikeTv.Services;
 using AspNetCoreRateLimit;
 using DotEnv.Core;
+using Microsoft.Extensions.Caching.Hybrid;
+using TalkLikeTv.Repositories; // To use HybridCacheEntryOptions.
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,6 +28,12 @@ builder.Services.AddSingleton<AzureTextToSpeechService>();
 builder.Services.AddSingleton<AzureTranslateService>();
 builder.Services.AddScoped<AudioFileService>();
 builder.Services.AddScoped<AudioProcessingService>();
+builder.Services.AddScoped<ITitleRepository, TitleRepository>();
+builder.Services.AddScoped<ILanguageRepository, LanguageRepository>();
+builder.Services.AddScoped<IVoiceRepository, VoiceRepository>();
+builder.Services.AddScoped<IPhraseRepository, PhraseRepository>();
+builder.Services.AddScoped<ITokenRepository, TokenRepository>();
+builder.Services.AddScoped<ITranslateRepository, TranslateRepository>();
 
 // Add rate limiting services
 builder.Services.AddMemoryCache();
@@ -48,6 +57,19 @@ else
     sql.Password = Environment.GetEnvironmentVariable("MY_SQL_PWD");
     builder.Services.AddTalkliketvContext(sql.ConnectionString);
 }
+
+#pragma warning disable EXTEXP0018
+
+builder.Services.AddHybridCache(options =>
+{
+    options.DefaultEntryOptions = new HybridCacheEntryOptions
+    {
+        Expiration = TimeSpan.FromSeconds(120),
+        LocalCacheExpiration = TimeSpan.FromSeconds(60)
+    };
+});
+
+#pragma warning restore EXTEXP0018
 
 var app = builder.Build();
 

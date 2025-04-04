@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using TalkLikeTv.EntityModels;
 using Microsoft.Extensions.Configuration;
+using TalkLikeTv.Repositories;
 
 namespace TalkLikeTv.Services;
 
@@ -10,19 +10,19 @@ public class AudioFileService
 {
     private readonly ILogger<AudioFileService> _logger;
     private readonly string _baseDir;
-    private readonly TalkliketvContext _db;
     private readonly PhraseService _phraseService;
+    private readonly IPhraseRepository _phraseRepository;
     private readonly int _maxPhrases;
 
     public AudioFileService(
         ILogger<AudioFileService> logger, 
-        TalkliketvContext db, 
         PhraseService phraseService,
+        IPhraseRepository phraseRepository,
         IConfiguration configuration)
     {
         _logger = logger;
-        _db = db;
         _phraseService = phraseService;
+        _phraseRepository = phraseRepository;
         _maxPhrases = configuration.GetValue<int>("SharedSettings:MaxPhrases");
         _baseDir = configuration.GetValue<string>("SharedSettings:BaseDir") ?? throw new InvalidOperationException("BaseDir is not configured.");
     }
@@ -92,7 +92,7 @@ public class AudioFileService
         public List<string> Errors { get; set; } = [];
     }
 
-    public async Task<AudioFileResult> BuildAudioFilesAsync(BuildAudioFilesParams parameters)
+    public async Task<AudioFileResult> BuildAudioFilesAsync(BuildAudioFilesParams parameters, CancellationToken cancellationToken = default)
     {
         var result = new AudioFileResult();
         try
@@ -104,8 +104,8 @@ public class AudioFileService
                 result.Errors.Add($"Pattern not found: {parameters.Pattern}");
                 return result;
             }
-
-            var phrases = await _db.Phrases.Where(ph => ph.TitleId == parameters.Title.TitleId).ToListAsync();
+            var phrases = await _phraseRepository.GetPhrasesByTitleIdAsync(parameters.Title.TitleId, cancellationToken);
+            //var phrases = await _db.Phrases.Where(ph => ph.TitleId == parameters.Title.TitleId).ToListAsync();
             var phraseIdMapping = new Dictionary<int, int>();
 
             for (var i = 1; i < phrases.Count + 1; i++)

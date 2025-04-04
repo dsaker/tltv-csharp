@@ -1,38 +1,43 @@
 using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using TalkLikeTv.EntityModels;
-using TalkLikeTv.Mvc.Configurations;
 using TalkLikeTv.Mvc.Models;
 using TalkLikeTv.Services;
 using Exception = System.Exception;
+using TalkLikeTv.Repositories;
 
 namespace TalkLikeTv.Mvc.Controllers;
 
 public class AudioController : Controller
 {
     private readonly ILogger<AudioController> _logger;
-    private readonly TalkliketvContext _db;
     private readonly TokenService _tokenService;
     private readonly AudioProcessingService _audioProcessingService;
     private readonly AudioFileService _audioFileService;
     private readonly IWebHostEnvironment _env;
+    private readonly ILanguageRepository _languageRepository;
+    private readonly IVoiceRepository _voiceRepository;
+    private readonly ITitleRepository _titleRepository;
     
     public AudioController(
         ILogger<AudioController> logger,
-        TalkliketvContext db,
         TokenService tokenService,
         AudioProcessingService audioProcessingService,
         AudioFileService audioFileService,
+        ILanguageRepository languageRepository,
+        IVoiceRepository voiceRepository,
+        ITitleRepository titleRepository,
         IWebHostEnvironment env)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _db = db ?? throw new ArgumentNullException(nameof(db));
-        _tokenService = tokenService ?? throw new ArgumentNullException(nameof(tokenService));
-        _audioProcessingService = audioProcessingService ?? throw new ArgumentNullException(nameof(audioProcessingService));
-        _audioFileService = audioFileService ?? throw new ArgumentNullException(nameof(audioFileService));
+        _logger = logger;
+        _tokenService = tokenService;
+        _audioProcessingService = audioProcessingService;
+        _audioFileService = audioFileService;
         _env = env ?? throw new ArgumentNullException(nameof(env));
+        _languageRepository = languageRepository;
+        _voiceRepository = voiceRepository;
+        _titleRepository = titleRepository;
     }
     
     [HttpGet]
@@ -52,10 +57,10 @@ public class AudioController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateTitle(IFormCollection form)
     {
-        var (formModel, errorResult) = ValidateCreateTitleFormModel(form);
+        var (formModel, errorResult) = await ValidateCreateTitleFormModel(form);
         if (errorResult != null)
         {
-            return await errorResult;
+            return errorResult;
         }
 
         try
@@ -68,7 +73,7 @@ public class AudioController : Controller
             }
 
             // Get the result object from ExtractAndValidatePhraseStrings
-            var result = _audioFileService.ExtractAndValidatePhraseStrings(formModel!.File!);
+            var result = _audioFileService.ExtractAndValidatePhraseStrings(formModel.File!);
             if (result.Errors.Count > 0)
             {
                 foreach (var error in result.Errors)
@@ -85,15 +90,18 @@ public class AudioController : Controller
             }
 
             // Detect language
-            var detectedLanguage = await _audioProcessingService.DetectLanguageAsync(phraseStrings, ModelState);
-            if (detectedLanguage == null)
+            var (detectedLang, detectionErrors) = await _audioProcessingService.DetectLanguageAsync(phraseStrings, HttpContext.RequestAborted);
+            if (detectedLang == null || detectionErrors.Any())
             {
-                return Problem(detail: "Language detection failed.", statusCode: StatusCodes.Status500InternalServerError);
+                string errorDetails = detectionErrors.Any() 
+                    ? string.Join("; ", detectionErrors)
+                    : "Language detection failed.";
+                return Problem(detail: errorDetails, statusCode: StatusCodes.Status500InternalServerError);
             }
 
             // Process title and create DB objects
             var newTitle = await _audioProcessingService.ProcessTitleAsync(
-                formModel!.TitleName!, formModel.Description, phraseStrings, detectedLanguage);
+                formModel.TitleName!, formModel.Description, phraseStrings, detectedLang);
 
             // Process audio
             var (zipFilePath, errors) = await _audioProcessingService.ProcessAudioRequestAsync(
@@ -147,8 +155,21 @@ public class AudioController : Controller
     
     private async Task<ViewResult> CreateTitleErrorView(CreateTitleFormModel formModel)
     {
-        var toVoice = await _db.Voices.SingleOrDefaultAsync(v => v.VoiceId == formModel.ToVoiceId);
-        var fromVoice = await _db.Voices.SingleOrDefaultAsync(v => v.VoiceId == formModel.FromVoiceId);
+        Voice? toVoice = null;
+        if (formModel.ToVoiceId.HasValue)
+        {
+            toVoice = await _voiceRepository.RetrieveAsync(
+                formModel.ToVoiceId.Value.ToString(), 
+                HttpContext.RequestAborted);
+        }
+        
+        Voice? fromVoice = null;
+        if (formModel.ToVoiceId.HasValue)
+        {
+            fromVoice = await _voiceRepository.RetrieveAsync(
+                formModel.ToVoiceId.Value.ToString(), 
+                HttpContext.RequestAborted);
+        }
         
         if (toVoice == null || fromVoice == null)
         {
@@ -173,7 +194,7 @@ public class AudioController : Controller
         return View(model);
     }
     
-    private (CreateTitleFormModel? formModel, Task<ViewResult>? errorResult) ValidateCreateTitleFormModel(IFormCollection form)
+    private async Task<(CreateTitleFormModel? formModel, ViewResult? errorResult)> ValidateCreateTitleFormModel(IFormCollection form)
     {
         if (!int.TryParse(form["PauseDuration"], out var pauseDuration))
         {
@@ -193,24 +214,24 @@ public class AudioController : Controller
         var formModel = new CreateTitleFormModel(toVoiceId, fromVoiceId, pauseDuration, form["Pattern"], form["Token"], form["TitleName"], form["Description"], form.Files["File"]);
         if (!TryValidateModel(formModel) || !ModelState.IsValid)
         {
-            return (null, CreateTitleErrorView(formModel));
+            return (null, await CreateTitleErrorView(formModel));
         }
 
         // Check if TitleName is unique
-        if (_db.Titles.Any(t => t.TitleName == formModel.TitleName))
+        if (await _titleRepository.RetrieveByNameAsync(formModel.TitleName!, HttpContext.RequestAborted) != null)
         {
             ModelState.AddModelError("", "Title name must be unique.");
-            return (null, CreateTitleErrorView(formModel));
+            return (null, await CreateTitleErrorView(formModel));
         }
         
         return (formModel, null);
     }
     
     [HttpGet]
-    public IActionResult ChooseAudio(int? titleId)
+    public async Task<IActionResult> ChooseAudio(int? titleId)
     {
         var model = new ChooseAudioViewModel(
-            _db.Languages.OrderBy(l => l.Name).ThenBy(l => l.NativeName),
+            await _languageRepository.RetrieveAllAsync(),
             new ChooseAudioFormModel(titleId, null, null, null, null),
             HasErrors: false,
             ValidationErrors: []
@@ -229,36 +250,29 @@ public class AudioController : Controller
         
         if (ModelState.IsValid)
         {
-            var dbToVoice = await _db.Voices
-                .Include(v => v.Personalities)
-                .Include(v => v.Styles)
-                .Include(v => v.Scenarios)
-                .SingleOrDefaultAsync(v => v.VoiceId == modelIn.ToVoice);
-            var dbFromVoice = await _db.Voices
-                .Include(v => v.Personalities)
-                .Include(v => v.Styles)
-                .Include(v => v.Scenarios)
-                .SingleOrDefaultAsync(v => v.VoiceId == modelIn.FromVoice);
-        
-            if (dbToVoice == null || dbFromVoice == null)
+            var dbVoices = await _voiceRepository.RetrieveAllAsync();
+            var toVoice = dbVoices.FirstOrDefault(v => v.VoiceId == modelIn.ToVoice);
+            var fromVoice = dbVoices.FirstOrDefault(v => v.VoiceId == modelIn.FromVoice);
+
+            if (toVoice != null && fromVoice != null)
             {
-                ModelState.AddModelError("", "Invalid voice selection.");
-                var errorModel = new ChooseAudioViewModel(
-                    _db.Languages.OrderBy(l => l.Name).ThenBy(l => l.NativeName),
-                    modelIn,
-                   !ModelState.IsValid,
-                    ModelState.Values
-                        .SelectMany(state => state.Errors)
-                        .Select(error => error.ErrorMessage)
-                );
-                return View(errorModel);
+                return CreateTitle(toVoice, fromVoice, modelIn.PauseDuration ?? 0, modelIn.Pattern ?? "");
             }
-            
-            return CreateTitle(dbToVoice, dbFromVoice, modelIn.PauseDuration ?? 0, modelIn.Pattern ?? "");
+
+            ModelState.AddModelError("", "Invalid voice selection.");
+            var errorModel = new ChooseAudioViewModel(
+                await _languageRepository.RetrieveAllAsync(),
+                modelIn,
+               !ModelState.IsValid,
+                ModelState.Values
+                    .SelectMany(state => state.Errors)
+                    .Select(error => error.ErrorMessage)
+            );
+            return View(errorModel);
         }
 
         var model = new ChooseAudioViewModel(
-            _db.Languages.OrderBy(l => l.Name).ThenBy(l => l.NativeName),
+            await _languageRepository.RetrieveAllAsync(),
             modelIn,
             !ModelState.IsValid,
             ModelState.Values
@@ -277,17 +291,12 @@ public class AudioController : Controller
     
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult GetVoices([FromBody] GetVoicesRequest request)
+    public async Task<IActionResult> GetVoices([FromBody] GetVoicesRequest request)
     {
-        var dbVoices = _db.Voices
-            .AsSplitQuery()
-            .Include(v => v.Styles)
-            .Include(v => v.Scenarios)
-            .Include(v => v.Personalities)
-            .Where(v => v.LanguageId == request.SelectedLanguage)
-            .OrderBy(v => v.DisplayName); // Configure QuerySplittingBehavior to SplitQuery;
+        var dbVoices = await _voiceRepository.RetrieveAllAsync();
+        var filteredVoices = dbVoices.Where(v => v.LanguageId == request.SelectedLanguage); // Configure QuerySplittingBehavior to SplitQuery;
 
-        var voiceData = dbVoices
+        var voiceData = filteredVoices
             .Select(v => new {
                 v.VoiceId,
                 v.DisplayName,
@@ -301,8 +310,7 @@ public class AudioController : Controller
             })
             .ToList();
 
-        
-        // In your GetVoices method
+        // TODO cache modelVoices
         var modelVoices = voiceData
             .Select(v => {
                 var encoder = HtmlEncoder.Default;
