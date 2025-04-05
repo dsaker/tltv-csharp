@@ -127,7 +127,8 @@ public class AudioProcessingService
         Voice toVoice, 
         Voice fromVoice, 
         Language toLang, 
-        Language fromLang)
+        Language fromLang,
+        CancellationToken token = default)
     {
         try
         {
@@ -140,7 +141,7 @@ public class AudioProcessingService
                 FromLang = fromLang
             };
 
-            return await _translationService.ProcessTranslations(parameters);
+            return await _translationService.ProcessTranslations(parameters, token);
         }
         catch (Exception ex)
         {
@@ -283,7 +284,7 @@ public class AudioProcessingService
 
             // Process translations
             var (translationSuccess, translationErrors) = await ProcessTranslationsAsync(
-                title, toVoice, fromVoice, toLang!, fromLang!);
+                title, toVoice, fromVoice, toLang!, fromLang!, token);
 
             if (!translationSuccess)
             {

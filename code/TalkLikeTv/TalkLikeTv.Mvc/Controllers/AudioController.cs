@@ -66,7 +66,8 @@ public class AudioController : Controller
         try
         {
             // Validate token and file, get phrases
-            if (!_tokenService.CheckTokenStatus(formModel!.Token!))
+            var validToken = await _tokenService.CheckTokenStatus(formModel!.Token!);
+            if (!validToken)
             {
                 ModelState.AddModelError("", "Invalid token.");
                 return await CreateTitleErrorView(formModel);

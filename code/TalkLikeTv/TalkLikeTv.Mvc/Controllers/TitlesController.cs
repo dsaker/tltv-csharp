@@ -109,7 +109,8 @@ public class TitlesController : Controller
 
         try
         {
-            if (!_tokenService.CheckTokenStatus(formModel!.Token!))
+            var validToken = await _tokenService.CheckTokenStatus(formModel!.Token!);
+            if (!validToken)
             {
                 ModelState.AddModelError(string.Empty, "Invalid token");
                 return await AudioFromTitleErrorView(formModel);

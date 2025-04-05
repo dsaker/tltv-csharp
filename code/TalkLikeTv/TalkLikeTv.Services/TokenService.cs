@@ -1,27 +1,27 @@
 using System.Security.Cryptography;
 using System.Text;
-using TalkLikeTv.EntityModels;
+using TalkLikeTv.Repositories;
 using TalkLikeTv.Services.Exceptions;
 
 namespace TalkLikeTv.Services;
 
 public class TokenService
 {
-    private readonly TalkliketvContext _db;
+    private readonly ITokenRepository _tokenRepository;
 
-    public TokenService(TalkliketvContext db)
+    public TokenService(ITokenRepository tokenRepository)
     {
-        _db = db ?? throw new ArgumentNullException(nameof(db));
+        _tokenRepository = tokenRepository;
     }
     
-    public bool CheckTokenStatus(string token)
+    public async Task<bool> CheckTokenStatus(string token)
     {
         token = token ?? throw new ArgumentNullException(nameof(token));
 
         var tokenHash = SHA256.HashData(Encoding.UTF8.GetBytes(token));
         var hashString = Convert.ToHexStringLower(tokenHash);
 
-        var dbToken = _db.Tokens.FirstOrDefault(t => t.Hash == hashString);
+        var dbToken = await _tokenRepository.RetrieveByHashAsync(hashString);
         if (dbToken == null)
         {
             throw new TokenNotFoundException();

@@ -118,4 +118,11 @@ public class TranslateRepository : ITranslateRepository
 
         return translates;
     }
+    
+    public Task<List<Translate>> GetTranslatesByLanguageAndPhrasesAsync(int languageId, IEnumerable<int> phraseIds, CancellationToken token = default)
+    {
+        return _db.Translates
+            .Where(t => t.LanguageId == languageId && phraseIds.Contains(t.PhraseId))
+            .ToListAsync(token);
+    }
 }

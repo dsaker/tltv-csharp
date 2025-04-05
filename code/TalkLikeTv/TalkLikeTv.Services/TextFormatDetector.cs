@@ -2,7 +2,7 @@ using System.Text.RegularExpressions;
 
 namespace TalkLikeTv.Services;
 
-public partial class TextFormatDetector
+public static partial class TextFormatDetector
 {
     public enum TextFormat
     {

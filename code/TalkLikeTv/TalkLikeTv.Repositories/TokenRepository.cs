@@ -83,7 +83,7 @@ public class TokenRepository : ITokenRepository
         return true;
     }
     
-    public async Task<Token?> RetrieveByHashAsync(string hash, CancellationToken token = default)
+    public async Task<Token?> RetrieveByHashAsync(string hash, CancellationToken cancel = default)
     {
         if (string.IsNullOrEmpty(hash))
         {
@@ -94,7 +94,7 @@ public class TokenRepository : ITokenRepository
     
         return await _cache.GetOrCreateAsync(
             cacheKey,
-            async _ => await _db.Tokens.FirstOrDefaultAsync(t => t.Hash == hash, token),
-            cancellationToken: token);
+            async _ => await _db.Tokens.FirstOrDefaultAsync(t => t.Hash == hash, cancellationToken: cancel),
+            cancellationToken: cancel);
     }
 }
