@@ -1,4 +1,3 @@
-using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using Newtonsoft.Json;
@@ -23,6 +22,7 @@ public class AzureTranslateService
         }
 
     }
+    
     private async Task<string> DetectLanguageAsync(string textToDetect)
     {
         const string route = "/detect?api-version=3.0";

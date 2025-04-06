@@ -46,10 +46,12 @@ public class HomeController : Controller
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error processing file {FileName}", model.File?.FileName);
                 return BadRequest($"Something went wrong: {ex.Message}");
             }
         }
 
+        _logger.LogWarning("Index post action called with no file or invalid model state");
         ViewBag.Message = "No file selected.";
 
         return View("Index");

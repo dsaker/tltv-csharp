@@ -2,44 +2,47 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TalkLikeTv.EntityModels;
 using TalkLikeTv.Mvc.Models;
+using TalkLikeTv.Repositories;
 using TalkLikeTv.Services;
 
 namespace TalkLikeTv.Mvc.Controllers;
 
 public class TitlesController : Controller
 {
-    private readonly TalkliketvContext _db;
-    private static List<Language>? _cachedLanguages;
     private readonly ILogger<AudioController> _logger;
     private readonly AudioProcessingService _audioProcessingService;
     private readonly TokenService _tokenService;
+    private readonly ILanguageRepository _languageRepository;
+    private readonly ITitleRepository _titleRepository;
+    private readonly IVoiceRepository _voiceRepository;
     private readonly IWebHostEnvironment _env;
 
     public TitlesController(
         ILogger<AudioController> logger, 
-        TalkliketvContext db,
         AudioProcessingService audioProcessingService,
         TokenService tokenService,
+        ILanguageRepository languageRepository,
+        ITitleRepository titleRepository,
+        IVoiceRepository voiceRepository,
         IWebHostEnvironment env)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _db = db ?? throw new ArgumentNullException(nameof(db));
-        _audioProcessingService = audioProcessingService ?? throw new ArgumentNullException(nameof(audioProcessingService));
-        _tokenService = tokenService ?? throw new ArgumentNullException(nameof(tokenService));
+        _audioProcessingService = audioProcessingService;
+        _tokenService = tokenService;
+        _languageRepository = languageRepository;
+        _titleRepository = titleRepository;
+        _voiceRepository = voiceRepository;
         _env = env ?? throw new ArgumentNullException(nameof(env));
     }
 
     [HttpGet]
     public async Task<IActionResult> SearchTitles()
     {
-        _cachedLanguages ??= await _db.Languages
-                .Where(l => l.Titles.Any())
-                .OrderBy(l => l.Name)
-                .ToListAsync();
+        var languages = await _languageRepository.RetrieveAllAsync(HttpContext.RequestAborted);
 
         var model = new SearchTitlesViewModel
         {
-            TitleLanguages = _cachedLanguages
+            TitleLanguages = languages,
         };
 
         return View(model);
@@ -49,55 +52,32 @@ public class TitlesController : Controller
     public async Task<IActionResult> SearchTitles(SearchTitlesViewModel model)
     {
         const int pageSize = 10;
-        IQueryable<Title> query;
-
-        if (model.SearchType == "Language")
-        {
-            query = _db.Titles.Include(t => t.OriginalLanguage).Where(t => t.OriginalLanguageId == model.OriginalLanguageId);
-        }
-        else if (model.SearchType == "Keyword")
-        {
-            query = _db.Titles.Include(t => t.OriginalLanguage).Where(t => (t.TitleName).Contains(model.Keyword ?? "") || (t.Description ?? "").Contains(model.Keyword ?? ""));
-        }
-        else // Both
-        {
-            query = _db.Titles.Include(t => t.OriginalLanguage).Where(t => t.OriginalLanguageId == model.OriginalLanguageId && ((t.TitleName).Contains(model.Keyword ?? "") || (t.Description ?? "").Contains(model.Keyword ?? "")));
-        }
-
-        model.TotalPages = (int)Math.Ceiling(await query.CountAsync() / (double)pageSize);
-        model.Results = await query
-            .Skip((model.PageNumber - 1) * pageSize)
-            .Take(pageSize)
-            .OrderBy(t => t.Popularity)
-            .ToListAsync();
-
-        // Use cached languages for the dropdown
-        if (_cachedLanguages == null)
-        {
-            _cachedLanguages = await _db.Languages
-                .Where(l => l.Titles.Any())
-                .OrderBy(l => l.Name)
-                .ToListAsync();
-        }
-        model.TitleLanguages = _cachedLanguages;
-
+    
+        // Get search results with paging
+        var (titles, totalCount) = await _titleRepository.SearchTitlesAsync(
+            model.OriginalLanguageId,
+            model.Keyword,
+            model.SearchType,
+            model.PageNumber,
+            pageSize,
+            HttpContext.RequestAborted);
+    
+        // Calculate total pages
+        model.TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+        model.Results = titles;
+    
+        // Get languages for the dropdown
+        model.TitleLanguages = await _languageRepository.RetrieveAllAsync(HttpContext.RequestAborted);
+    
         return View(model);
     }
     
     [HttpGet]
     public async Task<IActionResult> AudioFromTitle(int titleId, int toVoiceId, int fromVoiceId, int pauseDuration, string pattern)
     {
-        var title = _db.Titles.SingleOrDefault(t => t.TitleId == titleId);
-        var toVoice = await _db.Voices
-            .Include(v => v.Personalities)
-            .Include(v => v.Styles)
-            .Include(v => v.Scenarios)
-            .SingleOrDefaultAsync(v => v.VoiceId == toVoiceId);
-        var fromVoice = await _db.Voices
-            .Include(v => v.Personalities)
-            .Include(v => v.Styles)
-            .Include(v => v.Scenarios)
-            .SingleOrDefaultAsync(v => v.VoiceId == fromVoiceId);
+        var title = await _titleRepository.RetrieveAsync(titleId.ToString(), HttpContext.RequestAborted);
+        var toVoice = await _voiceRepository.RetrieveAsync(toVoiceId.ToString(), HttpContext.RequestAborted);
+        var fromVoice = await _voiceRepository.RetrieveAsync(fromVoiceId.ToString(), HttpContext.RequestAborted);
         
         if (title == null || toVoice == null || fromVoice == null)
         {
@@ -129,16 +109,14 @@ public class TitlesController : Controller
 
         try
         {
-            if (!_tokenService.CheckTokenStatus(formModel!.Token!))
+            var validToken = await _tokenService.CheckTokenStatus(formModel!.Token!);
+            if (!validToken)
             {
                 ModelState.AddModelError(string.Empty, "Invalid token");
                 return await AudioFromTitleErrorView(formModel);
             }
 
-            var dbTitle = await _db.Titles
-                .Include(t => t.Phrases)
-                .Include(t => t.OriginalLanguage)
-                .SingleOrDefaultAsync(t => t.TitleId == formModel.TitleId);
+            var dbTitle = await _titleRepository.RetrieveAsync(formModel.TitleId.ToString()!, HttpContext.RequestAborted);
 
             if (dbTitle == null)
             {
@@ -191,21 +169,42 @@ public class TitlesController : Controller
         {
             _logger.LogError(ex, "An error occurred while saving changes to the database.");
             ModelState.AddModelError("", "An error occurred while saving changes to the database.");
-            return await AudioFromTitleErrorView(formModel);
+            return await AudioFromTitleErrorView(formModel!);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, ex.Message);
             ModelState.AddModelError("", ex.Message);
-            return await AudioFromTitleErrorView(formModel);
+            return await AudioFromTitleErrorView(formModel!);
         }
     }
     
     private async Task<ViewResult> AudioFromTitleErrorView(AudioFromTitleFormModel formModel)
     {
-        var toVoice = await _db.Voices.SingleOrDefaultAsync(v => v.VoiceId == formModel.ToVoiceId);
-        var fromVoice = await _db.Voices.SingleOrDefaultAsync(v => v.VoiceId == formModel.FromVoiceId);
-        var title = await _db.Titles.SingleOrDefaultAsync(t => t.TitleId == formModel.TitleId);
+        Voice? toVoice = null;
+        if (formModel.ToVoiceId.HasValue)
+        {
+            toVoice = await _voiceRepository.RetrieveAsync(
+                formModel.ToVoiceId.Value.ToString(),
+                HttpContext.RequestAborted);
+        }
+    
+        Voice? fromVoice = null;
+        if (formModel.FromVoiceId.HasValue)
+        {
+            fromVoice = await _voiceRepository.RetrieveAsync(
+                formModel.FromVoiceId.Value.ToString(),
+                HttpContext.RequestAborted);
+        }
+    
+        Title? title = null;
+        if (formModel.TitleId.HasValue)
+        {
+            title = await _titleRepository.RetrieveAsync(
+                formModel.TitleId.Value.ToString(),
+                HttpContext.RequestAborted);
+        }
+    
         if (toVoice == null || fromVoice == null)
         {
             ModelState.AddModelError("", "Invalid voice id.");
@@ -223,7 +222,7 @@ public class TitlesController : Controller
                 .Select(error => error.ErrorMessage)
         );
         return View(model);
-    }
+    }    
     
     private async Task<(AudioFromTitleFormModel? formModel, IActionResult? errorResult)> ValidateAudioFromTitleFormModel(IFormCollection form)
     {

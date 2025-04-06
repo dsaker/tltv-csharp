@@ -1,21 +1,30 @@
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using TalkLikeTv.EntityModels;
+using TalkLikeTv.Repositories;
 using TalkLikeTv.Utilities;
 
 namespace TalkLikeTv.Services;
 
 public class TranslationService
 {
-    private readonly TalkliketvContext _db;
     private readonly ILogger<TranslationService> _logger;
     private readonly string _baseDir;
+    private readonly ITranslateRepository _translateRepository;
+    private readonly IPhraseRepository _phraseRepository;
+    private readonly ILanguageRepository _languageRepository;
 
-    public TranslationService(TalkliketvContext db, ILogger<TranslationService> logger, IConfiguration configuration)
+    public TranslationService(
+        ILogger<TranslationService> logger, 
+        ITranslateRepository translateRepository,
+        IPhraseRepository phraseRepository,
+        ILanguageRepository languageRepository,
+        IConfiguration configuration)
     {
-        _db = db;
         _logger = logger;
+        _translateRepository = translateRepository;
+        _phraseRepository = phraseRepository;
+        _languageRepository = languageRepository;
         _baseDir = configuration.GetValue<string>("SharedSettings:BaseDir") ?? throw new InvalidOperationException("BaseDir is not configured.");
     }
     
@@ -28,16 +37,13 @@ public class TranslationService
         public required Language FromLang { get; set; }
     }
     
-    public async Task<(bool Success, List<string> Errors)> ProcessTranslations(ProcessTranslationsParams p)
+    public async Task<(bool Success, List<string> Errors)> ProcessTranslations(ProcessTranslationsParams p, CancellationToken cancellationToken)
     {
         var errors = new List<string>();
-    
+
         try
         {
-            var dbPhrases = await _db.Phrases
-                .AsNoTracking()
-                .Where(phrase => phrase.TitleId == p.Title.TitleId)
-                .ToListAsync();
+            var dbPhrases = await _phraseRepository.GetPhrasesByTitleIdAsync(p.Title.TitleId);
 
             if (dbPhrases.Count != p.Title.NumPhrases)
             {
@@ -45,24 +51,35 @@ public class TranslationService
                 return (false, errors);
             }
 
-            var originalLanguageTranslations = await _db.Translates
-                .Where(t => t.LanguageId == p.Title.OriginalLanguageId && dbPhrases.Select(p => p.PhraseId).Contains(t.PhraseId))
-                .ToListAsync();
+            if (p.Title.OriginalLanguageId == null)
+            {
+                errors.Add("Original language ID is null.");
+                return (false, errors);
+            }
+
+            // Convert nullable int to non-nullable for the repository call
+            int originalLanguageId = p.Title.OriginalLanguageId.Value;
+            
+            var phraseIds = dbPhrases.Select(ph => ph.PhraseId).ToList();
+            var originalLanguageTranslations = await _translateRepository.GetTranslatesByLanguageAndPhrasesAsync(
+                originalLanguageId, 
+                phraseIds);
 
             if (originalLanguageTranslations.Count != p.Title.NumPhrases)
             {
                 errors.Add("Phrases count must equal title.NumPhrases.");
                 return (false, errors);
             }
+            
+            var originalLanguage = await _languageRepository.RetrieveAsync(originalLanguageId.ToString(), cancellationToken);
 
-            if (p.Title.OriginalLanguage == null)
+            if (originalLanguage == null)
             {
-                errors.Add("Title.OriginalLanguage is null.");
+                errors.Add("Original language not found.");
                 return (false, errors);
             }
 
-            var dbFromTranslates = await GetOrCreateTranslationsAsync(dbPhrases, p.Title.OriginalLanguage.Tag, p.FromLang, originalLanguageTranslations);
-
+            var dbFromTranslates = await GetOrCreateTranslationsAsync(dbPhrases, originalLanguage.Tag, p.FromLang, originalLanguageTranslations);
             var dbToTranslates = await GetOrCreateTranslationsAsync(dbPhrases, p.FromLang.Tag, p.ToLang, dbFromTranslates);
 
             // Generate TTS audio files and save them to the specified directory
@@ -77,21 +94,21 @@ public class TranslationService
             errors.Add("An error occurred while processing translations.");
             return (false, errors);
         }
-    }
+    }    
     
     private async Task<List<Translate>> GetOrCreateTranslationsAsync(List<Phrase> dbPhrases, string fromLanguageTag, Language toLanguage, List<Translate> fromTranslates)
     {
-        var existingTranslations = await _db.Translates
-            .Where(t => t.LanguageId == toLanguage.LanguageId && dbPhrases.Select(p => p.PhraseId).Contains(t.PhraseId))
-            .ToListAsync();
+        var phraseIds = dbPhrases.Select(p => p.PhraseId).ToList();
+        var existingTranslations = await _translateRepository.GetTranslatesByLanguageAndPhrasesAsync(
+            toLanguage.LanguageId, 
+            phraseIds);
 
         if (existingTranslations.Count == dbPhrases.Count)
         {
             return existingTranslations;
         }
-        
+
         var translateStrings = fromTranslates.Select(t => t.Phrase).ToList();
-        
         var translatedPhrases = await new AzureTranslateService().TranslatePhrasesAsync(translateStrings, fromLanguageTag, toLanguage.Tag);
 
         var newTranslations = dbPhrases.Select((phrase, index) => new Translate
@@ -102,8 +119,8 @@ public class TranslationService
             PhraseHint = StringUtils.MakeHintString(translatedPhrases[index])
         }).ToList();
 
-        _db.Translates.AddRange(newTranslations);
-        await _db.SaveChangesAsync();
+        // Use the repository to create translations
+        await _translateRepository.CreateManyAsync(newTranslations);
 
         return newTranslations;
     }
