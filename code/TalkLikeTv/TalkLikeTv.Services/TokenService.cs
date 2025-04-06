@@ -14,7 +14,7 @@ public class TokenService
         _tokenRepository = tokenRepository;
     }
     
-    public async Task<bool> CheckTokenStatus(string token)
+    public async Task<bool> CheckTokenStatus(string token, CancellationToken cancellationToken = default)
     {
         token = token ?? throw new ArgumentNullException(nameof(token));
 

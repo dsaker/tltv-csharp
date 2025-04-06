@@ -19,12 +19,12 @@ public class TitleRepository : ITitleRepository
     _cache = hybridCache;
   }
 
-  public Task<Title[]> RetrieveAllAsync(CancellationToken token = default)
+  public Task<Title[]> RetrieveAllAsync(CancellationToken cancel = default)
   {
-    return _db.Titles.Include(t => t.OriginalLanguage).ToArrayAsync(token);
+    return _db.Titles.Include(t => t.OriginalLanguage).ToArrayAsync(cancel);
   }
 
-  public async Task<Title?> RetrieveAsync(string id, CancellationToken token = default)
+  public async Task<Title?> RetrieveAsync(string id, CancellationToken cancel = default)
     {
         if (!int.TryParse(id, out var titleId))
         {
@@ -33,73 +33,73 @@ public class TitleRepository : ITitleRepository
 
         return await _cache.GetOrCreateAsync(
             id,
-            async _ => await _db.Titles.FirstOrDefaultAsync(p => p.TitleId == titleId, token),
-            cancellationToken: token);
+            async _ => await _db.Titles.FirstOrDefaultAsync(p => p.TitleId == titleId, cancel),
+            cancellationToken: cancel);
     }
 
-    public async Task<Title> CreateAsync(Title title, CancellationToken token = default)
+    public async Task<Title> CreateAsync(Title title, CancellationToken cancel = default)
     {
         _db.Titles.Add(title);
-        await _db.SaveChangesAsync(token);
+        await _db.SaveChangesAsync(cancel);
 
         // Add to cache after successful save
-        await _cache.SetAsync(title.TitleId.ToString(), title, cancellationToken: token);
+        await _cache.SetAsync(title.TitleId.ToString(), title, cancellationToken: cancel);
 
         return title;
     }
 
-    public async Task<bool> UpdateAsync(string id, Title title, CancellationToken token = default)
+    public async Task<bool> UpdateAsync(string id, Title title, CancellationToken cancel = default)
     {
         if (!int.TryParse(id, out var titleId))
         {
             return false;
         }
 
-        var existingTitle = await _db.Titles.FirstOrDefaultAsync(p => p.TitleId == titleId, token);
+        var existingTitle = await _db.Titles.FirstOrDefaultAsync(p => p.TitleId == titleId, cancel);
         if (existingTitle == null)
         {
             return false;
         }
 
         _db.Entry(existingTitle).CurrentValues.SetValues(title);
-        await _db.SaveChangesAsync(token);
+        await _db.SaveChangesAsync(cancel);
 
         // Update cache
-        await _cache.SetAsync(id, title, cancellationToken: token);
+        await _cache.SetAsync(id, title, cancellationToken: cancel);
 
         return true;
     }
 
-    public async Task<bool> DeleteAsync(string id, CancellationToken token = default)
+    public async Task<bool> DeleteAsync(string id, CancellationToken cancel = default)
     {
         if (!int.TryParse(id, out var titleId))
         {
             return false;
         }
 
-        var title = await _db.Titles.FirstOrDefaultAsync(p => p.TitleId == titleId, token);
+        var title = await _db.Titles.FirstOrDefaultAsync(p => p.TitleId == titleId, cancel);
         if (title == null)
         {
             return false;
         }
 
         _db.Titles.Remove(title);
-        await _db.SaveChangesAsync(token);
+        await _db.SaveChangesAsync(cancel);
 
         // Remove from cache
-        await _cache.RemoveAsync(id, token);
+        await _cache.RemoveAsync(id, cancel);
 
         return true;
     }
   
   public async Task<Title?> RetrieveByNameAsync(string name,
-    CancellationToken token = default)
+    CancellationToken cancel = default)
   {
     return await _cache.GetOrCreateAsync(
       key: name, // Unique key to the cache entry.
       factory: async cancel => await _db.Titles
-        .FirstOrDefaultAsync(t => t.TitleName == name, token),
-      cancellationToken: token);
+        .FirstOrDefaultAsync(t => t.TitleName == name, cancel),
+      cancellationToken: cancel);
   }
   
   public async Task<(Title[] titles, int totalCount)> SearchTitlesAsync(
@@ -108,7 +108,7 @@ public class TitleRepository : ITitleRepository
       string searchType,
       int pageNumber,
       int pageSize,
-      CancellationToken token = default)
+      CancellationToken cancel = default)
   {
       IQueryable<Title> query = _db.Titles.Include(t => t.OriginalLanguage);
 
@@ -130,13 +130,13 @@ public class TitleRepository : ITitleRepository
               break;
       }
 
-      var totalCount = await query.CountAsync(token);
+      var totalCount = await query.CountAsync(cancel);
 
       var titles = await query
           .Skip((pageNumber - 1) * pageSize)
           .Take(pageSize)
           .OrderBy(t => t.Popularity)
-          .ToArrayAsync(token);
+          .ToArrayAsync(cancel);
 
       return (titles, totalCount);
   }

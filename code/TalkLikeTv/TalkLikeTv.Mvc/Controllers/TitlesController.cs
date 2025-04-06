@@ -38,7 +38,7 @@ public class TitlesController : Controller
     [HttpGet]
     public async Task<IActionResult> SearchTitles()
     {
-        var languages = await _languageRepository.RetrieveAllAsync();
+        var languages = await _languageRepository.RetrieveAllAsync(HttpContext.RequestAborted);
 
         var model = new SearchTitlesViewModel
         {
@@ -67,7 +67,7 @@ public class TitlesController : Controller
         model.Results = titles;
     
         // Get languages for the dropdown
-        model.TitleLanguages = await _languageRepository.RetrieveAllAsync();
+        model.TitleLanguages = await _languageRepository.RetrieveAllAsync(HttpContext.RequestAborted);
     
         return View(model);
     }
@@ -223,6 +223,7 @@ public class TitlesController : Controller
         );
         return View(model);
     }    
+    
     private async Task<(AudioFromTitleFormModel? formModel, IActionResult? errorResult)> ValidateAudioFromTitleFormModel(IFormCollection form)
     {
         if (!int.TryParse(form["PauseDuration"], out var pauseDuration))

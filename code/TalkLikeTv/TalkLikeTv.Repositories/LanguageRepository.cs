@@ -19,26 +19,26 @@ public class LanguageRepository : ILanguageRepository
     _cache = hybridCache;
   }
 
-  public Task<Language[]> RetrieveAllAsync()
+  public Task<Language[]> RetrieveAllAsync(CancellationToken token = default)
   {
-    return _db.Languages.OrderBy(l => l.Name).ThenBy(l => l.NativeName).ToArrayAsync();
+    return _db.Languages.OrderBy(l => l.Name).ThenBy(l => l.NativeName).ToArrayAsync(token);
   }
 
-  public async Task<Language?> RetrieveAsync(string id, CancellationToken token = default)
+  public async Task<Language?> RetrieveAsync(string id, CancellationToken cancel = default)
   {
     return await _cache.GetOrCreateAsync(
       id,
-      async _ => await _db.Languages.FirstOrDefaultAsync(l => l.LanguageId.ToString() == id, token),
-      cancellationToken: token);
+      async _ => await _db.Languages.FirstOrDefaultAsync(l => l.LanguageId.ToString() == id, cancel),
+      cancellationToken: cancel);
   }
   
-  public async Task<Language?> RetrieveByTagAsync(string tag, CancellationToken token = default)
+  public async Task<Language?> RetrieveByTagAsync(string tag, CancellationToken cancel = default)
   {
     var cacheKey = $"language_code_{tag}";
     
     return await _cache.GetOrCreateAsync(
       cacheKey,
-      async _ => await _db.Languages.FirstOrDefaultAsync(l => l.Tag == tag, token),
-      cancellationToken: token);
+      async _ => await _db.Languages.FirstOrDefaultAsync(l => l.Tag == tag, cancel),
+      cancellationToken: cancel);
   }
 }

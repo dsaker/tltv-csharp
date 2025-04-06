@@ -4,7 +4,7 @@ namespace TalkLikeTv.Repositories;
 
 public interface IPhraseRepository
 {
-    Task<List<Phrase>> GetPhrasesByTitleIdAsync(int titleId, CancellationToken token = default);
+    Task<List<Phrase>> GetPhrasesByTitleIdAsync(int titleId, CancellationToken cancel = default);
     Task<Phrase?> RetrieveAsync(string id, CancellationToken token = default);
     Task<Phrase> CreateAsync(Phrase phrase, CancellationToken token = default);
     Task<bool> UpdateAsync(string id, Phrase phrase, CancellationToken token = default);

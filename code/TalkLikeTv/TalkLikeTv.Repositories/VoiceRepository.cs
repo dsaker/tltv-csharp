@@ -29,7 +29,7 @@ public class VoiceRepository : IVoiceRepository
             .ToArrayAsync();;
     }
 
-    public async Task<Voice?> RetrieveAsync(string id, CancellationToken token = default)
+    public async Task<Voice?> RetrieveAsync(string id, CancellationToken cancel = default)
     {
         if (!int.TryParse(id, out var voiceId))
         {
@@ -38,7 +38,7 @@ public class VoiceRepository : IVoiceRepository
         
         return await _cache.GetOrCreateAsync(
             id,
-            async _ => await _db.Voices.FirstOrDefaultAsync(v => v.VoiceId == voiceId, token),
-            cancellationToken: token);
+            async _ => await _db.Voices.FirstOrDefaultAsync(v => v.VoiceId == voiceId, cancel),
+            cancellationToken: cancel);
     }
 }

@@ -41,14 +41,14 @@ public class AudioFileService
     
     public class BuildAudioFilesParams
     {
-        public required Title Title { get; set; }
-        public required Voice ToVoice { get; set; }
-        public required Voice FromVoice { get; set; }
-        public required Language ToLang { get; set; }
-        public required Language FromLang { get; set; }
-        public required int Pause { get; set; }
-        public required string Pattern { get; set; }
-        public required string TitleOutputPath { get; set; }
+        public required Title Title { get; init; }
+        public required Voice ToVoice { get; init; }
+        public required Voice FromVoice { get; init; }
+        public required Language ToLang { get; init; }
+        public required Language FromLang { get; init; }
+        public required int Pause { get; init; }
+        public required string Pattern { get; init; }
+        public required string TitleOutputPath { get; init; }
     }
     
     public class ExtractAndValidateResult

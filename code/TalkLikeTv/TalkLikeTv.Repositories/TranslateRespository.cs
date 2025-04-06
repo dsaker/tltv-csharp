@@ -19,12 +19,12 @@ public class TranslateRepository : ITranslateRepository
         _cache = hybridCache;
     }
 
-    public Task<Translate[]> RetrieveAllAsync(CancellationToken token = default)
+    public Task<Translate[]> RetrieveAllAsync(CancellationToken cancel = default)
     {
-        return _db.Translates.ToArrayAsync(token);
+        return _db.Translates.ToArrayAsync(cancel);
     }
 
-    public async Task<Translate?> RetrieveAsync(string phraseId, string languageId, CancellationToken token = default)
+    public async Task<Translate?> RetrieveAsync(string phraseId, string languageId, CancellationToken cancel = default)
     {
         if (!int.TryParse(phraseId, out var phraseIdInt) || !int.TryParse(languageId, out var languageIdInt))
         {
@@ -38,23 +38,23 @@ public class TranslateRepository : ITranslateRepository
             async _ => await _db.Translates
                 .Include(t => t.Language)
                 .Include(t => t.PhraseNavigation)
-                .FirstOrDefaultAsync(t => t.PhraseId == phraseIdInt && t.LanguageId == languageIdInt, token),
-            cancellationToken: token);
+                .FirstOrDefaultAsync(t => t.PhraseId == phraseIdInt && t.LanguageId == languageIdInt, cancel),
+            cancellationToken: cancel);
     }
 
-    public async Task<Translate> CreateAsync(Translate translate, CancellationToken token = default)
+    public async Task<Translate> CreateAsync(Translate translate, CancellationToken cancel = default)
     {
         _db.Translates.Add(translate);
-        await _db.SaveChangesAsync(token);
+        await _db.SaveChangesAsync(cancel);
 
         // Create composite cache key
         var cacheKey = $"translate_{translate.PhraseId}_{translate.LanguageId}";
-        await _cache.SetAsync(cacheKey, translate, cancellationToken: token);
+        await _cache.SetAsync(cacheKey, translate, cancellationToken: cancel);
 
         return translate;
     }
 
-    public async Task<bool> UpdateAsync(string phraseId, string languageId, Translate translate, CancellationToken token = default)
+    public async Task<bool> UpdateAsync(string phraseId, string languageId, Translate translate, CancellationToken cancel = default)
     {
         if (!int.TryParse(phraseId, out var phraseIdInt) || !int.TryParse(languageId, out var languageIdInt))
         {
@@ -62,7 +62,7 @@ public class TranslateRepository : ITranslateRepository
         }
 
         var existingTranslate = await _db.Translates.FirstOrDefaultAsync(
-            t => t.PhraseId == phraseIdInt && t.LanguageId == languageIdInt, token);
+            t => t.PhraseId == phraseIdInt && t.LanguageId == languageIdInt, cancel);
 
         if (existingTranslate == null)
         {
@@ -70,16 +70,16 @@ public class TranslateRepository : ITranslateRepository
         }
 
         _db.Entry(existingTranslate).CurrentValues.SetValues(translate);
-        await _db.SaveChangesAsync(token);
+        await _db.SaveChangesAsync(cancel);
 
         // Update cache with composite key
         var cacheKey = $"translate_{phraseIdInt}_{languageIdInt}";
-        await _cache.SetAsync(cacheKey, translate, cancellationToken: token);
+        await _cache.SetAsync(cacheKey, translate, cancellationToken: cancel);
 
         return true;
     }
 
-    public async Task<bool> DeleteAsync(string phraseId, string languageId, CancellationToken token = default)
+    public async Task<bool> DeleteAsync(string phraseId, string languageId, CancellationToken cancel = default)
     {
         if (!int.TryParse(phraseId, out var phraseIdInt) || !int.TryParse(languageId, out var languageIdInt))
         {
@@ -87,7 +87,7 @@ public class TranslateRepository : ITranslateRepository
         }
 
         var translate = await _db.Translates.FirstOrDefaultAsync(
-            t => t.PhraseId == phraseIdInt && t.LanguageId == languageIdInt, token);
+            t => t.PhraseId == phraseIdInt && t.LanguageId == languageIdInt, cancel);
 
         if (translate == null)
         {
@@ -95,34 +95,34 @@ public class TranslateRepository : ITranslateRepository
         }
 
         _db.Translates.Remove(translate);
-        await _db.SaveChangesAsync(token);
+        await _db.SaveChangesAsync(cancel);
 
         // Remove from cache using composite key
         var cacheKey = $"translate_{phraseIdInt}_{languageIdInt}";
-        await _cache.RemoveAsync(cacheKey, token);
+        await _cache.RemoveAsync(cacheKey, cancel);
 
         return true;
     }
     
-    public async Task<List<Translate>> CreateManyAsync(List<Translate> translates, CancellationToken token = default)
+    public async Task<List<Translate>> CreateManyAsync(List<Translate> translates, CancellationToken cancel = default)
     {
         _db.Translates.AddRange(translates);
-        await _db.SaveChangesAsync(token);
+        await _db.SaveChangesAsync(cancel);
 
         // Cache each individual translate using composite keys
         foreach (var translate in translates)
         {
             var cacheKey = $"translate_{translate.PhraseId}_{translate.LanguageId}";
-            await _cache.SetAsync(cacheKey, translate, cancellationToken: token);
+            await _cache.SetAsync(cacheKey, translate, cancellationToken: cancel);
         }
 
         return translates;
     }
     
-    public Task<List<Translate>> GetTranslatesByLanguageAndPhrasesAsync(int languageId, IEnumerable<int> phraseIds, CancellationToken token = default)
+    public Task<List<Translate>> GetTranslatesByLanguageAndPhrasesAsync(int languageId, IEnumerable<int> phraseIds, CancellationToken cancel = default)
     {
         return _db.Translates
             .Where(t => t.LanguageId == languageId && phraseIds.Contains(t.PhraseId))
-            .ToListAsync(token);
+            .ToListAsync(cancel);
     }
 }

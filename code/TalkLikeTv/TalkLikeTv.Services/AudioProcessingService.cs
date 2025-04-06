@@ -43,12 +43,12 @@ public class AudioProcessingService
         _audioOutputDir = configuration.GetValue<string>("SharedSettings:AudioOutputDir") ?? throw new InvalidOperationException("AudioOutputdir is not configured.");
     }
 
-    private async Task<(Voice?, Voice?)> GetVoicesAsync(int toVoiceId, int fromVoiceId, CancellationToken token = default)
+    private async Task<(Voice?, Voice?)> GetVoicesAsync(int toVoiceId, int fromVoiceId, CancellationToken cancel = default)
     {
         try
         {
-            var toVoice = await _voiceRepository.RetrieveAsync(toVoiceId.ToString(), token);
-            var fromVoice = await _voiceRepository.RetrieveAsync(fromVoiceId.ToString(), token);
+            var toVoice = await _voiceRepository.RetrieveAsync(toVoiceId.ToString(), cancel);
+            var fromVoice = await _voiceRepository.RetrieveAsync(fromVoiceId.ToString(), cancel);
             return (toVoice, fromVoice);
         }
         catch (Exception ex)
@@ -152,7 +152,8 @@ public class AudioProcessingService
 
     private async Task<AudioFileService.AudioFileResult> BuildAudioFilesAsync(
         Title title, Voice toVoice, Voice fromVoice, Language toLang, 
-        Language fromLang, int pauseDuration, string pattern)
+        Language fromLang, int pauseDuration, string pattern,
+        CancellationToken token = default)
     {
         var parameters = new AudioFileService.BuildAudioFilesParams
         {
@@ -166,7 +167,7 @@ public class AudioProcessingService
             TitleOutputPath = Path.Combine(_audioOutputDir, title.TitleName, fromVoice.ShortName, toVoice.ShortName)
         };
 
-        return await _audioFileService.BuildAudioFilesAsync(parameters);
+        return await _audioFileService.BuildAudioFilesAsync(parameters, token);
     }
 
     private FileInfo CreateZipFile(string titleName, string fromLangTag, string toLangTag, 

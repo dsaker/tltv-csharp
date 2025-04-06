@@ -15,7 +15,7 @@ public class TokenRepository : ITokenRepository
         _cache = hybridCache;
     }
 
-    public async Task<Token?> RetrieveAsync(string id, CancellationToken token = default)
+    public async Task<Token?> RetrieveAsync(string id, CancellationToken cancel = default)
     {
         if (!int.TryParse(id, out var tokenId))
         {
@@ -24,8 +24,8 @@ public class TokenRepository : ITokenRepository
 
         return await _cache.GetOrCreateAsync(
             id,
-            async _ => await _db.Tokens.FirstOrDefaultAsync(p => p.TokenId == tokenId, token),
-            cancellationToken: token);
+            async _ => await _db.Tokens.FirstOrDefaultAsync(p => p.TokenId == tokenId, cancel),
+            cancellationToken: cancel);
     }
 
     public async Task<Token> CreateAsync(Token token, CancellationToken cancel = default)
