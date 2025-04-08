@@ -31,28 +31,38 @@ public class HomeController : Controller
         {
             try
             {
-                //using var fileStream = model.File.OpenReadStream() as FileStream;
                 await using (var fileStream = model.File.OpenReadStream())
                 {
-                    var fileInfo = ParseService.ParseFile(fileStream, model.File.FileName, _sharedSettings.MaxPhrases);
+                    var parseResult = ParseService.ParseFile(fileStream, model.File.FileName, _sharedSettings.MaxPhrases);
 
-                    // Read the file content
-                    var fileBytes = await System.IO.File.ReadAllBytesAsync(fileInfo.FullName);
-                    var fileName = Path.GetFileName(fileInfo.FullName);
+                    if (!parseResult.Success)
+                    {
+                        ViewBag.Error = parseResult.ErrorMessage;
+                        return View("Index");
+                    }
 
-                    // Return the file as a response
+                    if (parseResult.File == null)
+                    {
+                        ViewBag.Error = "File not found.";
+                        return View("Index");
+                    }
+
+                    var fileBytes = await System.IO.File.ReadAllBytesAsync(parseResult.File.FullName);
+                    var fileName = Path.GetFileName(parseResult.File.FullName);
+
                     return File(fileBytes, "application/zip", fileName + ".zip");
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error processing file {FileName}", model.File?.FileName);
-                return BadRequest($"Something went wrong: {ex.Message}");
+                _logger.LogError("Error processing file {FileName}: {Exception}", model.File?.FileName, ex);
+                ViewBag.Error = $"Something went wrong: {ex.Message}";
+                return View("Index");
             }
         }
 
         _logger.LogWarning("Index post action called with no file or invalid model state");
-        ViewBag.Message = "No file selected.";
+        ViewBag.Error = "No file selected.";
 
         return View("Index");
     }

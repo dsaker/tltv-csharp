@@ -109,10 +109,10 @@ public class TitlesController : Controller
 
         try
         {
-            var validToken = await _tokenService.CheckTokenStatus(formModel!.Token!);
-            if (!validToken)
+            var tokenResult = await _tokenService.CheckTokenStatus(formModel!.Token!, HttpContext.RequestAborted);
+            if (!tokenResult.Success)
             {
-                ModelState.AddModelError(string.Empty, "Invalid token");
+                ModelState.AddModelError("", tokenResult.ErrorMessage ?? "Invalid token.");
                 return await AudioFromTitleErrorView(formModel);
             }
 

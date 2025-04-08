@@ -14,7 +14,7 @@
                 Search by Language
             </label>
             <label>
-                <input type="radio" name="SearchType" value="Keyword" onclick="toggleSearchType()" />
+                <input data-testid="SearchByKeyword" type="radio" name="SearchType" value="Keyword" onclick="toggleSearchType()" />
                 Search by Keyword
             </label>
             <label>
@@ -32,7 +32,7 @@
             <label asp-for="Keyword">Keyword</label>
             <input asp-for="Keyword" class="form-control short-input" />
         </div>
-        <button type="submit" class="btn btn-primary float-right">Search</button>
+        <button data-testid="SearchButton" type="submit" class="btn btn-primary float-right">Search</button>
     </form>
 </div>
 

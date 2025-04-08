@@ -14,24 +14,30 @@ public class TokenService
         _tokenRepository = tokenRepository;
     }
     
-    public async Task<bool> CheckTokenStatus(string token, CancellationToken cancellationToken = default)
+    public class TokenResult
+    {
+        public bool Success { get; set; }
+        public string? ErrorMessage { get; set; }
+    }
+
+    public async Task<TokenResult> CheckTokenStatus(string token, CancellationToken cancellationToken = default)
     {
         token = token ?? throw new ArgumentNullException(nameof(token));
 
         var tokenHash = SHA256.HashData(Encoding.UTF8.GetBytes(token));
         var hashString = Convert.ToHexStringLower(tokenHash);
 
-        var dbToken = await _tokenRepository.RetrieveByHashAsync(hashString);
+        var dbToken = await _tokenRepository.RetrieveByHashAsync(hashString, cancellationToken);
         if (dbToken == null)
         {
-            throw new TokenNotFoundException();
+            return new TokenResult { Success = false, ErrorMessage = "Token not found." };
         }
-        
+
         if (dbToken.Used)
         {
-            throw new InvalidOperationException("Token already used.");
+            return new TokenResult { Success = false, ErrorMessage = "Token already used." };
         }
-        
-        return true;
+
+        return new TokenResult { Success = true };
     }
 }

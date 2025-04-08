@@ -16,30 +16,32 @@ public partial class ParseService
     private static partial Regex SplitOnEndingPunctuation();
     private static string[] _splitOnEndingPunctuation(string input) => SplitOnEndingPunctuation().Split(input);
 
-    public static FileInfo ParseFile(Stream fileStream, string fileName, int maxPhrases)
+    public class ParseResult
     {
-        ArgumentNullException.ThrowIfNull(fileStream, nameof(fileStream));
-
-        Console.WriteLine($"File size: {fileStream.Length} bytes");
-
-        if (fileStream.Length > 8192*8)
+        public bool Success { get; set; }
+        public string? ErrorMessage { get; set; }
+        public FileInfo? File { get; set; }
+    }
+    
+    public static ParseResult ParseFile(Stream fileStream, string fileName, int maxPhrases)
+    {
+        if (fileStream == null)
         {
-            throw new Exception($"File too large ({fileStream.Length} > {8192*8} bytes)");
+            return new ParseResult { Success = false, ErrorMessage = "File stream is null." };
+        }
+
+        if (fileStream.Length > 8192 * 8)
+        {
+            return new ParseResult { Success = false, ErrorMessage = $"File too large ({fileStream.Length} > {8192 * 8} bytes)" };
         }
 
         var stringsList = _getLines(fileStream);
-
         var txtPath = Path.Combine("/tmp/ParseFile/", fileName);
-        
-        // Create outputs folder to hold all the txt files to zip
         Directory.CreateDirectory(txtPath);
-        // var filePath = Path.Combine(txtPath, "tooLongPhrases.txt");
-        // using var writer = new StreamWriter(filePath);
-        
+
         var tooLongPhrases = new List<string>();
-        for( var i=0; i < stringsList.Count; i++)
+        for (var i = 0; i < stringsList.Count; i++)
         {
-            // 128 is the max length of a phrase in db
             if (stringsList[i].Length > 128)
             {
                 tooLongPhrases.Add(stringsList[i]);
@@ -58,10 +60,9 @@ public partial class ParseService
         }
 
         var file = ZipDirService.ZipStringsList(stringsList, maxPhrases, txtPath, fileName);
-
-        return file;
+        return new ParseResult { Success = true, File = file };
     }
-
+    
     private static List<string> _getLines(Stream fileStream)
     {
         using var reader = new StreamReader(fileStream);

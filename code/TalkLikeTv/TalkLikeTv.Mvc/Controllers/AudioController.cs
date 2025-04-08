@@ -55,9 +55,10 @@ public class AudioController : Controller
 
         try
         {
-            if (!await _tokenService.CheckTokenStatus(formModel!.Token!, HttpContext.RequestAborted))
+            var tokenResult = await _tokenService.CheckTokenStatus(formModel!.Token!, HttpContext.RequestAborted);
+            if (!tokenResult.Success)
             {
-                ModelState.AddModelError("", "Invalid token.");
+                ModelState.AddModelError("", tokenResult.ErrorMessage ?? "Invalid token.");
                 return await CreateTitleErrorView(formModel);
             }
 

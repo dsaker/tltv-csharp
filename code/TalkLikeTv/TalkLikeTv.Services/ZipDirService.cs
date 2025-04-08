@@ -30,8 +30,9 @@ public static class ZipDirService
         }
         catch (Exception ex)
         {
-            Console.WriteLine("An error occurred while creating phrase files: " + ex.Message);
-            throw;
+            var errorMessage = "An error occurred while creating phrase files.";
+            Console.WriteLine($"{errorMessage} {ex.Message}");
+            throw new Exception(errorMessage, ex);
         }
     }
 
@@ -54,8 +55,9 @@ public static class ZipDirService
         }
         catch (Exception ex)
         {
-            Console.WriteLine("An error occurred: " + ex.Message);
-            throw;
+            var errorMessage = "An error occurred while creating the zip file.";
+            Console.WriteLine($"{errorMessage} {ex.Message}");
+            throw new Exception(errorMessage, ex);
         }
 
         return new FileInfo(zipFilePath);
