@@ -10,7 +10,7 @@ using TalkLikeTv.Repositories; // To use HybridCacheEntryOptions.
 
 
 var builder = WebApplication.CreateBuilder(args);
-
+builder.AddServiceDefaults();
 // Load environment variables from .env file
 new EnvLoader().Load();
 
@@ -40,6 +40,8 @@ else
 }
 
 var app = builder.Build();
+
+app.MapDefaultEndpoints();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

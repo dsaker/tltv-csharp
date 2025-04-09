@@ -16,6 +16,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TalkLikeTv.Repositories", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TalkLikeTv.WebUITests", "TalkLikeTv.WebUITests\TalkLikeTv.WebUITests.csproj", "{32744DF7-8AF9-4006-A490-5099C35518D0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TalkLikeTv.AppHost", "TalkLikeTv.AppHost\TalkLikeTv.AppHost.csproj", "{1C46B176-681F-4792-8850-1E088CA6D836}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TalkLikeTv.ServiceDefaults", "TalkLikeTv.ServiceDefaults\TalkLikeTv.ServiceDefaults.csproj", "{69E278A2-FCCE-47C1-8E57-325C802F64EB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -122,6 +126,30 @@ Global
 		{32744DF7-8AF9-4006-A490-5099C35518D0}.Release|x64.Build.0 = Release|Any CPU
 		{32744DF7-8AF9-4006-A490-5099C35518D0}.Release|x86.ActiveCfg = Release|Any CPU
 		{32744DF7-8AF9-4006-A490-5099C35518D0}.Release|x86.Build.0 = Release|Any CPU
+		{1C46B176-681F-4792-8850-1E088CA6D836}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1C46B176-681F-4792-8850-1E088CA6D836}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1C46B176-681F-4792-8850-1E088CA6D836}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{1C46B176-681F-4792-8850-1E088CA6D836}.Debug|x64.Build.0 = Debug|Any CPU
+		{1C46B176-681F-4792-8850-1E088CA6D836}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{1C46B176-681F-4792-8850-1E088CA6D836}.Debug|x86.Build.0 = Debug|Any CPU
+		{1C46B176-681F-4792-8850-1E088CA6D836}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1C46B176-681F-4792-8850-1E088CA6D836}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1C46B176-681F-4792-8850-1E088CA6D836}.Release|x64.ActiveCfg = Release|Any CPU
+		{1C46B176-681F-4792-8850-1E088CA6D836}.Release|x64.Build.0 = Release|Any CPU
+		{1C46B176-681F-4792-8850-1E088CA6D836}.Release|x86.ActiveCfg = Release|Any CPU
+		{1C46B176-681F-4792-8850-1E088CA6D836}.Release|x86.Build.0 = Release|Any CPU
+		{69E278A2-FCCE-47C1-8E57-325C802F64EB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{69E278A2-FCCE-47C1-8E57-325C802F64EB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{69E278A2-FCCE-47C1-8E57-325C802F64EB}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{69E278A2-FCCE-47C1-8E57-325C802F64EB}.Debug|x64.Build.0 = Debug|Any CPU
+		{69E278A2-FCCE-47C1-8E57-325C802F64EB}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{69E278A2-FCCE-47C1-8E57-325C802F64EB}.Debug|x86.Build.0 = Debug|Any CPU
+		{69E278A2-FCCE-47C1-8E57-325C802F64EB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{69E278A2-FCCE-47C1-8E57-325C802F64EB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{69E278A2-FCCE-47C1-8E57-325C802F64EB}.Release|x64.ActiveCfg = Release|Any CPU
+		{69E278A2-FCCE-47C1-8E57-325C802F64EB}.Release|x64.Build.0 = Release|Any CPU
+		{69E278A2-FCCE-47C1-8E57-325C802F64EB}.Release|x86.ActiveCfg = Release|Any CPU
+		{69E278A2-FCCE-47C1-8E57-325C802F64EB}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
