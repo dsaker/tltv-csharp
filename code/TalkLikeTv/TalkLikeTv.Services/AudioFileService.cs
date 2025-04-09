@@ -63,22 +63,22 @@ public class AudioFileService
 
         try
         {
-            var phraseStrings = _phraseService.GetPhraseStrings(file);
-            if (phraseStrings == null)
+            var phraseResult = _phraseService.GetPhraseStrings(file);
+            if (!phraseResult.Success)
             {
-                result.Errors.Add("Failed to extract phrases from the file.");
+                result.Errors.Add(phraseResult.ErrorMessage ?? "Failed to extract phrases from the file.");
                 return result;
             }
 
-            if (phraseStrings.Count > _maxPhrases)
+            if (phraseResult.Phrases == null || phraseResult.Phrases.Count > _maxPhrases)
             {
                 result.Errors.Add($"Phrase count exceeds the maximum of {_maxPhrases}.");
                 return result;
             }
 
-            result.PhraseStrings = phraseStrings;
+            result.PhraseStrings = phraseResult.Phrases;
         }
-        catch (InvalidDataException ex)
+        catch (Exception ex)
         {
             result.Errors.Add(ex.Message);
         }

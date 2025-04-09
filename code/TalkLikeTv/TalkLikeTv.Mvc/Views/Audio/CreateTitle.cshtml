@@ -8,7 +8,7 @@
 @if (Model.HasErrors)
 {
     <div id="error-messages">
-        @foreach (string errorMessage in Model.ValidationErrors)
+        @foreach (var errorMessage in Model.ValidationErrors)
         {
             <div class="alert alert-danger" role="alert">@errorMessage</div>
         }

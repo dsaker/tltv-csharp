@@ -11,6 +11,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\TalkLikeTv.ServiceDefaults\TalkLikeTv.ServiceDefaults.csproj" />
         <ProjectReference Include="..\TalkLikeTv.Services\TalkLikeTv.Services.csproj"/>
         <ProjectReference Include="..\TalkLikeTv.Utilities\TalkLikeTv.Utilities.csproj"/>
         <ProjectReference Include="..\TalkLikeTv.EntityModels\TalkLikeTv.EntityModels.csproj"/>
