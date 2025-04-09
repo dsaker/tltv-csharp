@@ -4,8 +4,7 @@ using Microsoft.Playwright;
 using Xunit;
 
 public class PlaywrightFixture : IAsyncLifetime
-{
-// Or make them nullable, which is more explicit about their initialization state:
+{ 
     private IPlaywright PlaywrightInstance { get; set; } = null!;
     public IBrowser Browser { get; private set; } = null!;
 

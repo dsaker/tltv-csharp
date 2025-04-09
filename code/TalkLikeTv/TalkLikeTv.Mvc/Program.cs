@@ -5,6 +5,7 @@ using TalkLikeTv.Services;
 using AspNetCoreRateLimit;
 using DotEnv.Core;
 using Microsoft.Extensions.Caching.Hybrid;
+using TalkLikeTv.Mvc.Extensions;
 using TalkLikeTv.Repositories; // To use HybridCacheEntryOptions.
 
 
@@ -16,29 +17,9 @@ new EnvLoader().Load();
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-// Register TokenService
-builder.Services.AddScoped<TokenService>();
-builder.Services.Configure<SharedSettings>(builder.Configuration.GetSection("SharedSettings"));
+// Add TalkLikeTv features
+builder.Services.AddTalkliketvFeatures(builder.Configuration);
 
-// Register Services
-builder.Services.AddSingleton<PatternService>();
-builder.Services.AddScoped<TranslationService>();
-builder.Services.AddSingleton<PhraseService>();
-builder.Services.AddSingleton<AzureTextToSpeechService>();
-builder.Services.AddSingleton<AzureTranslateService>();
-builder.Services.AddScoped<AudioFileService>();
-builder.Services.AddScoped<AudioProcessingService>();
-builder.Services.AddScoped<ITitleRepository, TitleRepository>();
-builder.Services.AddScoped<ILanguageRepository, LanguageRepository>();
-builder.Services.AddScoped<IVoiceRepository, VoiceRepository>();
-builder.Services.AddScoped<IPhraseRepository, PhraseRepository>();
-builder.Services.AddScoped<ITokenRepository, TokenRepository>();
-builder.Services.AddScoped<ITranslateRepository, TranslateRepository>();
-
-// Add rate limiting services
-builder.Services.AddMemoryCache();
-builder.Services.Configure<IpRateLimitOptions>(builder.Configuration.GetSection("IpRateLimiting"));
-builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
 builder.Services.AddInMemoryRateLimiting();
 
 var sqlServerConnection = builder.Configuration
@@ -57,19 +38,6 @@ else
     sql.Password = Environment.GetEnvironmentVariable("MY_SQL_PWD");
     builder.Services.AddTalkliketvContext(sql.ConnectionString);
 }
-
-#pragma warning disable EXTEXP0018
-
-builder.Services.AddHybridCache(options =>
-{
-    options.DefaultEntryOptions = new HybridCacheEntryOptions
-    {
-        Expiration = TimeSpan.FromSeconds(120),
-        LocalCacheExpiration = TimeSpan.FromSeconds(60)
-    };
-});
-
-#pragma warning restore EXTEXP0018
 
 var app = builder.Build();
 
