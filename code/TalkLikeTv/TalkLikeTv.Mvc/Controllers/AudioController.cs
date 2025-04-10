@@ -176,7 +176,7 @@ public class AudioController : Controller
 
         if (ModelState.IsValid)
         {
-            var dbVoices = await _voiceRepository.RetrieveAllAsync();
+            var dbVoices = await _voiceRepository.RetrieveAllAsync(HttpContext.RequestAborted);
             var toVoice = dbVoices.FirstOrDefault(v => v.VoiceId == modelIn.ToVoice);
             var fromVoice = dbVoices.FirstOrDefault(v => v.VoiceId == modelIn.FromVoice);
 
@@ -201,7 +201,7 @@ public class AudioController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> GetVoices([FromBody] GetVoicesRequest request)
     {
-        var dbVoices = await _voiceRepository.RetrieveAllAsync();
+        var dbVoices = await _voiceRepository.RetrieveAllAsync(HttpContext.RequestAborted);
         var filteredVoices = dbVoices.Where(v => v.LanguageId == request.SelectedLanguage);
 
         var voiceData = filteredVoices.Select(v => new {

@@ -20,6 +20,13 @@ namespace TalkLikeTv.UnitTests.Tests.WebApi
             _mockRepo = new Mock<ITitleRepository>();
             _mockValidationService = new Mock<ITitleValidationService>();
             _controller = new TitlesController(_mockRepo.Object, _mockValidationService.Object);
+            
+            // Set up HttpContext with CancellationToken
+            var httpContext = new DefaultHttpContext();
+            _controller.ControllerContext = new ControllerContext()
+            {
+                HttpContext = httpContext
+            };
         }
 
         [Fact]

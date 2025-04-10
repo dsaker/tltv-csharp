@@ -32,7 +32,7 @@ public class TitlesController : ControllerBase
     {
         if (string.IsNullOrWhiteSpace(originallanguageid))
         {
-            return await _repo.RetrieveAllAsync();
+            return await _repo.RetrieveAllAsync(HttpContext.RequestAborted);
         }
 
         if (!int.TryParse(originallanguageid, out var originalId))
@@ -41,7 +41,7 @@ public class TitlesController : ControllerBase
             return BadRequest($"Invalid originalLanguageId format: {originallanguageid}");
         }
 
-        return (await _repo.RetrieveAllAsync())
+        return (await _repo.RetrieveAllAsync(HttpContext.RequestAborted))
             .Where(title => title.OriginalLanguageId == originalId)
             .ToArray();
     }
@@ -65,7 +65,8 @@ public class TitlesController : ControllerBase
             keyword,
             searchType,
             pageNumber,
-            pageSize);
+            pageSize,
+            HttpContext.RequestAborted);
 
         var result = new PaginatedResult<Title>
         {
@@ -88,7 +89,7 @@ public class TitlesController : ControllerBase
     )]
     public async Task<IActionResult> GetTitle(string id)
     {
-        var title = await _repo.RetrieveAsync(id);
+        var title = await _repo.RetrieveAsync(id, HttpContext.RequestAborted);
         if (title == null)
         {
             return NotFound(); // 404 Resource not found.
@@ -117,7 +118,7 @@ public class TitlesController : ControllerBase
                 return BadRequest(errors);
             }
         
-            var addedTitle = await _repo.CreateAsync(t);
+            var addedTitle = await _repo.CreateAsync(t, HttpContext.RequestAborted);
         
             return CreatedAtRoute(
                 routeName: nameof(GetTitle),
@@ -143,13 +144,13 @@ public class TitlesController : ControllerBase
             return BadRequest(); // 400 Bad request.
         }
         
-        var existing = await _repo.RetrieveAsync(id);
+        var existing = await _repo.RetrieveAsync(id, HttpContext.RequestAborted);
         if (existing == null)
         {
             return NotFound(); // 404 Resource not found.
         }
         
-        await _repo.UpdateAsync(id, t);
+        await _repo.UpdateAsync(id, t, HttpContext.RequestAborted);
         return new NoContentResult(); // 204 No content.
     }
 
@@ -160,13 +161,13 @@ public class TitlesController : ControllerBase
     [ProducesResponseType(404)]
     public async Task<IActionResult> Delete(string id)
     {
-        var existing = await _repo.RetrieveAsync(id);
+        var existing = await _repo.RetrieveAsync(id, HttpContext.RequestAborted);
         if (existing == null)
         {
             return NotFound(); // 404 Resource not found.
         }
         
-        bool? deleted = await _repo.DeleteAsync(id);
+        bool? deleted = await _repo.DeleteAsync(id, HttpContext.RequestAborted);
         if (deleted.Value) // Short circuit AND.
         {
             return new NoContentResult(); // 204 No content.

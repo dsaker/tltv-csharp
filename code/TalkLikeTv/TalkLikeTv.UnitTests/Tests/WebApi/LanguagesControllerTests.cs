@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Microsoft.Extensions.Logging;
@@ -18,6 +19,13 @@ public class LanguagesControllerTests
         _mockRepo = new Mock<ILanguageRepository>();
         _mockLogger = new Mock<ILogger<LanguagesController>>();
         _controller = new LanguagesController(_mockRepo.Object, _mockLogger.Object);
+        
+        // Set up HttpContext with CancellationToken
+        var httpContext = new DefaultHttpContext();
+        _controller.ControllerContext = new ControllerContext()
+        {
+            HttpContext = httpContext
+        };
     }
 
     [Fact]

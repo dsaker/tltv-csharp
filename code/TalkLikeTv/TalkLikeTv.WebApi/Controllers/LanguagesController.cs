@@ -23,11 +23,11 @@ public class LanguagesController : ControllerBase
     [HttpGet]
     [ProducesResponseType(200, Type = typeof(IEnumerable<Language>))]
     [ProducesResponseType(500)]
-    public async Task<ActionResult<IEnumerable<Language>>> GetLanguages(CancellationToken cancel = default)
+    public async Task<ActionResult<IEnumerable<Language>>> GetLanguages()
     {
         try
         {
-            var languages = await _repo.RetrieveAllAsync(cancel);
+            var languages = await _repo.RetrieveAllAsync(HttpContext.RequestAborted);
             return Ok(languages);
         }
         catch (Exception ex)
@@ -42,11 +42,11 @@ public class LanguagesController : ControllerBase
     [ProducesResponseType(200, Type = typeof(Language))]
     [ProducesResponseType(404)]
     [ProducesResponseType(500)]
-    public async Task<IActionResult> GetLanguage(string id, CancellationToken cancel = default)
+    public async Task<IActionResult> GetLanguage(string id)
     {
         try
         {
-            var language = await _repo.RetrieveAsync(id, cancel);
+            var language = await _repo.RetrieveAsync(id, HttpContext.RequestAborted);
             if (language == null)
             {
                 return NotFound(); // 404 Resource not found
@@ -65,11 +65,11 @@ public class LanguagesController : ControllerBase
     [ProducesResponseType(200, Type = typeof(Language))]
     [ProducesResponseType(404)]
     [ProducesResponseType(500)]
-    public async Task<IActionResult> GetLanguageByTag(string code, CancellationToken cancel = default)
+    public async Task<IActionResult> GetLanguageByTag(string code)
     {
         try
         {
-            var language = await _repo.RetrieveByTagAsync(code, cancel);
+            var language = await _repo.RetrieveByTagAsync(code, HttpContext.RequestAborted);
             if (language == null)
             {
                 return NotFound(); // 404 Resource not found
