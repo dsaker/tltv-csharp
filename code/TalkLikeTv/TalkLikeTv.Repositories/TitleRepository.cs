@@ -92,18 +92,15 @@ public class TitleRepository : ITitleRepository
         return true;
     }
   
-  public async Task<Title?> RetrieveByNameAsync(string name,
-    CancellationToken cancel = default)
-  {
-    return await _cache.GetOrCreateAsync(
-      key: name, // Unique key to the cache entry.
-      factory: async cancel => await _db.Titles
-        .FirstOrDefaultAsync(t => t.TitleName == name, cancel),
-      cancellationToken: cancel);
-  }
+    public async Task<Title?> RetrieveByNameAsync(string name, 
+        CancellationToken cancel = default)
+    {
+        return await _db.Titles
+            .FirstOrDefaultAsync(t => t.TitleName == name, cancel);
+    }
   
   public async Task<(Title[] titles, int totalCount)> SearchTitlesAsync(
-      int? languageId,
+      string? languageId,
       string? keyword,
       string searchType,
       int pageNumber,
@@ -112,10 +109,16 @@ public class TitleRepository : ITitleRepository
   {
       IQueryable<Title> query = _db.Titles.Include(t => t.OriginalLanguage);
 
+      int? parsedLanguageId = null;
+      if (!string.IsNullOrEmpty(languageId) && int.TryParse(languageId, out var id))
+      {
+          parsedLanguageId = id;
+      }
+      
       switch (searchType)
       {
-          case "Language" when languageId.HasValue:
-              query = query.Where(t => t.OriginalLanguageId == languageId);
+          case "Language" when parsedLanguageId.HasValue:
+              query = query.Where(t => t.OriginalLanguageId == parsedLanguageId);
               break;
             
           case "Keyword" when !string.IsNullOrEmpty(keyword):
@@ -123,8 +126,8 @@ public class TitleRepository : ITitleRepository
                                        (t.Description ?? "").Contains(keyword));
               break;
             
-          case "Both" when languageId.HasValue && !string.IsNullOrEmpty(keyword):
-              query = query.Where(t => t.OriginalLanguageId == languageId &&
+          case "Both" when parsedLanguageId.HasValue && !string.IsNullOrEmpty(keyword):
+              query = query.Where(t => t.OriginalLanguageId == parsedLanguageId &&
                                        ((t.TitleName).Contains(keyword) ||
                                         (t.Description ?? "").Contains(keyword)));
               break;

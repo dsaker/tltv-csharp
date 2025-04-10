@@ -13,14 +13,17 @@ public partial class Title
     [Column("TitleID")]
     public int TitleId { get; set; }
 
-    [StringLength(64)]
+    [Required(ErrorMessage = "Title name is required")]
+    [StringLength(64, ErrorMessage = "Title name cannot exceed 64 characters")]
     public string TitleName { get; set; } = null!;
 
-    [StringLength(256)]
+    [StringLength(256, ErrorMessage = "Description cannot exceed 256 characters")]
     public string? Description { get; set; }
 
+    [Range(0, int.MaxValue, ErrorMessage = "Number of phrases must be non-negative")]
     public int NumPhrases { get; set; }
     
+    [Range(0, int.MaxValue, ErrorMessage = "Popularity must be non-negative")]
     public int Popularity { get; set; } = 0;
 
     [Column("OriginalLanguageID")]
