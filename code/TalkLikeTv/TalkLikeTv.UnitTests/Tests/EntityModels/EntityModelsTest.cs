@@ -1,6 +1,6 @@
 ﻿using TalkLikeTv.EntityModels; // To use TalkLikeTvContext.
 
-namespace TalkLikeTv.UnitTests;
+namespace TalkLikeTv.UnitTests.Tests.EntityModels;
 
 public class EntityModelTests
 {

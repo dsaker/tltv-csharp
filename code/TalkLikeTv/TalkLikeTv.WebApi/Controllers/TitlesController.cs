@@ -13,10 +13,10 @@ namespace TalkLikeTv.WebApi.Controllers;
 public class TitlesController : ControllerBase
 {
     private readonly ITitleRepository _repo;
-    private readonly TitleValidationService _validationService;
+    private readonly ITitleValidationService _validationService;
 
     // Constructor injects repository registered in Program.cs.
-    public TitlesController(ITitleRepository repo, TitleValidationService validationService)
+    public TitlesController(ITitleRepository repo, ITitleValidationService validationService)
     {
         _repo = repo;
         _validationService = validationService;

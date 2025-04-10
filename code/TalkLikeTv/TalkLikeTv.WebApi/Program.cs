@@ -34,6 +34,7 @@ builder.Services.AddControllers(options =>
 
 builder.Services.AddScoped<TitleValidationService>();
 builder.Services.AddScoped<ITitleRepository, TitleRepository>();
+builder.Services.AddScoped<ILanguageRepository, LanguageRepository>();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();

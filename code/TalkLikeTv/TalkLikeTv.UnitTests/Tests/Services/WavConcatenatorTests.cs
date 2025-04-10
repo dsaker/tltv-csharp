@@ -1,7 +1,7 @@
 using NAudio.Wave;
 using TalkLikeTv.Services;
 
-namespace TalkLikeTv.UnitTests.Services;
+namespace TalkLikeTv.UnitTests.Tests.Services;
 
 public class WavConcatenatorTests : IDisposable
 {
