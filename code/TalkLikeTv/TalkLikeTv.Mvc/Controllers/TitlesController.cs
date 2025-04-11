@@ -4,14 +4,15 @@ using TalkLikeTv.EntityModels;
 using TalkLikeTv.Mvc.Models;
 using TalkLikeTv.Repositories;
 using TalkLikeTv.Services;
+using TalkLikeTv.Services.Abstractions;
 
 namespace TalkLikeTv.Mvc.Controllers;
 
 public class TitlesController : Controller
 {
     private readonly ILogger<AudioController> _logger;
-    private readonly AudioProcessingService _audioProcessingService;
-    private readonly TokenService _tokenService;
+    private readonly IAudioProcessingService _audioProcessingService;
+    private readonly ITokenService _tokenService;
     private readonly ILanguageRepository _languageRepository;
     private readonly ITitleRepository _titleRepository;
     private readonly IVoiceRepository _voiceRepository;
@@ -19,8 +20,8 @@ public class TitlesController : Controller
 
     public TitlesController(
         ILogger<AudioController> logger, 
-        AudioProcessingService audioProcessingService,
-        TokenService tokenService,
+        IAudioProcessingService audioProcessingService,
+        ITokenService tokenService,
         ILanguageRepository languageRepository,
         ITitleRepository titleRepository,
         IVoiceRepository voiceRepository,
