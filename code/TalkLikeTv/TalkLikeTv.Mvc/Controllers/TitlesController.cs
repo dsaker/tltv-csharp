@@ -130,7 +130,8 @@ public class TitlesController : Controller
                 formModel.FromVoiceId ?? -99,
                 dbTitle,
                 formModel.PauseDuration ?? -99,
-                formModel.Pattern ?? "");
+                formModel.Pattern ?? "",
+                HttpContext.RequestAborted);
 
             if (errors.Any())
             {
@@ -153,7 +154,7 @@ public class TitlesController : Controller
             }
 
             // Mark token as used
-            var (markSuccess, markErrors) = await _audioProcessingService.MarkTokenAsUsedAsync(formModel.Token!);
+            var (markSuccess, markErrors) = await _audioProcessingService.MarkTokenAsUsedAsync(formModel.Token!, HttpContext.RequestAborted);
             if (markSuccess)
             {
                 return PhysicalFile(zipFilePath.FullName, "application/zip", zipFilePath.Name);

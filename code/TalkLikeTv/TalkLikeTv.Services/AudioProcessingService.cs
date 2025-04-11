@@ -179,7 +179,7 @@ public class AudioProcessingService : IAudioProcessingService
         return ZipDirService.CreateZipFile(outputPath, zipFileName);
     }
 
-    public async Task<(bool Success, List<string> Errors)> MarkTokenAsUsedAsync(string? tokenHash)
+    public async Task<(bool Success, List<string> Errors)> MarkTokenAsUsedAsync(string? tokenHash, CancellationToken cancellationToken = default)
     {
         var errors = new List<string>();
     
@@ -191,7 +191,7 @@ public class AudioProcessingService : IAudioProcessingService
                 return (false, errors);
             }
         
-            var token = await _tokenRepository.RetrieveByHashAsync(tokenHash);
+            var token = await _tokenRepository.RetrieveByHashAsync(tokenHash, cancellationToken);
             if (token == null)
             {
                 errors.Add("Invalid token.");
@@ -199,7 +199,7 @@ public class AudioProcessingService : IAudioProcessingService
             }
 
             token.Used = true;
-            await _tokenRepository.UpdateAsync(token.TokenId.ToString(), token);
+            await _tokenRepository.UpdateAsync(token.TokenId.ToString(), token, cancellationToken);
             return (true, errors);
         }
         catch (Exception ex)

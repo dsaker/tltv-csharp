@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using TalkLikeTv.EntityModels;
 using TalkLikeTv.Repositories;
 using TalkLikeTv.WebApi.Controllers;
+using TalkLikeTv.WebApi.Models;
 
 namespace TalkLikeTv.UnitTests.Tests.WebApi;
 
@@ -19,7 +20,7 @@ public class VoicesControllerTests
         _mockRepo = new Mock<IVoiceRepository>();
         _mockLogger = new Mock<ILogger<VoicesController>>();
         _controller = new VoicesController(_mockRepo.Object, _mockLogger.Object);
-        
+
         // Set up HttpContext with CancellationToken
         var httpContext = new DefaultHttpContext();
         _controller.ControllerContext = new ControllerContext()
@@ -69,21 +70,23 @@ public class VoicesControllerTests
         // Assert
         var statusCodeResult = Assert.IsType<ObjectResult>(result.Result);
         Assert.Equal(500, statusCodeResult.StatusCode);
-        Assert.Equal("An error occurred while processing your request.", statusCodeResult.Value);
+
+        var errorResponse = Assert.IsType<ErrorResponse>(statusCodeResult.Value);
+        Assert.Contains("An error occurred while processing your request.", errorResponse.Errors);
     }
 
     [Fact]
     public async Task GetVoice_ReturnsVoice_WhenFound()
     {
         // Arrange
-        var voice = new Voice 
-        { 
-            VoiceId = 1, 
-            DisplayName = "Male Voice", 
+        var voice = new Voice
+        {
+            VoiceId = 1,
+            DisplayName = "Male Voice",
             Platform = "Google",
             Gender = "Male"
         };
-        
+
         _mockRepo.Setup(repo => repo.RetrieveAsync("1", It.IsAny<CancellationToken>()))
                  .ReturnsAsync(voice);
 
@@ -106,7 +109,9 @@ public class VoicesControllerTests
         var result = await _controller.GetVoice("1");
 
         // Assert
-        Assert.IsType<NotFoundResult>(result);
+        var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
+        var errorResponse = Assert.IsType<ErrorResponse>(notFoundResult.Value);
+        Assert.Contains("Voice with ID 1 was not found.", errorResponse.Errors);
     }
 
     [Fact]
@@ -122,8 +127,10 @@ public class VoicesControllerTests
         // Assert
         var statusCodeResult = Assert.IsType<ObjectResult>(result);
         Assert.Equal(500, statusCodeResult.StatusCode);
-        Assert.Equal("An error occurred while processing your request.", statusCodeResult.Value);
-        
+
+        var errorResponse = Assert.IsType<ErrorResponse>(statusCodeResult.Value);
+        Assert.Contains("An error occurred while processing your request.", errorResponse.Errors);
+
         // Verify logger was called with correct parameters
         _mockLogger.Verify(
             x => x.Log(

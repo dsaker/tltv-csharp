@@ -42,7 +42,7 @@ public class TitlesController : ControllerBase
     // this will always return a list of titles (but it might be empty)
     [HttpGet]
     [ProducesResponseType(200, Type = typeof(IEnumerable<Title>))]
-    [ProducesResponseType(400)]
+    [ProducesResponseType(400, Type = typeof(ErrorResponse))]
     public async Task<ActionResult<IEnumerable<Title>>> GetTitles(string? originallanguageid)
     {
         if (string.IsNullOrWhiteSpace(originallanguageid))
@@ -52,8 +52,10 @@ public class TitlesController : ControllerBase
 
         if (!int.TryParse(originallanguageid, out var originalId))
         {
-            // Return BadRequest for invalid input instead of empty collection
-            return BadRequest($"Invalid originalLanguageId format: {originallanguageid}");
+            return BadRequest(new ErrorResponse
+            {
+                Errors = new[] { $"Invalid originalLanguageId format: {originallanguageid}" }
+            });
         }
 
         return (await _repo.RetrieveAllAsync(HttpContext.RequestAborted))
@@ -114,14 +116,17 @@ public class TitlesController : ControllerBase
 
     [HttpPost("fromFile")]
     [Consumes("multipart/form-data")]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Title))]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(200, Type = typeof(Title))]
+    [ProducesResponseType(400, Type = typeof(ErrorResponse))]
+    [ProducesResponseType(500, Type = typeof(ErrorResponse))]
     public async Task<IActionResult> CreateTitleFromFile([FromForm] CreateTitleFromFileApiModel model)
     {
         if (!ModelState.IsValid)
         {
-            return BadRequest(ModelState);
+            return BadRequest(new ErrorResponse
+            {
+                Errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
+            });
         }
 
         try
@@ -129,69 +134,88 @@ public class TitlesController : ControllerBase
             var tokenResult = await _tokenService.CheckTokenStatus(model.Token, HttpContext.RequestAborted);
             if (!tokenResult.Success)
             {
-                return BadRequest(new { error = tokenResult.ErrorMessage ?? "Invalid token." });
+                return BadRequest(new ErrorResponse
+                {
+                    Errors = new[] { tokenResult.ErrorMessage ?? "Invalid token." }
+                });
             }
 
             var result = _audioFileService.ExtractAndValidatePhraseStrings(model.File);
             if (result.Errors.Any())
             {
-                return BadRequest(new { errors = result.Errors });
+                return BadRequest(new ErrorResponse { Errors = result.Errors });
             }
 
             var phraseStrings = result.PhraseStrings;
             if (phraseStrings == null)
             {
-                return BadRequest(new { error = "Failed to extract phrase strings from the file." });
+                return BadRequest(new ErrorResponse
+                {
+                    Errors = new[] { "Failed to extract phrase strings from the file." }
+                });
             }
 
             var (detectedLang, detectionErrors) = await _audioProcessingService.DetectLanguageAsync(phraseStrings, HttpContext.RequestAborted);
             if (detectedLang == null || detectionErrors.Any())
             {
                 var errorDetails = detectionErrors.Any() ? string.Join("; ", detectionErrors) : "Language detection failed.";
-                return StatusCode(StatusCodes.Status500InternalServerError, new { error = errorDetails });
+                return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse
+                {
+                    Errors = new[] { errorDetails }
+                });
             }
 
             var newTitle = await _audioProcessingService.ProcessTitleAsync(model.TitleName, model.Description, phraseStrings, detectedLang, HttpContext.RequestAborted);
 
-            // Mark the token as used
             var (markSuccess, markErrors) = await _audioProcessingService.MarkTokenAsUsedAsync(model.Token);
             if (!markSuccess)
             {
-                return BadRequest(new { errors = markErrors });
+                return BadRequest(new ErrorResponse { Errors = markErrors });
             }
 
-            // Return the created title
             return Ok(newTitle);
         }
         catch (DbUpdateException ex)
         {
             _logger.LogError(ex, "Database error while processing title {TitleName}", model.TitleName);
-            return StatusCode(StatusCodes.Status500InternalServerError, new { error = "An error occurred while saving changes to the database." });
+            return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse
+            {
+                Errors = new[] { "An error occurred while saving changes to the database." }
+            });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error processing title {TitleName}: {ErrorMessage}", model.TitleName, ex.Message);
-            return StatusCode(StatusCodes.Status500InternalServerError, new { error = ex.Message });
+            return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse
+            {
+                Errors = new[] { ex.Message }
+            });
         }
     }
 
     [HttpPut("{id}")]
     [ProducesResponseType(204)]
-    [ProducesResponseType(400)]
-    [ProducesResponseType(404)]
+    [ProducesResponseType(400, Type = typeof(ErrorResponse))]
+    [ProducesResponseType(404, Type = typeof(ErrorResponse))]
     public async Task<IActionResult> Update(string id, [FromBody] Title t)
     {
         if (t.TitleId.ToString() != id) // Compare as string
         {
-            return BadRequest(); // 400 Bad request.
+            return BadRequest(new ErrorResponse
+            {
+                Errors = new[] { "The ID in the URL does not match the ID in the request body." }
+            });
         }
-        
+
         var existing = await _repo.RetrieveAsync(id, HttpContext.RequestAborted);
         if (existing == null)
         {
-            return NotFound(); // 404 Resource not found.
+            return NotFound(new ErrorResponse
+            {
+                Errors = new[] { $"Title with ID {id} was not found." }
+            });
         }
-        
+
         await _repo.UpdateAsync(id, t, HttpContext.RequestAborted);
         return new NoContentResult(); // 204 No content.
     }
@@ -199,23 +223,28 @@ public class TitlesController : ControllerBase
     // DELETE: api/titles/[id]
     [HttpDelete("{id}")]
     [ProducesResponseType(204)]
-    [ProducesResponseType(400)]
-    [ProducesResponseType(404)]
+    [ProducesResponseType(400, Type = typeof(ErrorResponse))]
+    [ProducesResponseType(404, Type = typeof(ErrorResponse))]
     public async Task<IActionResult> Delete(string id)
     {
         var existing = await _repo.RetrieveAsync(id, HttpContext.RequestAborted);
         if (existing == null)
         {
-            return NotFound(); // 404 Resource not found.
+            return NotFound(new ErrorResponse
+            {
+                Errors = new[] { $"Title with ID {id} was not found." }
+            });
         }
-        
+
         bool? deleted = await _repo.DeleteAsync(id, HttpContext.RequestAborted);
-        if (deleted.Value) // Short circuit AND.
+        if (deleted == true)
         {
             return new NoContentResult(); // 204 No content.
         }
-        
-        return BadRequest( // 400 Bad request.
-            $"Title {id} was found but failed to delete.");
+
+        return BadRequest(new ErrorResponse
+        {
+            Errors = new[] { $"Title {id} was found but failed to delete." }
+        });
     }
 }

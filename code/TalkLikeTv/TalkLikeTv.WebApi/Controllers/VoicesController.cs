@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using TalkLikeTv.EntityModels;
 using TalkLikeTv.Repositories;
+using TalkLikeTv.WebApi.Models;
 
 namespace TalkLikeTv.WebApi.Controllers;
 
@@ -22,7 +23,7 @@ public class VoicesController : ControllerBase
     // GET: api/voices
     [HttpGet]
     [ProducesResponseType(200, Type = typeof(IEnumerable<Voice>))]
-    [ProducesResponseType(500)]
+    [ProducesResponseType(500, Type = typeof(ErrorResponse))]
     public async Task<ActionResult<IEnumerable<Voice>>> GetVoices()
     {
         try
@@ -33,15 +34,18 @@ public class VoicesController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error occurred while retrieving all voices.");
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while processing your request.");
+            return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse
+            {
+                Errors = new[] { "An error occurred while processing your request." }
+            });
         }
     }
 
     // GET: api/voices/{id}
     [HttpGet("{id}", Name = nameof(GetVoice))]
     [ProducesResponseType(200, Type = typeof(Voice))]
-    [ProducesResponseType(404)]
-    [ProducesResponseType(500)]
+    [ProducesResponseType(404, Type = typeof(ErrorResponse))]
+    [ProducesResponseType(500, Type = typeof(ErrorResponse))]
     public async Task<IActionResult> GetVoice(string id)
     {
         try
@@ -49,14 +53,20 @@ public class VoicesController : ControllerBase
             var voice = await _repo.RetrieveAsync(id, HttpContext.RequestAborted);
             if (voice == null)
             {
-                return NotFound(); // 404 Resource not found
+                return NotFound(new ErrorResponse
+                {
+                    Errors = new[] { $"Voice with ID {id} was not found." }
+                });
             }
-            return Ok(voice); // 200 OK with voice in body
+            return Ok(voice);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error occurred while retrieving voice with ID {Id}.", id);
-            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while processing your request.");
+            return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse
+            {
+                Errors = new[] { "An error occurred while processing your request." }
+            });
         }
     }
 }

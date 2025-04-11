@@ -186,7 +186,9 @@ public class TitlesControllerTests
             var result = await _controller.Update("1", title);
 
             // Assert
-            Assert.IsType<BadRequestResult>(result);
+            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+            var errorResponse = Assert.IsType<ErrorResponse>(badRequestResult.Value);
+            Assert.Contains("The ID in the URL does not match the ID in the request body.", errorResponse.Errors);
         }
 
         [Fact]
@@ -203,7 +205,9 @@ public class TitlesControllerTests
             var result = await _controller.Update("999", title);
 
             // Assert
-            Assert.IsType<NotFoundResult>(result);
+            var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
+            var errorResponse = Assert.IsType<ErrorResponse>(notFoundResult.Value);
+            Assert.Contains("Title with ID 999 was not found.", errorResponse.Errors);
         }
 
         [Fact]
@@ -241,7 +245,9 @@ public class TitlesControllerTests
             var result = await _controller.Delete("999");
 
             // Assert
-            Assert.IsType<NotFoundResult>(result);
+            var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
+            var errorResponse = Assert.IsType<ErrorResponse>(notFoundResult.Value);
+            Assert.Contains("Title with ID 999 was not found.", errorResponse.Errors);
         }
 
         [Fact]
@@ -303,7 +309,7 @@ public class TitlesControllerTests
                 .ReturnsAsync(title);
 
             // Fix 4: Use proper tuple return type compatible with Moq
-            _mockAudioProcessingService.Setup(s => s.MarkTokenAsUsedAsync(It.IsAny<string>()))
+            _mockAudioProcessingService.Setup(s => s.MarkTokenAsUsedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync((true, new List<string>()));
             
             var result = await _controller.CreateTitleFromFile(model);
@@ -335,13 +341,8 @@ public class TitlesControllerTests
 
             // Assert
             var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-    
-            // Fix: Use reflection to safely access properties
-            var errorProp = badRequestResult.Value.GetType().GetProperty("error");
-            Assert.NotNull(errorProp);
-    
-            var errorMessage = errorProp.GetValue(badRequestResult.Value)?.ToString();
-            Assert.Equal("Invalid token", errorMessage);
+            var errorResponse = Assert.IsType<ErrorResponse>(badRequestResult.Value);
+            Assert.Equal("Invalid token", errorResponse.Errors.First());
         }
 
         [Fact]
@@ -373,16 +374,9 @@ public class TitlesControllerTests
 
             // Assert
             var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-    
-            // Fix: Use a more explicit approach to access the errors property
-            //var errorObject = badRequestResult.Value;
-            var errorsProp = badRequestResult.Value.GetType().GetProperty("errors");
-            Assert.NotNull(errorsProp);
-    
-            var errors = errorsProp.GetValue(badRequestResult.Value) as IEnumerable<string>;
-            Assert.NotNull(errors);
-            Assert.Contains("Invalid file format", errors);
-            Assert.Contains("File is empty", errors);
+            var errorResponse = Assert.IsType<ErrorResponse>(badRequestResult.Value);
+            Assert.Contains("Invalid file format", errorResponse.Errors);
+            Assert.Contains("File is empty", errorResponse.Errors);
         }
 
         [Fact]
@@ -454,7 +448,7 @@ public class TitlesControllerTests
                     It.IsAny<Language>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(title);
 
-            _mockAudioProcessingService.Setup(s => s.MarkTokenAsUsedAsync(It.IsAny<string>()))
+            _mockAudioProcessingService.Setup(s => s.MarkTokenAsUsedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync((false, new List<string> { "Token already used" }));
 
             // Act
@@ -462,14 +456,8 @@ public class TitlesControllerTests
 
             // Assert
             var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-            
-            // Fix: Use reflection to safely access properties
-            var errorsProp = badRequestResult.Value.GetType().GetProperty("errors");
-            Assert.NotNull(errorsProp);
-            
-            var errors = errorsProp.GetValue(badRequestResult.Value) as IEnumerable<string>;
-            Assert.NotNull(errors);
-            Assert.Contains("Token already used", errors);
+            var errorResponse = Assert.IsType<ErrorResponse>(badRequestResult.Value);
+            Assert.Contains("Token already used", errorResponse.Errors);
         }
 
         [Fact]
@@ -511,14 +499,9 @@ public class TitlesControllerTests
             // Assert
             var statusCodeResult = Assert.IsType<ObjectResult>(result);
             Assert.Equal(StatusCodes.Status500InternalServerError, statusCodeResult.StatusCode);
-            
-            // Fix: Use reflection instead of dynamic
-            var errorProp = statusCodeResult.Value.GetType().GetProperty("error");
-            Assert.NotNull(errorProp);
-            
-            var errorMessage = errorProp.GetValue(statusCodeResult.Value)?.ToString();
-            Assert.NotNull(errorMessage);
-            Assert.Contains("database", errorMessage.ToLower());
+
+            var errorResponse = Assert.IsType<ErrorResponse>(statusCodeResult.Value);
+            Assert.Contains("An error occurred while saving changes to the database.", errorResponse.Errors);
         }
 
         [Fact]
@@ -560,13 +543,9 @@ public class TitlesControllerTests
             // Assert
             var statusCodeResult = Assert.IsType<ObjectResult>(result);
             Assert.Equal(StatusCodes.Status500InternalServerError, statusCodeResult.StatusCode);
-    
-            // Fix: Use reflection to safely access the error property
-            var errorProp = statusCodeResult.Value.GetType().GetProperty("error");
-            Assert.NotNull(errorProp);
 
-            var errorMessage = errorProp.GetValue(statusCodeResult.Value)?.ToString();
-            Assert.Equal("Processing error", errorMessage);
+            var errorResponse = Assert.IsType<ErrorResponse>(statusCodeResult.Value);
+            Assert.Contains("Processing error", errorResponse.Errors);
         }
 
         [Fact]
@@ -579,12 +558,13 @@ public class TitlesControllerTests
             };
 
             _controller.ModelState.AddModelError("TitleName", "Title name is required");
-            
+
             // Act
             var result = await _controller.CreateTitleFromFile(model);
 
             // Assert
             var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-            Assert.IsType<SerializableError>(badRequestResult.Value);
+            var errorResponse = Assert.IsType<ErrorResponse>(badRequestResult.Value);
+            Assert.Contains("Title name is required", errorResponse.Errors);
         }
     }
