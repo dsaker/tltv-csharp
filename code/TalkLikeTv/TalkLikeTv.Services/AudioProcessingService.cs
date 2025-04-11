@@ -2,11 +2,12 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using TalkLikeTv.EntityModels;
 using TalkLikeTv.Repositories;
+using TalkLikeTv.Services.Abstractions;
 using TalkLikeTv.Utilities;
 
 namespace TalkLikeTv.Services;
 
-public class AudioProcessingService
+public class AudioProcessingService : IAudioProcessingService
 {
     private readonly ILogger<AudioProcessingService> _logger;
     private readonly TranslationService _translationService;
@@ -150,12 +151,12 @@ public class AudioProcessingService
         }
     }
 
-    private async Task<AudioFileService.AudioFileResult> BuildAudioFilesAsync(
+    private async Task<IAudioFileService.AudioFileResult> BuildAudioFilesAsync(
         Title title, Voice toVoice, Voice fromVoice, Language toLang, 
         Language fromLang, int pauseDuration, string pattern,
         CancellationToken token = default)
     {
-        var parameters = new AudioFileService.BuildAudioFilesParams
+        var parameters = new IAudioFileService.BuildAudioFilesParams
         {
             Title = title,
             ToVoice = toVoice,

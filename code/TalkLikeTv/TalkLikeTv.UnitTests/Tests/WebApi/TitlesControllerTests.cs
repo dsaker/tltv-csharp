@@ -1,26 +1,40 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 using TalkLikeTv.EntityModels;
 using TalkLikeTv.Repositories;
 using TalkLikeTv.Services;
+using TalkLikeTv.Services.Abstractions;
 using TalkLikeTv.WebApi.Controllers;
 using TalkLikeTv.WebApi.Models;
 
-namespace TalkLikeTv.UnitTests.Tests.WebApi
-{
-    public class TitlesControllerTests
+namespace TalkLikeTv.UnitTests.Tests.WebApi;
+
+public class TitlesControllerTests
     {
         private readonly Mock<ITitleRepository> _mockRepo;
-        private readonly Mock<ITitleValidationService> _mockValidationService;
+        private readonly Mock<IAudioFileService> _mockAudioFileService;
+        private readonly Mock<IAudioProcessingService> _mockAudioProcessingService;
+        private readonly Mock<ITokenService> _mockTokenService;
+        private readonly Mock<ILogger<AudioController>> _mockLogger;
         private readonly TitlesController _controller;
 
         public TitlesControllerTests()
         {
             _mockRepo = new Mock<ITitleRepository>();
-            _mockValidationService = new Mock<ITitleValidationService>();
-            _controller = new TitlesController(_mockRepo.Object, _mockValidationService.Object);
-            
+            _mockAudioFileService = new Mock<IAudioFileService>();
+            _mockAudioProcessingService = new Mock<IAudioProcessingService>();
+            _mockTokenService = new Mock<ITokenService>();
+            _mockLogger = new Mock<ILogger<AudioController>>();
+    
+            _controller = new TitlesController(
+                _mockRepo.Object,
+                _mockAudioFileService.Object,
+                _mockAudioProcessingService.Object,
+                _mockTokenService.Object,
+                _mockLogger.Object);
+
             // Set up HttpContext with CancellationToken
             var httpContext = new DefaultHttpContext();
             _controller.ControllerContext = new ControllerContext()
@@ -140,90 +154,6 @@ namespace TalkLikeTv.UnitTests.Tests.WebApi
         }
 
         [Fact]
-        public async Task Create_ReturnsCreatedAtRoute_WhenValidTitleSubmitted()
-        {
-            // Arrange
-            var title = new Title { TitleName = "New Title", OriginalLanguageId = 1 };
-            var createdTitle = new Title { TitleId = 1, TitleName = "New Title", OriginalLanguageId = 1 };
-
-            var errors = new List<string>();
-            var validationResult = (IsValid: true, Errors: errors);
-            _mockValidationService.Setup(service => service.ValidateAsync(It.IsAny<Title>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(validationResult);
-
-            _mockRepo.Setup(repo => repo.CreateAsync(
-                    It.IsAny<Title>(),
-                    It.IsAny<CancellationToken>()))
-                .ReturnsAsync(createdTitle);
-
-            // Act
-            var result = await _controller.Create(title);
-
-            // Assert
-            var createdAtRouteResult = Assert.IsType<CreatedAtRouteResult>(result);
-            Assert.Equal("GetTitle", createdAtRouteResult.RouteName);
-            Assert.Equal("1", createdAtRouteResult.RouteValues["id"]);
-            Assert.Equal(createdTitle, createdAtRouteResult.Value);
-        }
-
-        [Fact]
-        public async Task Create_ReturnsBadRequest_WhenModelStateInvalid()
-        {
-            // Arrange
-            _controller.ModelState.AddModelError("TitleName", "Required");
-            var title = new Title();
-
-            // Act
-            var result = await _controller.Create(title);
-
-            // Assert
-            Assert.IsType<BadRequestObjectResult>(result);
-        }
-
-        [Fact]
-        public async Task Create_ReturnsBadRequest_WhenValidationFails()
-        {
-            // Arrange
-            var title = new Title { TitleName = "New Title" };
-            var errorsList = new List<string> { "Original language is required" };
-            var validationResult = (IsValid: false, Errors: errorsList);
-
-            _mockValidationService.Setup(service => service.ValidateAsync(It.IsAny<Title>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(validationResult);
-
-            // Act
-            var result = await _controller.Create(title);
-
-            // Assert
-            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-            Assert.Equal(errorsList, badRequestResult.Value);
-        }
-
-        [Fact]
-        public async Task Create_ReturnsServerError_WhenExceptionOccurs()
-        {
-            // Arrange
-            var title = new Title { TitleName = "New Title", OriginalLanguageId = 1 };
-
-            var errors = new List<string>();
-            var validationResult = (IsValid: true, Errors: errors);
-            _mockValidationService.Setup(service => service.ValidateAsync(It.IsAny<Title>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(validationResult);
-
-            _mockRepo.Setup(repo => repo.CreateAsync(
-                    It.IsAny<Title>(),
-                    It.IsAny<CancellationToken>()))
-                .ThrowsAsync(new Exception("Database error"));
-
-            // Act
-            var result = await _controller.Create(title);
-
-            // Assert
-            var statusCodeResult = Assert.IsType<ObjectResult>(result);
-            Assert.Equal(StatusCodes.Status500InternalServerError, statusCodeResult.StatusCode);
-        }
-
-        [Fact]
         public async Task Update_ReturnsNoContent_WhenSuccessful()
         {
             // Arrange
@@ -335,5 +265,326 @@ namespace TalkLikeTv.UnitTests.Tests.WebApi
             // Assert
             Assert.IsType<BadRequestObjectResult>(result);
         }
+        
+        [Fact]
+        public async Task CreateTitleFromFile_ReturnsTitle_WhenSuccessful()
+        {
+            // Arrange
+            var model = new CreateTitleFromFileApiModel
+            {
+                TitleName = "Test Title",
+                Description = "Test Description",
+                Token = "validToken",
+                File = new FormFile(Stream.Null, 0, 0, "file", "test.txt")
+            };
+
+            // Fix 1: Define token result as the correct type
+            _mockTokenService.Setup(s => s.CheckTokenStatus(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ITokenService.TokenResult { Success = true, ErrorMessage = null });
+
+            // Fix 2: Create a proper ExtractAndValidateResult object
+            var extractResult = new IAudioFileService.ExtractAndValidateResult
+            {
+                PhraseStrings = new List<string> { "Phrase 1", "Phrase 2" },
+                Errors = new List<string>()
+            };
+            _mockAudioFileService.Setup(s => s.ExtractAndValidatePhraseStrings(It.IsAny<IFormFile>()))
+                .Returns(extractResult);
+
+            // Fix 3: Use tuple syntax compatible with Moq
+            var language = new Language { LanguageId = 1, Tag = "en", Name = "English" };
+            _mockAudioProcessingService.Setup(s => s.DetectLanguageAsync(It.IsAny<List<string>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((language, new List<string>()));
+
+            var title = new Title { TitleId = 1, TitleName = "Test Title", Description = "Test Description" };
+            _mockAudioProcessingService.Setup(s => s.ProcessTitleAsync(
+                    It.IsAny<string>(), It.IsAny<string>(), It.IsAny<List<string>>(),
+                    It.IsAny<Language>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(title);
+
+            // Fix 4: Use proper tuple return type compatible with Moq
+            _mockAudioProcessingService.Setup(s => s.MarkTokenAsUsedAsync(It.IsAny<string>()))
+                .ReturnsAsync((true, new List<string>()));
+            
+            var result = await _controller.CreateTitleFromFile(model);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var returnedTitle = Assert.IsType<Title>(okResult.Value);
+            Assert.Equal(title.TitleId, returnedTitle.TitleId);
+            Assert.Equal(title.TitleName, returnedTitle.TitleName);
+        }
+        
+        [Fact]
+        public async Task CreateTitleFromFile_ReturnsBadRequest_WhenTokenIsInvalid()
+        {
+            // Arrange
+            var model = new CreateTitleFromFileApiModel
+            {
+                TitleName = "Test Title",
+                Description = "Test Description",
+                Token = "invalidToken",
+                File = new FormFile(Stream.Null, 0, 0, "file", "test.txt")
+            };
+
+            _mockTokenService.Setup(s => s.CheckTokenStatus(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ITokenService.TokenResult { Success = false, ErrorMessage = "Invalid token" });
+
+            // Act
+            var result = await _controller.CreateTitleFromFile(model);
+
+            // Assert
+            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+    
+            // Fix: Use reflection to safely access properties
+            var errorProp = badRequestResult.Value.GetType().GetProperty("error");
+            Assert.NotNull(errorProp);
+    
+            var errorMessage = errorProp.GetValue(badRequestResult.Value)?.ToString();
+            Assert.Equal("Invalid token", errorMessage);
+        }
+
+        [Fact]
+        public async Task CreateTitleFromFile_ReturnsBadRequest_WhenFileContainsErrors()
+        {
+            // Arrange
+            var model = new CreateTitleFromFileApiModel
+            {
+                TitleName = "Test Title",
+                Description = "Test Description",
+                Token = "validToken",
+                File = new FormFile(Stream.Null, 0, 0, "file", "test.txt")
+            };
+
+            _mockTokenService.Setup(s => s.CheckTokenStatus(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ITokenService.TokenResult { Success = true, ErrorMessage = null });
+
+            var extractResult = new IAudioFileService.ExtractAndValidateResult
+            {
+                PhraseStrings = new List<string>(),
+                Errors = new List<string> { "Invalid file format", "File is empty" }
+            };
+
+            _mockAudioFileService.Setup(s => s.ExtractAndValidatePhraseStrings(It.IsAny<IFormFile>()))
+                .Returns(extractResult);
+
+            // Act
+            var result = await _controller.CreateTitleFromFile(model);
+
+            // Assert
+            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+    
+            // Fix: Use a more explicit approach to access the errors property
+            //var errorObject = badRequestResult.Value;
+            var errorsProp = badRequestResult.Value.GetType().GetProperty("errors");
+            Assert.NotNull(errorsProp);
+    
+            var errors = errorsProp.GetValue(badRequestResult.Value) as IEnumerable<string>;
+            Assert.NotNull(errors);
+            Assert.Contains("Invalid file format", errors);
+            Assert.Contains("File is empty", errors);
+        }
+
+        [Fact]
+        public async Task CreateTitleFromFile_ReturnsServerError_WhenLanguageDetectionFails()
+        {
+            // Arrange
+            var model = new CreateTitleFromFileApiModel
+            {
+                TitleName = "Test Title",
+                Description = "Test Description",
+                Token = "validToken",
+                File = new FormFile(Stream.Null, 0, 0, "file", "test.txt")
+            };
+
+            _mockTokenService.Setup(s => s.CheckTokenStatus(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ITokenService.TokenResult { Success = true, ErrorMessage = null });
+
+            var extractResult = new IAudioFileService.ExtractAndValidateResult
+            {
+                PhraseStrings = new List<string> { "Phrase 1", "Phrase 2" },
+                Errors = new List<string>()
+            };
+            
+            _mockAudioFileService.Setup(s => s.ExtractAndValidatePhraseStrings(It.IsAny<IFormFile>()))
+                .Returns(extractResult);
+
+            _mockAudioProcessingService.Setup(s => s.DetectLanguageAsync(It.IsAny<List<string>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((null, new List<string> { "Language detection failed" }));
+
+            // Act
+            var result = await _controller.CreateTitleFromFile(model);
+
+            // Assert
+            var statusCodeResult = Assert.IsType<ObjectResult>(result);
+            Assert.Equal(StatusCodes.Status500InternalServerError, statusCodeResult.StatusCode);
+        }
+
+        [Fact]
+        public async Task CreateTitleFromFile_ReturnsBadRequest_WhenTokenMarkingFails()
+        {
+            // Arrange
+            var model = new CreateTitleFromFileApiModel
+            {
+                TitleName = "Test Title",
+                Description = "Test Description",
+                Token = "validToken",
+                File = new FormFile(Stream.Null, 0, 0, "file", "test.txt")
+            };
+
+            _mockTokenService.Setup(s => s.CheckTokenStatus(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ITokenService.TokenResult { Success = true, ErrorMessage = null });
+
+            var extractResult = new IAudioFileService.ExtractAndValidateResult
+            {
+                PhraseStrings = new List<string> { "Phrase 1", "Phrase 2" },
+                Errors = new List<string>()
+            };
+
+            _mockAudioFileService.Setup(s => s.ExtractAndValidatePhraseStrings(It.IsAny<IFormFile>()))
+                .Returns(extractResult);
+
+            var language = new Language { LanguageId = 1, Tag = "en", Name = "English" };
+            _mockAudioProcessingService.Setup(s => s.DetectLanguageAsync(It.IsAny<List<string>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((language, new List<string>()));
+
+            var title = new Title { TitleId = 1, TitleName = "Test Title", Description = "Test Description" };
+            _mockAudioProcessingService.Setup(s => s.ProcessTitleAsync(
+                    It.IsAny<string>(), It.IsAny<string>(), It.IsAny<List<string>>(),
+                    It.IsAny<Language>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(title);
+
+            _mockAudioProcessingService.Setup(s => s.MarkTokenAsUsedAsync(It.IsAny<string>()))
+                .ReturnsAsync((false, new List<string> { "Token already used" }));
+
+            // Act
+            var result = await _controller.CreateTitleFromFile(model);
+
+            // Assert
+            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+            
+            // Fix: Use reflection to safely access properties
+            var errorsProp = badRequestResult.Value.GetType().GetProperty("errors");
+            Assert.NotNull(errorsProp);
+            
+            var errors = errorsProp.GetValue(badRequestResult.Value) as IEnumerable<string>;
+            Assert.NotNull(errors);
+            Assert.Contains("Token already used", errors);
+        }
+
+        [Fact]
+        public async Task CreateTitleFromFile_ReturnsServerError_WhenDbExceptionOccurs()
+        {
+            // Arrange
+            var model = new CreateTitleFromFileApiModel
+            {
+                TitleName = "Test Title",
+                Description = "Test Description",
+                Token = "validToken",
+                File = new FormFile(Stream.Null, 0, 0, "file", "test.txt")
+            };
+
+            _mockTokenService.Setup(s => s.CheckTokenStatus(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ITokenService.TokenResult { Success = true, ErrorMessage = null });
+
+            var extractResult = new IAudioFileService.ExtractAndValidateResult
+            {
+                PhraseStrings = new List<string> { "Phrase 1", "Phrase 2" },
+                Errors = new List<string>()
+            };
+
+            _mockAudioFileService.Setup(s => s.ExtractAndValidatePhraseStrings(It.IsAny<IFormFile>()))
+                .Returns(extractResult);
+
+            var language = new Language { LanguageId = 1, Tag = "en", Name = "English" };
+            _mockAudioProcessingService.Setup(s => s.DetectLanguageAsync(It.IsAny<List<string>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((language, new List<string>()));
+
+            _mockAudioProcessingService.Setup(s => s.ProcessTitleAsync(
+                    It.IsAny<string>(), It.IsAny<string>(), It.IsAny<List<string>>(),
+                    It.IsAny<Language>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new Microsoft.EntityFrameworkCore.DbUpdateException("Database error", new Exception()));
+
+            // Act
+            var result = await _controller.CreateTitleFromFile(model);
+
+            // Assert
+            var statusCodeResult = Assert.IsType<ObjectResult>(result);
+            Assert.Equal(StatusCodes.Status500InternalServerError, statusCodeResult.StatusCode);
+            
+            // Fix: Use reflection instead of dynamic
+            var errorProp = statusCodeResult.Value.GetType().GetProperty("error");
+            Assert.NotNull(errorProp);
+            
+            var errorMessage = errorProp.GetValue(statusCodeResult.Value)?.ToString();
+            Assert.NotNull(errorMessage);
+            Assert.Contains("database", errorMessage.ToLower());
+        }
+
+        [Fact]
+        public async Task CreateTitleFromFile_ReturnsServerError_WhenGeneralExceptionOccurs()
+        {
+            // Arrange
+            var model = new CreateTitleFromFileApiModel
+            {
+                TitleName = "Test Title",
+                Description = "Test Description",
+                Token = "validToken",
+                File = new FormFile(Stream.Null, 0, 0, "file", "test.txt")
+            };
+
+            _mockTokenService.Setup(s => s.CheckTokenStatus(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ITokenService.TokenResult { Success = true, ErrorMessage = null });
+
+            var extractResult = new IAudioFileService.ExtractAndValidateResult
+            {
+                PhraseStrings = new List<string> { "Phrase 1", "Phrase 2" },
+                Errors = new List<string>()
+            };
+
+            _mockAudioFileService.Setup(s => s.ExtractAndValidatePhraseStrings(It.IsAny<IFormFile>()))
+                .Returns(extractResult);
+
+            var language = new Language { LanguageId = 1, Tag = "en", Name = "English" };
+            _mockAudioProcessingService.Setup(s => s.DetectLanguageAsync(It.IsAny<List<string>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((language, new List<string>()));
+
+            _mockAudioProcessingService.Setup(s => s.ProcessTitleAsync(
+                    It.IsAny<string>(), It.IsAny<string>(), It.IsAny<List<string>>(),
+                    It.IsAny<Language>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new InvalidOperationException("Processing error"));
+
+            // Act
+            var result = await _controller.CreateTitleFromFile(model);
+
+            // Assert
+            var statusCodeResult = Assert.IsType<ObjectResult>(result);
+            Assert.Equal(StatusCodes.Status500InternalServerError, statusCodeResult.StatusCode);
+    
+            // Fix: Use reflection to safely access the error property
+            var errorProp = statusCodeResult.Value.GetType().GetProperty("error");
+            Assert.NotNull(errorProp);
+
+            var errorMessage = errorProp.GetValue(statusCodeResult.Value)?.ToString();
+            Assert.Equal("Processing error", errorMessage);
+        }
+
+        [Fact]
+        public async Task CreateTitleFromFile_ReturnsBadRequest_WhenModelStateIsInvalid()
+        {
+            // Arrange
+            var model = new CreateTitleFromFileApiModel
+            {
+                // Missing required fields
+            };
+
+            _controller.ModelState.AddModelError("TitleName", "Title name is required");
+            
+            // Act
+            var result = await _controller.CreateTitleFromFile(model);
+
+            // Assert
+            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+            Assert.IsType<SerializableError>(badRequestResult.Value);
+        }
     }
-}

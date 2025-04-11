@@ -3,10 +3,11 @@ using Microsoft.Extensions.Logging;
 using TalkLikeTv.EntityModels;
 using Microsoft.Extensions.Configuration;
 using TalkLikeTv.Repositories;
+using TalkLikeTv.Services.Abstractions;
 
 namespace TalkLikeTv.Services;
 
-public class AudioFileService
+public class AudioFileService : IAudioFileService
 {
     private readonly ILogger<AudioFileService> _logger;
     private readonly string _baseDir;
@@ -39,27 +40,11 @@ public class AudioFileService
         { 10, $"{_baseDir}pause/10SecondsOfSilence.wav" }
     };
     
-    public class BuildAudioFilesParams
+
+
+    public IAudioFileService.ExtractAndValidateResult ExtractAndValidatePhraseStrings(IFormFile file)
     {
-        public required Title Title { get; init; }
-        public required Voice ToVoice { get; init; }
-        public required Voice FromVoice { get; init; }
-        public required Language ToLang { get; init; }
-        public required Language FromLang { get; init; }
-        public required int Pause { get; init; }
-        public required string Pattern { get; init; }
-        public required string TitleOutputPath { get; init; }
-    }
-    
-    public class ExtractAndValidateResult
-    {
-        public List<string>? PhraseStrings { get; set; }
-        public List<string> Errors { get; set; } = new();
-    }
-    
-    public ExtractAndValidateResult ExtractAndValidatePhraseStrings(IFormFile file)
-    {
-        var result = new ExtractAndValidateResult();
+        var result = new IAudioFileService.ExtractAndValidateResult();
 
         try
         {
@@ -86,15 +71,10 @@ public class AudioFileService
         return result;
     }
     
-    public class AudioFileResult
-    {
-        public bool Success { get; set; }
-        public List<string> Errors { get; set; } = [];
-    }
 
-    public async Task<AudioFileResult> BuildAudioFilesAsync(BuildAudioFilesParams parameters, CancellationToken cancellationToken = default)
+    public async Task<IAudioFileService.AudioFileResult> BuildAudioFilesAsync(IAudioFileService.BuildAudioFilesParams parameters, CancellationToken cancellationToken = default)
     {
-        var result = new AudioFileResult();
+        var result = new IAudioFileService.AudioFileResult();
         try
         {
             var pattern = PatternService.GetPattern(parameters.Pattern);

@@ -1,8 +1,10 @@
 // To use [Route], [ApiController], ControllerBase and so on.
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using TalkLikeTv.EntityModels; // To use Title.
 using TalkLikeTv.Repositories;
-using TalkLikeTv.Services; // To use ITitleRepository.
+using TalkLikeTv.Services;
+using TalkLikeTv.Services.Abstractions; // To use ITitleRepository.
 using TalkLikeTv.WebApi.Models;
 
 namespace TalkLikeTv.WebApi.Controllers;
@@ -13,13 +15,26 @@ namespace TalkLikeTv.WebApi.Controllers;
 public class TitlesController : ControllerBase
 {
     private readonly ITitleRepository _repo;
-    private readonly ITitleValidationService _validationService;
+    private readonly IAudioFileService _audioFileService;
+    private readonly IAudioProcessingService _audioProcessingService;
+    private readonly ITokenService _tokenService;
+    private readonly ILogger<AudioController> _logger;
+    private readonly IWebHostEnvironment _env;
 
     // Constructor injects repository registered in Program.cs.
-    public TitlesController(ITitleRepository repo, ITitleValidationService validationService)
+    public TitlesController(
+        ITitleRepository repo,
+        IAudioFileService audioFileService,
+        IAudioProcessingService audioProcessingService,
+        ITokenService tokenService,
+        ILogger<AudioController> logger)
+    
     {
         _repo = repo;
-        _validationService = validationService;
+        _audioFileService = audioFileService;
+        _audioProcessingService = audioProcessingService;
+        _tokenService = tokenService;
+        _logger = logger;
     }
 
     // GET: api/titles
@@ -97,39 +112,66 @@ public class TitlesController : ControllerBase
         return Ok(title); // 200 OK with title in body.
     }
 
-    // POST: api/titles
-    [HttpPost]
-    [ProducesResponseType(201, Type = typeof(Title))]
-    [ProducesResponseType(400)]
-    [ProducesResponseType(500)]
-    public async Task<IActionResult> Create([FromBody] Title t)
+    [HttpPost("fromFile")]
+    [Consumes("multipart/form-data")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Title))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> CreateTitleFromFile([FromForm] CreateTitleFromFileApiModel model)
     {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
         try
         {
-            if (!ModelState.IsValid)
+            var tokenResult = await _tokenService.CheckTokenStatus(model.Token, HttpContext.RequestAborted);
+            if (!tokenResult.Success)
             {
-                return BadRequest(ModelState);
+                return BadRequest(new { error = tokenResult.ErrorMessage ?? "Invalid token." });
             }
-        
-            // Use validation service for business rules
-            var (isValid, errors) = await _validationService.ValidateAsync(t);
-            if (!isValid)
+
+            var result = _audioFileService.ExtractAndValidatePhraseStrings(model.File);
+            if (result.Errors.Any())
             {
-                return BadRequest(errors);
+                return BadRequest(new { errors = result.Errors });
             }
-        
-            var addedTitle = await _repo.CreateAsync(t, HttpContext.RequestAborted);
-        
-            return CreatedAtRoute(
-                routeName: nameof(GetTitle),
-                routeValues: new { id = addedTitle.TitleId.ToString() },
-                value: addedTitle);
+
+            var phraseStrings = result.PhraseStrings;
+            if (phraseStrings == null)
+            {
+                return BadRequest(new { error = "Failed to extract phrase strings from the file." });
+            }
+
+            var (detectedLang, detectionErrors) = await _audioProcessingService.DetectLanguageAsync(phraseStrings, HttpContext.RequestAborted);
+            if (detectedLang == null || detectionErrors.Any())
+            {
+                var errorDetails = detectionErrors.Any() ? string.Join("; ", detectionErrors) : "Language detection failed.";
+                return StatusCode(StatusCodes.Status500InternalServerError, new { error = errorDetails });
+            }
+
+            var newTitle = await _audioProcessingService.ProcessTitleAsync(model.TitleName, model.Description, phraseStrings, detectedLang, HttpContext.RequestAborted);
+
+            // Mark the token as used
+            var (markSuccess, markErrors) = await _audioProcessingService.MarkTokenAsUsedAsync(model.Token);
+            if (!markSuccess)
+            {
+                return BadRequest(new { errors = markErrors });
+            }
+
+            // Return the created title
+            return Ok(newTitle);
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Database error while processing title {TitleName}", model.TitleName);
+            return StatusCode(StatusCodes.Status500InternalServerError, new { error = "An error occurred while saving changes to the database." });
         }
         catch (Exception ex)
         {
-            // Log the exception
-            return StatusCode(StatusCodes.Status500InternalServerError, 
-                "Error creating title: " + ex.Message);
+            _logger.LogError(ex, "Error processing title {TitleName}: {ErrorMessage}", model.TitleName, ex.Message);
+            return StatusCode(StatusCodes.Status500InternalServerError, new { error = ex.Message });
         }
     }
 
