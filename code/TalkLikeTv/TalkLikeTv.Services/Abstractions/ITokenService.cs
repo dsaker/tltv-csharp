@@ -1,4 +1,4 @@
-namespace TalkLikeTv.Services;
+namespace TalkLikeTv.Services.Abstractions;
 
 public interface ITokenService
 {

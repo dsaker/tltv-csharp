@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using TalkLikeTv.Repositories;
-using TalkLikeTv.Services.Exceptions;
+using TalkLikeTv.Services.Abstractions;
 
 namespace TalkLikeTv.Services;
 

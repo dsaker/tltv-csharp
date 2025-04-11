@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TalkLikeTv.Repositories;
 using TalkLikeTv.WebApi.Models;
-using TalkLikeTv.Services;
+using TalkLikeTv.Services.Abstractions;
 
 namespace TalkLikeTv.WebApi.Controllers;
 
@@ -29,11 +29,11 @@ public class AudioController : ControllerBase
     }
 
     [HttpPost("fromTitle")]
-[Consumes("multipart/form-data")]
-[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(FileResult))]
-[ProducesResponseType(StatusCodes.Status400BadRequest)]
-[ProducesResponseType(StatusCodes.Status500InternalServerError)]
-public async Task<IActionResult> AudioFromTitle([FromForm] AudioFromTitleApiModel model)
+    [Consumes("multipart/form-data")]
+    [ProducesResponseType(200, Type = typeof(FileResult))]
+    [ProducesResponseType(400, Type = typeof(ErrorResponse))]
+    [ProducesResponseType(500, Type = typeof(ErrorResponse))]
+    public async Task<IActionResult> AudioFromTitle([FromForm] AudioFromTitleApiModel model)
 {
     if (!ModelState.IsValid)
     {

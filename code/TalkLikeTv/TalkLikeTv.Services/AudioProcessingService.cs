@@ -10,8 +10,8 @@ namespace TalkLikeTv.Services;
 public class AudioProcessingService : IAudioProcessingService
 {
     private readonly ILogger<AudioProcessingService> _logger;
-    private readonly TranslationService _translationService;
-    private readonly AudioFileService _audioFileService;
+    private readonly ITranslationService _translationService;
+    private readonly IAudioFileService _audioFileService;
     private readonly string _audioOutputDir;
     private readonly IVoiceRepository _voiceRepository;
     private readonly ILanguageRepository _languageRepository;
@@ -19,17 +19,19 @@ public class AudioProcessingService : IAudioProcessingService
     private readonly ITitleRepository _titleRepository;
     private readonly IPhraseRepository _phraseRepository;
     private readonly ITranslateRepository _translateRepository;
+    private readonly ITranslateService _translateService;
 
     public AudioProcessingService(
         ILogger<AudioProcessingService> logger,
-        TranslationService translationService,
-        AudioFileService audioFileService,
+        ITranslationService translationService,
+        IAudioFileService audioFileService,
         IVoiceRepository voiceRepository,
         ILanguageRepository languageRepository,
         ITokenRepository tokenRepository,
         ITitleRepository titleRepository,
         IPhraseRepository phraseRepository,
         ITranslateRepository translateRepository,
+        ITranslateService translateService,
         IConfiguration configuration)
     {
         _logger = logger;
@@ -41,6 +43,7 @@ public class AudioProcessingService : IAudioProcessingService
         _titleRepository = titleRepository;
         _phraseRepository = phraseRepository;
         _translateRepository = translateRepository;
+        _translateService = translateService;
         _audioOutputDir = configuration.GetValue<string>("SharedSettings:AudioOutputDir") ?? throw new InvalidOperationException("AudioOutputdir is not configured.");
     }
 
@@ -67,8 +70,7 @@ public class AudioProcessingService : IAudioProcessingService
     
         try
         {
-            var translator = new AzureTranslateService();
-            var detectedCode = await translator.DetectLanguageFromPhrasesAsync(phraseStrings);
+            var detectedCode = await _translateService.DetectLanguageFromPhrasesAsync(phraseStrings);
 
             var detectedLanguage = await _languageRepository.RetrieveByTagAsync(detectedCode, token);
             if (detectedLanguage == null)

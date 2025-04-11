@@ -11,13 +11,13 @@ public class AudioFileService : IAudioFileService
 {
     private readonly ILogger<AudioFileService> _logger;
     private readonly string _baseDir;
-    private readonly PhraseService _phraseService;
+    private readonly IPhraseService _phraseService;
     private readonly IPhraseRepository _phraseRepository;
     private readonly int _maxPhrases;
 
     public AudioFileService(
         ILogger<AudioFileService> logger, 
-        PhraseService phraseService,
+        IPhraseService phraseService,
         IPhraseRepository phraseRepository,
         IConfiguration configuration)
     {
@@ -40,8 +40,6 @@ public class AudioFileService : IAudioFileService
         { 10, $"{_baseDir}pause/10SecondsOfSilence.wav" }
     };
     
-
-
     public IAudioFileService.ExtractAndValidateResult ExtractAndValidatePhraseStrings(IFormFile file)
     {
         var result = new IAudioFileService.ExtractAndValidateResult();
@@ -71,7 +69,6 @@ public class AudioFileService : IAudioFileService
         return result;
     }
     
-
     public async Task<IAudioFileService.AudioFileResult> BuildAudioFilesAsync(IAudioFileService.BuildAudioFilesParams parameters, CancellationToken cancellationToken = default)
     {
         var result = new IAudioFileService.AudioFileResult();

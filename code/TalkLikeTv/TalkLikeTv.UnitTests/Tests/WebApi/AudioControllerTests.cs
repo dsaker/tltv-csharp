@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
 using TalkLikeTv.Repositories;
-using TalkLikeTv.Services;
+using TalkLikeTv.Services.Abstractions;
 using TalkLikeTv.WebApi.Controllers;
 using TalkLikeTv.WebApi.Models;
 
@@ -11,11 +11,11 @@ namespace TalkLikeTv.UnitTests.Tests.WebApi;
 
 public class AudioControllerTests
 {
-    private readonly Mock<IAudioProcessingService> _mockAudioProcessingService;
     private readonly Mock<ITokenService> _mockTokenService;
     private readonly Mock<ITitleRepository> _mockTitleRepository;
     private readonly Mock<ILogger<AudioController>> _mockLogger;
     private readonly AudioController _controller;
+    private readonly Mock<IAudioProcessingService> _mockAudioProcessingService;
 
     public AudioControllerTests()
     {

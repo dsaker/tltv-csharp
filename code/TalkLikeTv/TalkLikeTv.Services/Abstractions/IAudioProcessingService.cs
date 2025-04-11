@@ -1,6 +1,6 @@
 using TalkLikeTv.EntityModels;
 
-namespace TalkLikeTv.Services;
+namespace TalkLikeTv.Services.Abstractions;
 
 public interface IAudioProcessingService
 {

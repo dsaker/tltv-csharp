@@ -25,10 +25,6 @@ public partial class ParseService
     
     public static ParseResult ParseFile(Stream fileStream, string fileName, int maxPhrases)
     {
-        if (fileStream == null)
-        {
-            return new ParseResult { Success = false, ErrorMessage = "File stream is null." };
-        }
 
         if (fileStream.Length > 8192 * 8)
         {
