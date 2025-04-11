@@ -2,11 +2,12 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using TalkLikeTv.EntityModels;
 using TalkLikeTv.Repositories;
+using TalkLikeTv.Services.Abstractions;
 using TalkLikeTv.Utilities;
 
 namespace TalkLikeTv.Services;
 
-public class TranslationService
+public class TranslationService : ITranslationService
 {
     private readonly ILogger<TranslationService> _logger;
     private readonly string _baseDir;
@@ -96,7 +97,7 @@ public class TranslationService
         }
     }    
     
-    private async Task<List<Translate>> GetOrCreateTranslationsAsync(List<Phrase> dbPhrases, string fromLanguageTag, Language toLanguage, List<Translate> fromTranslates)
+    public async Task<List<Translate>> GetOrCreateTranslationsAsync(List<Phrase> dbPhrases, string fromLanguageTag, Language toLanguage, List<Translate> fromTranslates)
     {
         var phraseIds = dbPhrases.Select(p => p.PhraseId).ToList();
         var existingTranslations = await _translateRepository.GetTranslatesByLanguageAndPhrasesAsync(
@@ -125,7 +126,7 @@ public class TranslationService
         return newTranslations;
     }
     
-    private async Task GenerateSpeechFilesAsync(Voice voice, Language voiceLanguage, Title newTitle, List<Translate> dbTranslates)
+    public async Task GenerateSpeechFilesAsync(Voice voice, Language voiceLanguage, Title newTitle, List<Translate> dbTranslates)
     {
         var azureTtsService = new AzureTextToSpeechService();
         var wavDir = Path.Combine(_baseDir, newTitle.TitleName, voiceLanguage.Tag, voice.ShortName);

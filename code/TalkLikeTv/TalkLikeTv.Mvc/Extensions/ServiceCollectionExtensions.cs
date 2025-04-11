@@ -1,3 +1,5 @@
+using TalkLikeTv.Services.Abstractions;
+
 namespace TalkLikeTv.Mvc.Extensions;
 
 using Microsoft.Extensions.DependencyInjection;
@@ -12,18 +14,18 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddTalkliketvFeatures(this IServiceCollection services, IConfiguration configuration)
     {
-        // Register TokenService and settings
-        services.AddScoped<TokenService>();
+
         services.Configure<SharedSettings>(configuration.GetSection("SharedSettings"));
 
         // Register Services
         services.AddTransient<PatternService>();
-        services.AddScoped<TranslationService>();
-        services.AddSingleton<PhraseService>();
+        services.AddScoped<ITranslationService, TranslationService>();
+        services.AddSingleton<IPhraseService, PhraseService>();
+        services.AddScoped<ITokenService, TokenService>(); 
         services.AddSingleton<AzureTextToSpeechService>();
-        services.AddSingleton<AzureTranslateService>();
-        services.AddScoped<AudioFileService>();
-        services.AddScoped<AudioProcessingService>();
+        services.AddScoped<IAudioFileService, AudioFileService>();
+        services.AddScoped<ITranslateService, AzureTranslateService>();
+        services.AddScoped<IAudioProcessingService, AudioProcessingService>();
         
         // Register Repositories
         services.AddScoped<ITitleRepository, TitleRepository>();
