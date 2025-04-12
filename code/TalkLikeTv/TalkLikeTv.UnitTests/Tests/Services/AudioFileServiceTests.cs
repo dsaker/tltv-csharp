@@ -24,8 +24,8 @@ public class AudioFileServiceTests
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                { "SharedSettings:MaxPhrases", "100" },
-                { "SharedSettings:BaseDir", "/base/dir/" }
+                { "TalkLikeTv:MaxPhrases", "100" },
+                { "TalkLikeTv:BaseDir", "/base/dir/" }
             })
             .Build();
 

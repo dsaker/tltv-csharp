@@ -8,14 +8,13 @@ using Services;
 using Repositories;
 using AspNetCoreRateLimit;
 using Microsoft.Extensions.Caching.Hybrid;
-using Configurations;
 
 public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddTalkliketvFeatures(this IServiceCollection services, IConfiguration configuration)
     {
 
-        services.Configure<SharedSettings>(configuration.GetSection("SharedSettings"));
+        services.Configure<TalkliketvOptions>(configuration.GetSection("TalkLikeTv"));
 
         // Register Services
         services.AddTransient<PatternService>();
@@ -24,7 +23,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ITokenService, TokenService>(); 
         services.AddSingleton<AzureTextToSpeechService>();
         services.AddScoped<IAudioFileService, AudioFileService>();
-        services.AddScoped<ITranslateService, AzureTranslateService>();
+        services.AddScoped<IAzureTranslateService, AzureTranslateService>();
         services.AddScoped<IAudioProcessingService, AudioProcessingService>();
         
         // Register Repositories

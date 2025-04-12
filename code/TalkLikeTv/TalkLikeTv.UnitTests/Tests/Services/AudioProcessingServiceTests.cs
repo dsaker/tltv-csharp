@@ -11,7 +11,7 @@ namespace TalkLikeTv.UnitTests.Tests.Services;
 public class AudioProcessingServiceTests
 {
     private readonly AudioProcessingService _service;
-    private readonly Mock<ITranslateService> _mockTranslateService;
+    private readonly Mock<IAzureTranslateService> _mockTranslateService;
     private readonly Mock<ILanguageRepository> _mockLanguageRepository;
 
     public AudioProcessingServiceTests()
@@ -25,7 +25,7 @@ public class AudioProcessingServiceTests
         var mockTitleRepository = new Mock<ITitleRepository>();
         var mockPhraseRepository = new Mock<IPhraseRepository>();
         var mockTranslateRepository = new Mock<ITranslateRepository>();
-        _mockTranslateService = new Mock<ITranslateService>();
+        _mockTranslateService = new Mock<IAzureTranslateService>();
 
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>

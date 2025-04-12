@@ -24,8 +24,8 @@ public class AudioFileService : IAudioFileService
         _logger = logger;
         _phraseService = phraseService;
         _phraseRepository = phraseRepository;
-        _maxPhrases = configuration.GetValue<int>("SharedSettings:MaxPhrases");
-        _baseDir = configuration.GetValue<string>("SharedSettings:BaseDir") ?? throw new InvalidOperationException("BaseDir is not configured.");
+        _maxPhrases = configuration.GetValue<int>("TalkLikeTv:MaxPhrases");
+        _baseDir = configuration.GetValue<string>("TalkLikeTv:BaseDir") ?? throw new InvalidOperationException("BaseDir is not configured.");
     }
     
     private Dictionary<int, string> PauseFilePaths => new ()

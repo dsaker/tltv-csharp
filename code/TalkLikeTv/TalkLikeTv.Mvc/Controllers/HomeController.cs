@@ -2,7 +2,6 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using TalkLikeTv.Mvc.Models;
-using TalkLikeTv.Mvc.Configurations;
 using TalkLikeTv.Services;
 
 namespace TalkLikeTv.Mvc.Controllers;
@@ -10,12 +9,12 @@ namespace TalkLikeTv.Mvc.Controllers;
 public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
-    private readonly SharedSettings _sharedSettings;
+    private readonly TalkliketvOptions _options;
 
-    public HomeController(ILogger<HomeController> logger, IOptions<SharedSettings> sharedSettings)
+    public HomeController(ILogger<HomeController> logger, IOptions<TalkliketvOptions> sharedSettings)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _sharedSettings = sharedSettings.Value ?? throw new ArgumentNullException(nameof(sharedSettings));
+        _options = sharedSettings.Value ?? throw new ArgumentNullException(nameof(sharedSettings));
     }
 
     public IActionResult Index()
@@ -33,7 +32,7 @@ public class HomeController : Controller
             {
                 await using (var fileStream = model.File.OpenReadStream())
                 {
-                    var parseResult = ParseService.ParseFile(fileStream, model.File.FileName, _sharedSettings.MaxPhrases);
+                    var parseResult = ParseService.ParseFile(fileStream, model.File.FileName, _options.MaxPhrases);
 
                     if (!parseResult.Success)
                     {

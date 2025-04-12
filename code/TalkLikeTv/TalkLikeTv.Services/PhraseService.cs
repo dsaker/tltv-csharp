@@ -10,6 +10,12 @@ public class PhraseService : IPhraseService
     {
 
         var fileStream = file.OpenReadStream();
+        
+        // Check if the file is empty
+        if (fileStream.Length == 0)
+        {
+            return new IPhraseService.PhraseResult { Success = false, ErrorMessage = "No phrases found in the file." };
+        }
 
         if (TextFormatDetector.DetectTextFormat(fileStream) != TextFormatDetector.TextFormat.OnePhrasePerLine)
         {

@@ -14,19 +14,25 @@ public class TranslationService : ITranslationService
     private readonly ITranslateRepository _translateRepository;
     private readonly IPhraseRepository _phraseRepository;
     private readonly ILanguageRepository _languageRepository;
+    private readonly IAzureTranslateService _azureTranslateService;
+    private readonly IAzureTextToSpeechService _azureTextToSpeechService;
 
     public TranslationService(
         ILogger<TranslationService> logger, 
         ITranslateRepository translateRepository,
         IPhraseRepository phraseRepository,
         ILanguageRepository languageRepository,
+        IAzureTranslateService azureTranslateService,
+        IAzureTextToSpeechService azureTextToSpeechService,
         IConfiguration configuration)
     {
         _logger = logger;
         _translateRepository = translateRepository;
         _phraseRepository = phraseRepository;
         _languageRepository = languageRepository;
-        _baseDir = configuration.GetValue<string>("SharedSettings:BaseDir") ?? throw new InvalidOperationException("BaseDir is not configured.");
+        _azureTranslateService = azureTranslateService;
+        _azureTextToSpeechService = azureTextToSpeechService;
+        _baseDir = configuration.GetValue<string>("TalkLikeTv:BaseDir") ?? throw new InvalidOperationException("BaseDir is not configured.");
     }
     
     public class ProcessTranslationsParams
@@ -44,7 +50,7 @@ public class TranslationService : ITranslationService
 
         try
         {
-            var dbPhrases = await _phraseRepository.GetPhrasesByTitleIdAsync(p.Title.TitleId);
+            var dbPhrases = await _phraseRepository.GetPhrasesByTitleIdAsync(p.Title.TitleId, cancellationToken);
 
             if (dbPhrases.Count != p.Title.NumPhrases)
             {
@@ -59,12 +65,12 @@ public class TranslationService : ITranslationService
             }
 
             // Convert nullable int to non-nullable for the repository call
-            int originalLanguageId = p.Title.OriginalLanguageId.Value;
+            var originalLanguageId = p.Title.OriginalLanguageId.Value;
             
             var phraseIds = dbPhrases.Select(ph => ph.PhraseId).ToList();
             var originalLanguageTranslations = await _translateRepository.GetTranslatesByLanguageAndPhrasesAsync(
                 originalLanguageId, 
-                phraseIds);
+                phraseIds, cancellationToken);
 
             if (originalLanguageTranslations.Count != p.Title.NumPhrases)
             {
@@ -110,7 +116,7 @@ public class TranslationService : ITranslationService
         }
 
         var translateStrings = fromTranslates.Select(t => t.Phrase).ToList();
-        var translatedPhrases = await new AzureTranslateService().TranslatePhrasesAsync(translateStrings, fromLanguageTag, toLanguage.Tag);
+        var translatedPhrases = await _azureTranslateService.TranslatePhrasesAsync(translateStrings, fromLanguageTag, toLanguage.Tag);
 
         var newTranslations = dbPhrases.Select((phrase, index) => new Translate
         {
@@ -128,7 +134,21 @@ public class TranslationService : ITranslationService
     
     public async Task GenerateSpeechFilesAsync(Voice voice, Language voiceLanguage, Title newTitle, List<Translate> dbTranslates)
     {
-        var azureTtsService = new AzureTextToSpeechService();
+        if (newTitle.TitleName == null)
+        {
+            throw new ArgumentNullException(nameof(newTitle), "Title name cannot be null");
+        }
+
+        if (voiceLanguage.Tag == null)
+        {
+            throw new ArgumentNullException(nameof(voiceLanguage), "Language tag cannot be null");
+        }
+
+        if (voice.ShortName == null)
+        {
+            throw new ArgumentNullException(nameof(voice), "Voice shortname cannot be null");
+        }
+        
         var wavDir = Path.Combine(_baseDir, newTitle.TitleName, voiceLanguage.Tag, voice.ShortName);
 
         if (Directory.Exists(wavDir))
@@ -139,7 +159,7 @@ public class TranslationService : ITranslationService
         Directory.CreateDirectory(wavDir);
 
         var tasks = dbTranslates.Select(translate =>
-            azureTtsService.GenerateSpeechToFileAsync(translate.Phrase, voice, Path.Combine(wavDir, $"{translate.PhraseId}"))
+            _azureTextToSpeechService.GenerateSpeechToFileAsync(translate.Phrase, voice, Path.Combine(wavDir, $"{translate.PhraseId}"))
         ).ToList();
 
         await Task.WhenAll(tasks);

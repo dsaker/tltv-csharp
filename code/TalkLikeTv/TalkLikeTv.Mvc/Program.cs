@@ -1,12 +1,8 @@
 using Microsoft.Data.SqlClient;
 using TalkLikeTv.EntityModels;
-using TalkLikeTv.Mvc.Configurations;
-using TalkLikeTv.Services;
 using AspNetCoreRateLimit;
 using DotEnv.Core;
-using Microsoft.Extensions.Caching.Hybrid;
 using TalkLikeTv.Mvc.Extensions;
-using TalkLikeTv.Repositories; // To use HybridCacheEntryOptions.
 
 
 var builder = WebApplication.CreateBuilder(args);

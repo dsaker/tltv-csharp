@@ -19,7 +19,7 @@ public class AudioProcessingService : IAudioProcessingService
     private readonly ITitleRepository _titleRepository;
     private readonly IPhraseRepository _phraseRepository;
     private readonly ITranslateRepository _translateRepository;
-    private readonly ITranslateService _translateService;
+    private readonly IAzureTranslateService _azureTranslateService;
 
     public AudioProcessingService(
         ILogger<AudioProcessingService> logger,
@@ -31,7 +31,7 @@ public class AudioProcessingService : IAudioProcessingService
         ITitleRepository titleRepository,
         IPhraseRepository phraseRepository,
         ITranslateRepository translateRepository,
-        ITranslateService translateService,
+        IAzureTranslateService azureTranslateService,
         IConfiguration configuration)
     {
         _logger = logger;
@@ -43,8 +43,8 @@ public class AudioProcessingService : IAudioProcessingService
         _titleRepository = titleRepository;
         _phraseRepository = phraseRepository;
         _translateRepository = translateRepository;
-        _translateService = translateService;
-        _audioOutputDir = configuration.GetValue<string>("SharedSettings:AudioOutputDir") ?? throw new InvalidOperationException("AudioOutputdir is not configured.");
+        _azureTranslateService = azureTranslateService;
+        _audioOutputDir = configuration.GetValue<string>("TalkLikeTv:AudioOutputDir") ?? throw new InvalidOperationException("AudioOutputdir is not configured.");
     }
 
     private async Task<(Voice?, Voice?)> GetVoicesAsync(int toVoiceId, int fromVoiceId, CancellationToken cancel = default)
@@ -70,7 +70,7 @@ public class AudioProcessingService : IAudioProcessingService
     
         try
         {
-            var detectedCode = await _translateService.DetectLanguageFromPhrasesAsync(phraseStrings);
+            var detectedCode = await _azureTranslateService.DetectLanguageFromPhrasesAsync(phraseStrings);
 
             var detectedLanguage = await _languageRepository.RetrieveByTagAsync(detectedCode, token);
             if (detectedLanguage == null)

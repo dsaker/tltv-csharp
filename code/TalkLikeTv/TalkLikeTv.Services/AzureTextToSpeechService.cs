@@ -1,10 +1,11 @@
 using Microsoft.CognitiveServices.Speech;
 using Microsoft.CognitiveServices.Speech.Audio;
 using TalkLikeTv.EntityModels;
+using TalkLikeTv.Services.Abstractions;
 
 namespace TalkLikeTv.Services;
 
-public class AzureTextToSpeechService
+public class AzureTextToSpeechService : IAzureTextToSpeechService
 {
     private readonly string?  _subscriptionKey;
     private readonly string? _region;

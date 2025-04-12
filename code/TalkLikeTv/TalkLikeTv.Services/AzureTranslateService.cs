@@ -5,7 +5,7 @@ using TalkLikeTv.Services.Abstractions;
 
 namespace TalkLikeTv.Services;
 
-public class AzureTranslateService : ITranslateService
+public class AzureTranslateService : IAzureTranslateService
 {
     private const string Endpoint = "https://api.cognitive.microsofttranslator.com";
     private static readonly HttpClient HttpClient = new();
