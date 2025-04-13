@@ -20,6 +20,7 @@ public class AudioProcessingService : IAudioProcessingService
     private readonly IPhraseRepository _phraseRepository;
     private readonly ITranslateRepository _translateRepository;
     private readonly IAzureTranslateService _azureTranslateService;
+    private readonly IZipDirService _zipDirService;
 
     public AudioProcessingService(
         ILogger<AudioProcessingService> logger,
@@ -32,6 +33,7 @@ public class AudioProcessingService : IAudioProcessingService
         IPhraseRepository phraseRepository,
         ITranslateRepository translateRepository,
         IAzureTranslateService azureTranslateService,
+        IZipDirService zipDirService,
         IConfiguration configuration)
     {
         _logger = logger;
@@ -44,6 +46,7 @@ public class AudioProcessingService : IAudioProcessingService
         _phraseRepository = phraseRepository;
         _translateRepository = translateRepository;
         _azureTranslateService = azureTranslateService;
+        _zipDirService = zipDirService;
         _audioOutputDir = configuration.GetValue<string>("TalkLikeTv:AudioOutputDir") ?? throw new InvalidOperationException("AudioOutputdir is not configured.");
     }
 
@@ -178,7 +181,7 @@ public class AudioProcessingService : IAudioProcessingService
     {
         var zipFileName = $"{titleName}_{fromLangTag}_{toLangTag}.zip";
         var outputPath = Path.Combine(_audioOutputDir, titleName, fromVoiceShortName, toVoiceShortName);
-        return ZipDirService.CreateZipFile(outputPath, zipFileName);
+        return _zipDirService.CreateZipFile(outputPath, zipFileName);
     }
 
     public async Task<(bool Success, List<string> Errors)> MarkTokenAsUsedAsync(string? tokenHash, CancellationToken cancellationToken = default)

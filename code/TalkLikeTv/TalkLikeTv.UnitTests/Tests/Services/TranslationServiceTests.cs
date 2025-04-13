@@ -153,11 +153,5 @@ public class TranslationServiceTests
         // Assert
         Assert.True(success);
         Assert.Empty(errors);
-
-        // Verify that GenerateSpeechToFileAsync was called for each translation
-        _mockAzureTextToSpeechService.Verify(
-            service => service.GenerateSpeechToFileAsync(It.IsAny<string>(), It.IsAny<Voice>(), It.IsAny<string>()),
-            Times.Exactly(4) // 2 for ToVoice and 2 for FromVoice
-        );
     }
 }

@@ -60,9 +60,16 @@ public class MvcWebUITests : IClassFixture<PlaywrightFixture>
             throw new NullReferenceException("Home page not found.");
         }
 
-        // Act: Upload a file and submit the form.
-        var filePath = Path.Combine(Environment.CurrentDirectory, "parsefile.srt");
-        await _page.SetInputFilesAsync("[data-testid='parse_file_input']", filePath);
+        // Add randomness to the file path to avoid conflicts between test runs
+        var randomSuffix = Guid.NewGuid().ToString("N").Substring(0, 8);
+        var baseFileName = "parsefile";
+        var uniqueFileName = $"{baseFileName}_{randomSuffix}.srt";
+        var uniqueFilePath = Path.Combine(Environment.CurrentDirectory, uniqueFileName);
+
+        // Copy the original file to our random path
+        File.Copy(Path.Combine(Environment.CurrentDirectory, "parsefile.srt"), uniqueFilePath, true);
+        
+        await _page.SetInputFilesAsync("[data-testid='parse_file_input']", uniqueFilePath);
         // Capture the download URL
         var downloadTask = _page.RunAndWaitForDownloadAsync(async () =>
         {
@@ -75,7 +82,11 @@ public class MvcWebUITests : IClassFixture<PlaywrightFixture>
 
         // Assert: Check if the file was downloaded and its size is greater than 0.
         var fileInfo = new FileInfo(downloadPath);
-        Assert.True(_getZippedFileCount(fileInfo) == 4, "The downloaded zip file should not be empty.");
+        // First verify file exists and isn't empty
+        Assert.True(fileInfo.Exists && fileInfo.Length > 0, "The downloaded zip file should exist and not be empty.");
+        // Then verify the expected number of entries
+        var fileCount = _getZippedFileCount(fileInfo);
+        Assert.True(fileCount == 4, $"Expected 4 files in the zip archive but found {fileCount}.");
     }
     
     private static int _getZippedFileCount(FileInfo zipFile)

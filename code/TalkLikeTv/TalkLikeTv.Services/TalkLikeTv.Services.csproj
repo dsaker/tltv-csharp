@@ -16,5 +16,7 @@
         <PackageReference Include="Microsoft.CognitiveServices.Speech" />
         <PackageReference Include="Newtonsoft.Json" />
         <PackageReference Include="Naudio" />
+        <PackageReference Include="System.IO.Abstractions" />
+        <PackageReference Include="System.IO.Abstractions.TestingHelpers" />
     </ItemGroup>
 </Project>

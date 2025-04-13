@@ -1,13 +1,31 @@
 using TalkLikeTv.Services;
+using System.Text;
+using Moq;
+using System.IO.Abstractions;
+using TalkLikeTv.Services.Abstractions;
 
 namespace TalkLikeTv.UnitTests.Tests.Services;
 
-using System.IO;
-using System.Text;
-using Xunit;
-
 public class ParseServiceTests
 {
+    private readonly ParseService _parseService;
+    private readonly Mock<IZipDirService> _mockZipDirService;
+
+    public ParseServiceTests()
+    {
+        _mockZipDirService = new Mock<IZipDirService>();
+        
+        _mockZipDirService
+            .Setup(z => z.ZipStringsList(
+                It.IsAny<List<string>>(),
+                It.IsAny<int>(),
+                It.IsAny<string>(),
+                It.IsAny<string>()))
+            .Returns(new FileInfo(Path.Combine("/tmp/ParseFile", "test.zip")));
+            
+        _parseService = new ParseService(_mockZipDirService.Object);
+    }
+
     [Fact]
     public void ParseFile_ShouldReturnError_WhenFileTooLarge()
     {
@@ -16,7 +34,7 @@ public class ParseServiceTests
         var fileName = "test.txt";
 
         // Act
-        var result = ParseService.ParseFile(largeFileStream, fileName, 10);
+        var result = _parseService.ParseFile(largeFileStream, fileName, 10);
 
         // Assert
         Assert.False(result.Success);
@@ -31,7 +49,7 @@ public class ParseServiceTests
         var fileName = "test.txt";
 
         // Act
-        var result = ParseService.ParseFile(validFileStream, fileName, 10);
+        var result = _parseService.ParseFile(validFileStream, fileName, 10);
 
         // Assert
         Assert.True(result.Success);
@@ -45,7 +63,7 @@ public class ParseServiceTests
         var input = "this is sentence one\nthis is sentence two\nthis is sentence three";
         var reader = new StreamReader(new MemoryStream(Encoding.UTF8.GetBytes(input)));
 
-        // Act
+        // Act - note the static method call
         var result = ParseService.ParseOnePhrasePerLine(reader);
 
         // Assert
@@ -62,14 +80,14 @@ public class ParseServiceTests
         var input = "This is a sentence. This is another sentence!";
         var reader = new StreamReader(new MemoryStream(Encoding.UTF8.GetBytes(input)));
 
-        // Act
+        // Act - note the static method call
         var result = ParseService.ParseOnePhrasePerLine(reader);
 
         // Assert
         Assert.Single(result);
         Assert.Contains("This is a sentence. This is another sentence!", result);
     }
-    
+
     [Fact]
     public void ParseParagraph_ShouldSplitOnEndingPunctuationTwo()
     {
@@ -77,7 +95,7 @@ public class ParseServiceTests
         var input = "This is a longer sentence. This is another longer sentence!";
         var reader = new StreamReader(new MemoryStream(Encoding.UTF8.GetBytes(input)));
 
-        // Act
+        // Act - note the static method call
         var result = ParseService.ParseOnePhrasePerLine(reader);
 
         // Assert
@@ -93,7 +111,7 @@ public class ParseServiceTests
         var input = "1\n00:00:01,000 --> 00:00:02,000\n[Music]\nHello world but longer\n";
         var reader = new StreamReader(new MemoryStream(Encoding.UTF8.GetBytes(input)));
 
-        // Act
+        // Act - note the static method call
         var result = ParseService.ParseOnePhrasePerLine(reader);
 
         // Assert

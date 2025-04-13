@@ -21,10 +21,13 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ITranslationService, TranslationService>();
         services.AddSingleton<IPhraseService, PhraseService>();
         services.AddScoped<ITokenService, TokenService>(); 
-        services.AddSingleton<AzureTextToSpeechService>();
+        services.AddSingleton<IAzureTextToSpeechService, AzureTextToSpeechService>();
         services.AddScoped<IAudioFileService, AudioFileService>();
         services.AddScoped<IAzureTranslateService, AzureTranslateService>();
         services.AddScoped<IAudioProcessingService, AudioProcessingService>();
+        services.AddSingleton<IZipDirService, ZipDirService>(_ =>
+            new ZipDirService(new System.IO.Abstractions.FileSystem()));
+        services.AddSingleton<IParseService, ParseService>();
         
         // Register Repositories
         services.AddScoped<ITitleRepository, TitleRepository>();

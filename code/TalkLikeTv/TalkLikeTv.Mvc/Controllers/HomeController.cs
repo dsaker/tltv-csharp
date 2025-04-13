@@ -2,7 +2,7 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using TalkLikeTv.Mvc.Models;
-using TalkLikeTv.Services;
+using TalkLikeTv.Services.Abstractions;
 
 namespace TalkLikeTv.Mvc.Controllers;
 
@@ -10,10 +10,15 @@ public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
     private readonly TalkliketvOptions _options;
+    private readonly IParseService _parseService;
 
-    public HomeController(ILogger<HomeController> logger, IOptions<TalkliketvOptions> sharedSettings)
+    public HomeController(
+        ILogger<HomeController> logger, 
+        IParseService parseService,
+        IOptions<TalkliketvOptions> sharedSettings)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _parseService = parseService;
         _options = sharedSettings.Value ?? throw new ArgumentNullException(nameof(sharedSettings));
     }
 
@@ -32,7 +37,7 @@ public class HomeController : Controller
             {
                 await using (var fileStream = model.File.OpenReadStream())
                 {
-                    var parseResult = ParseService.ParseFile(fileStream, model.File.FileName, _options.MaxPhrases);
+                    var parseResult = _parseService.ParseFile(fileStream, model.File.FileName, _options.MaxPhrases);
 
                     if (!parseResult.Success)
                     {
@@ -49,7 +54,23 @@ public class HomeController : Controller
                     var fileBytes = await System.IO.File.ReadAllBytesAsync(parseResult.File.FullName);
                     var fileName = Path.GetFileName(parseResult.File.FullName);
 
-                    return File(fileBytes, "application/zip", fileName + ".zip");
+                    var fileResult = File(fileBytes, "application/zip", fileName + ".zip");
+                    
+                    // Delete the temporary file after we've read its contents
+                    if (parseResult.File != null && System.IO.File.Exists(parseResult.File.FullName))
+                    {
+                        try
+                        {
+                            System.IO.File.Delete(parseResult.File.FullName);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning("Failed to delete temporary file {FileName}: {Exception}", 
+                                parseResult.File.FullName, ex.Message);
+                        }
+                    }
+
+                    return fileResult;
                 }
             }
             catch (Exception ex)

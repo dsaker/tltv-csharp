@@ -1,9 +1,17 @@
 using System.Text.RegularExpressions;
+using TalkLikeTv.Services.Abstractions;
 
 namespace TalkLikeTv.Services;
 
-public partial class ParseService
+public partial class ParseService : IParseService
 {
+    private readonly IZipDirService _zipDirService;
+    
+    public ParseService(IZipDirService zipDirService)
+    {
+        _zipDirService = zipDirService;
+    }
+    
     [GeneratedRegex(@"\[.*?\]|\{.*?\}|<.*?>|♪|-|\""")]
     private static partial Regex ReplaceFmt();
     private static string _replaceFmt(string input) => ReplaceFmt().Replace(input, "");
@@ -23,7 +31,7 @@ public partial class ParseService
         public FileInfo? File { get; set; }
     }
     
-    public static ParseResult ParseFile(Stream fileStream, string fileName, int maxPhrases)
+    public ParseResult ParseFile(Stream fileStream, string fileName, int maxPhrases)
     {
 
         if (fileStream.Length > 8192 * 8)
@@ -55,7 +63,7 @@ public partial class ParseService
             }
         }
 
-        var file = ZipDirService.ZipStringsList(stringsList, maxPhrases, txtPath, fileName);
+        var file = _zipDirService.ZipStringsList(stringsList, maxPhrases, txtPath, fileName);
         return new ParseResult { Success = true, File = file };
     }
     
