@@ -7,6 +7,7 @@ using TalkLikeTv.Mvc.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
+
 // Load environment variables from .env file
 new EnvLoader().Load();
 
