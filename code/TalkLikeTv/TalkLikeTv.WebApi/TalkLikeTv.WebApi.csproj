@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" />
   </ItemGroup>
 
   <ItemGroup Label="To use the TalkLikeTv entity models.">
@@ -19,5 +20,5 @@
   <ItemGroup Label="To simplify use of WriteLine.">
     <Using Include="System.Console" Static="true" />
   </ItemGroup>
-
+  
 </Project>

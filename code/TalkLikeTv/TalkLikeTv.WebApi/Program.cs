@@ -1,10 +1,11 @@
 using Microsoft.AspNetCore.Diagnostics;
-using Microsoft.AspNetCore.Mvc.Formatters; // To use IOutputFormatter.
+using Microsoft.AspNetCore.Mvc.Formatters;
+using Microsoft.Extensions.Caching.Hybrid; // To use IOutputFormatter.
 using TalkLikeTv.EntityModels;
 using TalkLikeTv.Repositories;
 using TalkLikeTv.Services;
 using TalkLikeTv.Services.Abstractions;
-
+using TalkLikeTv.WebApi.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,15 +34,8 @@ builder.Services.AddControllers(options =>
     .AddXmlDataContractSerializerFormatters()
     .AddXmlSerializerFormatters();
 
-builder.Services.AddScoped<TitleValidationService>();
-builder.Services.AddScoped<ITitleRepository, TitleRepository>();
-builder.Services.AddScoped<ILanguageRepository, LanguageRepository>();
-builder.Services.AddScoped<ITokenService, TokenService>();
-builder.Services.AddScoped<IAudioProcessingService, AudioProcessingService>();
-
-
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+// Add TalkLikeTv features
+builder.Services.AddTalkliketvFeatures(builder.Configuration);
 
 var app = builder.Build();
 
@@ -72,6 +66,8 @@ app.UseExceptionHandler(appBuilder => {
 });
 
 app.UseHttpsRedirection();
+
+app.UseResponseCaching();
 
 app.UseAuthorization();
 

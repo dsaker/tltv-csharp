@@ -24,6 +24,9 @@ public class VoicesController : ControllerBase
     [HttpGet]
     [ProducesResponseType(200, Type = typeof(IEnumerable<Voice>))]
     [ProducesResponseType(500, Type = typeof(ErrorResponse))]
+    [ResponseCache(Duration = 3600, // Cache-Control: max-age=5
+        Location = ResponseCacheLocation.Any // Cache-Control: public
+    )]
     public async Task<ActionResult<IEnumerable<Voice>>> GetVoices()
     {
         try
@@ -46,6 +49,9 @@ public class VoicesController : ControllerBase
     [ProducesResponseType(200, Type = typeof(Voice))]
     [ProducesResponseType(404, Type = typeof(ErrorResponse))]
     [ProducesResponseType(500, Type = typeof(ErrorResponse))]
+    [ResponseCache(Duration = 3600, // Cache-Control: max-age=5
+        Location = ResponseCacheLocation.Any // Cache-Control: public
+    )]
     public async Task<IActionResult> GetVoice(string id)
     {
         try

@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TalkLikeTv.EntityModels; // To use Title.
 using TalkLikeTv.Repositories;
-using TalkLikeTv.Services;
 using TalkLikeTv.Services.Abstractions; // To use ITitleRepository.
 using TalkLikeTv.WebApi.Models;
 
@@ -19,7 +18,6 @@ public class TitlesController : ControllerBase
     private readonly IAudioProcessingService _audioProcessingService;
     private readonly ITokenService _tokenService;
     private readonly ILogger<AudioController> _logger;
-    private readonly IWebHostEnvironment _env;
 
     // Constructor injects repository registered in Program.cs.
     public TitlesController(
@@ -43,6 +41,9 @@ public class TitlesController : ControllerBase
     [HttpGet]
     [ProducesResponseType(200, Type = typeof(IEnumerable<Title>))]
     [ProducesResponseType(400, Type = typeof(ErrorResponse))]
+    [ResponseCache(Duration = 3600, // Cache-Control: max-age=5
+        Location = ResponseCacheLocation.Any // Cache-Control: public
+    )]
     public async Task<ActionResult<IEnumerable<Title>>> GetTitles(string? originallanguageid)
     {
         if (string.IsNullOrWhiteSpace(originallanguageid))
@@ -101,8 +102,7 @@ public class TitlesController : ControllerBase
     [ProducesResponseType(200, Type = typeof(Title))]
     [ProducesResponseType(404)]
     [ResponseCache(Duration = 5, // Cache-Control: max-age=5
-    Location = ResponseCacheLocation.Any, // Cache-Control: public
-    VaryByHeader = "User-Agent" // Vary: User-Agent
+    Location = ResponseCacheLocation.Any // Cache-Control: public
     )]
     public async Task<IActionResult> GetTitle(string id)
     {

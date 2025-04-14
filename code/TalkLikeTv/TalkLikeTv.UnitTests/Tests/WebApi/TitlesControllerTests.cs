@@ -4,7 +4,6 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using TalkLikeTv.EntityModels;
 using TalkLikeTv.Repositories;
-using TalkLikeTv.Services;
 using TalkLikeTv.Services.Abstractions;
 using TalkLikeTv.WebApi.Controllers;
 using TalkLikeTv.WebApi.Models;
@@ -17,7 +16,6 @@ public class TitlesControllerTests
         private readonly Mock<IAudioFileService> _mockAudioFileService;
         private readonly Mock<IAudioProcessingService> _mockAudioProcessingService;
         private readonly Mock<ITokenService> _mockTokenService;
-        private readonly Mock<ILogger<AudioController>> _mockLogger;
         private readonly TitlesController _controller;
 
         public TitlesControllerTests()
@@ -26,14 +24,14 @@ public class TitlesControllerTests
             _mockAudioFileService = new Mock<IAudioFileService>();
             _mockAudioProcessingService = new Mock<IAudioProcessingService>();
             _mockTokenService = new Mock<ITokenService>();
-            _mockLogger = new Mock<ILogger<AudioController>>();
+            var mockLogger = new Mock<ILogger<AudioController>>();
     
             _controller = new TitlesController(
                 _mockRepo.Object,
                 _mockAudioFileService.Object,
                 _mockAudioProcessingService.Object,
                 _mockTokenService.Object,
-                _mockLogger.Object);
+                mockLogger.Object);
 
             // Set up HttpContext with CancellationToken
             var httpContext = new DefaultHttpContext();
@@ -95,7 +93,7 @@ public class TitlesControllerTests
         public async Task SearchTitles_ReturnsPagedResults()
         {
             // Arrange
-            var titles = new Title[] { new Title { TitleId = 1, TitleName = "Test" } };
+            var titles = new [] { new Title { TitleId = 1, TitleName = "Test" } };
             var returnValue = (titles, totalCount: 1);
 
             _mockRepo.Setup(repo => repo.SearchTitlesAsync(
@@ -554,7 +552,11 @@ public class TitlesControllerTests
             // Arrange
             var model = new CreateTitleFromFileApiModel
             {
-                // Missing required fields
+                // Add required properties with placeholder values
+                Token = "placeholder", 
+                TitleName = "placeholder",
+                File = new FormFile(Stream.Null, 0, 0, "file", "placeholder.txt")
+                // Missing required fields intentionally won't matter since we're manually adding ModelState errors
             };
 
             _controller.ModelState.AddModelError("TitleName", "Title name is required");

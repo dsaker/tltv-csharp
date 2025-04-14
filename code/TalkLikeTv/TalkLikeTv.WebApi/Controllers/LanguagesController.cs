@@ -23,6 +23,9 @@ public class LanguagesController : ControllerBase
     [HttpGet]
     [ProducesResponseType(200, Type = typeof(IEnumerable<Language>))]
     [ProducesResponseType(500)]
+    [ResponseCache(Duration = 3600, // Cache-Control: max-age=5
+        Location = ResponseCacheLocation.Any // Cache-Control: public
+    )]
     public async Task<ActionResult<IEnumerable<Language>>> GetLanguages()
     {
         try
@@ -42,6 +45,9 @@ public class LanguagesController : ControllerBase
     [ProducesResponseType(200, Type = typeof(Language))]
     [ProducesResponseType(404)]
     [ProducesResponseType(500)]
+    [ResponseCache(Duration = 3600, // Cache-Control: max-age=5
+        Location = ResponseCacheLocation.Any // Cache-Control: public
+    )]
     public async Task<IActionResult> GetLanguage(string id)
     {
         try
@@ -65,6 +71,9 @@ public class LanguagesController : ControllerBase
     [ProducesResponseType(200, Type = typeof(Language))]
     [ProducesResponseType(404)]
     [ProducesResponseType(500)]
+    [ResponseCache(Duration = 3600, // Cache-Control: max-age=5
+        Location = ResponseCacheLocation.Any // Cache-Control: public
+    )]
     public async Task<IActionResult> GetLanguageByTag(string code)
     {
         try
