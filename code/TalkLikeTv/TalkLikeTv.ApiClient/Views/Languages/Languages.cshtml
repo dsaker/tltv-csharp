@@ -1,0 +1,38 @@
+@model IEnumerable<TalkLikeTv.EntityModels.Language>
+<h2>@ViewData["Title"]</h2>
+<table class="table">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Native Name</th>
+        <th>Tag</th>
+        <th>Platform</th>
+    </tr>
+    </thead>
+    <tbody>
+    @if (Model is not null)
+    {
+        @foreach (var language in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => language.LanguageId)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => language.Name)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => language.NativeName)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => language.Tag)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => language.Platform)
+                </td>
+            </tr>
+        }
+    }
+    </tbody>
+</table>

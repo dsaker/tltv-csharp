@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.HttpLogging;
 using TalkLikeTv.Services.Abstractions;
 
 namespace TalkLikeTv.WebApi.Extensions;
@@ -59,6 +60,16 @@ public static class ServiceCollectionExtensions
         services.AddOpenApi();
         services.AddResponseCaching();
         
+        services.AddHttpLogging(options =>
+        {
+            // Add the Origin header so it will not be redacted.
+            options.RequestHeaders.Add("Origin");
+
+            options.LoggingFields = HttpLoggingFields.All;
+            options.RequestBodyLogLimit = 4096; // Default is 32k.
+            options.ResponseBodyLogLimit = 4096; // Default is 32k.
+        });
+
         return services;
     }
 }
