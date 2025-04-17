@@ -70,6 +70,15 @@ public static class ServiceCollectionExtensions
             options.ResponseBodyLogLimit = 4096; // Default is 32k.
         });
 
+        services.AddCors(options =>
+        {
+            options.AddPolicy(name: "TalkLikeTv.WebApi.Policy",
+                policy =>
+                {
+                    policy.WithOrigins("https://localhost:7215/");
+                });
+        });
+
         return services;
     }
 }

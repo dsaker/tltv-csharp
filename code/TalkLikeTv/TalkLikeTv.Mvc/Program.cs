@@ -4,7 +4,6 @@ using AspNetCoreRateLimit;
 using DotEnv.Core;
 using TalkLikeTv.Mvc.Extensions;
 
-
 var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
 

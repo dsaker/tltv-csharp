@@ -1,16 +1,11 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc.Formatters;
-using Microsoft.Extensions.Caching.Hybrid; // To use IOutputFormatter.
 using TalkLikeTv.EntityModels;
-using TalkLikeTv.Repositories;
-using TalkLikeTv.Services;
-using TalkLikeTv.Services.Abstractions;
 using TalkLikeTv.WebApi.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddTalkliketvContext();
-// Add services to the container.
 
 builder.Services.AddControllers(options =>
     {
@@ -69,9 +64,9 @@ app.UseExceptionHandler(appBuilder => {
 
 app.UseHttpsRedirection();
 
-app.UseResponseCaching();
+app.UseCors(policyName: "TalkLikeTv.WebApi.Policy");
 
-app.UseAuthorization();
+app.UseResponseCaching();
 
 app.MapControllers();
 
