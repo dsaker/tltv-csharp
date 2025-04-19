@@ -12,6 +12,7 @@
     <ItemGroup Label="To use the TalkLikeTv entity models.">
         <ProjectReference Include="..\TalkLikeTv.EntityModels\TalkLikeTv.EntityModels.csproj" />
         <ProjectReference Include="..\TalkLikeTv.Repositories\TalkLikeTv.Repositories.csproj" />
+        <ProjectReference Include="..\TalkLikeTv.Utilities\TalkLikeTv.Utilities.csproj" />
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="FastEndpoints" />

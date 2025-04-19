@@ -1,10 +1,11 @@
 using FastEndpoints;
 using TalkLikeTv.EntityModels;
+using TalkLikeTv.FastEndpoints.Mappers;
 using TalkLikeTv.Repositories;
 
 namespace TalkLikeTv.FastEndpoints.Endpoints;
 
-public class VoicesEndpoint : Endpoint<VoicesRequest, Voice[]>
+public class VoicesEndpoint : Endpoint<VoicesRequest, VoiceResponse[], VoiceMapper>
 {
     private readonly IVoiceRepository _voiceRepository;
 
@@ -20,25 +21,17 @@ public class VoicesEndpoint : Endpoint<VoicesRequest, Voice[]>
         AllowAnonymous();
     }
 
-    public override async Task HandleAsync(
-        VoicesRequest request, CancellationToken ct)
+    public override async Task HandleAsync(VoicesRequest request, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(request.LanguageId))
-        {
-            // Retrieve all voices
-            var response = await _voiceRepository.RetrieveAllAsync(ct);
-            await SendAsync(response, cancellation: ct);
-        }
-        else
-        {
-            var response = await RetrieveVoicesByLanguageIdAsync(
-                request.LanguageId, ct);
-            await SendAsync(response, cancellation: ct);
-        }
+        var voices = string.IsNullOrWhiteSpace(request.LanguageId)
+            ? await _voiceRepository.RetrieveAllAsync(ct)
+            : await RetrieveVoicesByLanguageIdAsync(request.LanguageId, ct);
+
+        var response = Map.FromEntity(voices);
+        await SendAsync(response, cancellation: ct);
     }
 
-    private async Task<Voice[]> RetrieveVoicesByLanguageIdAsync(
-        string languageId, CancellationToken ct)
+    private async Task<Voice[]> RetrieveVoicesByLanguageIdAsync(string languageId, CancellationToken ct)
     {
 
         var allVoices = await _voiceRepository.RetrieveAllAsync(ct);
@@ -51,5 +44,3 @@ public class VoicesEndpoint : Endpoint<VoicesRequest, Voice[]>
         return Array.Empty<Voice>();
     }
 }
-
-public record VoicesRequest(string LanguageId);

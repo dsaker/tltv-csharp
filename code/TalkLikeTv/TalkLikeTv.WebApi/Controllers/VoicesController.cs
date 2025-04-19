@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using TalkLikeTv.EntityModels;
 using TalkLikeTv.Repositories;
+using TalkLikeTv.WebApi.Mappers;
 using TalkLikeTv.WebApi.Models;
 
 namespace TalkLikeTv.WebApi.Controllers;
@@ -22,17 +23,18 @@ public class VoicesController : ControllerBase
 
     // GET: api/voices
     [HttpGet]
-    [ProducesResponseType(200, Type = typeof(IEnumerable<Voice>))]
+    [ProducesResponseType(200, Type = typeof(IEnumerable<VoiceMapper.VoiceResponse>))]
     [ProducesResponseType(500, Type = typeof(ErrorResponse))]
     [ResponseCache(Duration = 3600, // Cache-Control: max-age=5
         Location = ResponseCacheLocation.Any // Cache-Control: public
     )]
-    public async Task<ActionResult<IEnumerable<Voice>>> GetVoices()
+    public async Task<ActionResult<IEnumerable<VoiceMapper.VoiceResponse>>> GetVoices()
     {
         try
         {
             var voices = await _repo.RetrieveAllAsync(HttpContext.RequestAborted);
-            return Ok(voices);
+            var response = VoiceMapper.ToResponseList(voices);
+            return Ok(response);
         }
         catch (Exception ex)
         {

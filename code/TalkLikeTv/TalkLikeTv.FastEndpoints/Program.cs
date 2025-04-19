@@ -1,5 +1,3 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using FastEndpoints;
 using Microsoft.Extensions.Caching.Hybrid;
 using TalkLikeTv.EntityModels;
@@ -33,15 +31,7 @@ builder.Services.AddScoped<ILanguageRepository, LanguageRepository>();
 var app = builder.Build();
 
 // Configure FastEndpoints with the same JSON options
-app.UseFastEndpoints(c =>
-{
-    c.Serializer.Options.ReferenceHandler = ReferenceHandler.Preserve;
-    c.Serializer.Options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-    c.Serializer.Options.MaxDepth = 32;
-    c.Serializer.Options.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
-    c.Serializer.Options.WriteIndented = true;
-    c.Serializer.Options.Converters.Add(new CustomVoiceConverter()); // Add it here as well
-});
+app.UseFastEndpoints();
 
 app.MapGet("/", () => """
                       Hello FastEndpoints!

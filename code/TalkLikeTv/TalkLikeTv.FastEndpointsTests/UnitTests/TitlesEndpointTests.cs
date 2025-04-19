@@ -4,6 +4,8 @@ using Shouldly; // For ShouldBe extensions
 using FastEndpoints.Testing;
 using TalkLikeTv.EntityModels;
 using TalkLikeTv.FastEndpoints.Endpoints;
+using TalkLikeTv.FastEndpoints.Mappers;
+using TalkLikeTv.Utilities.Mappers;
 
 namespace TalkLikeTv.FastEndpointsTests.UnitTests;
 
@@ -95,15 +97,16 @@ public class TitlesEndpointTests(MyApp app) : TestBase<MyApp>
     [Fact]
     public async Task CreateTitle_ShouldCreateAndReturnNewTitle()
     {
-        // Create a new title to be added
-        var newTitle = new Title
-        {
-            TitleName = "NewTitle",
-            Description = "A new test title"
-        };
+        // Create a new request object for creating a title
+        var newTitleRequest = new CreateTitleRequest(
+            TitleName: "NewTitle",
+            Description: "A new test title",
+            NumPhrases: 10,
+            OriginalLanguageId: 1
+        );
 
         // Execute POST request to /titles endpoint
-        var result = await app.Client.POSTAsync<CreateTitleEndpoint, Title, Title>(newTitle);
+        var result = await app.Client.POSTAsync<CreateTitleEndpoint, CreateTitleRequest, TitleResponse>(newTitleRequest);
 
         // Assert response status code
         result.Response.StatusCode.ShouldBe(HttpStatusCode.Created);
@@ -118,5 +121,77 @@ public class TitlesEndpointTests(MyApp app) : TestBase<MyApp>
         var locationHeader = result.Response.Headers.Location;
         locationHeader.ShouldNotBeNull();
         locationHeader.ToString().ShouldContain("/titles/3");
+    }
+    
+    [Fact]
+    public async Task UpdateTitle_ShouldUpdateAndReturnOk()
+    {
+        // Arrange
+        var request = new UpdateTitleRequest(
+            Id: "1",
+            Title: new UpdateTitleDto
+            {
+                TitleName = "UpdatedTitle",
+                Description = "Updated description",
+                NumPhrases = 15,
+                Popularity = 5,
+                OriginalLanguageId = 2
+            }
+        );
+
+        // Act
+        var result = await app.Client.PUTAsync<UpdateTitleEndpoint, UpdateTitleRequest>(request);
+
+        // Assert
+        result.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task UpdateTitle_WithNonExistentId_ShouldReturnNotFound()
+    {
+        // Arrange
+        var request = new UpdateTitleRequest(
+            Id: "999",
+            Title: new UpdateTitleDto
+            {
+                TitleName = "UpdatedTitle",
+                Description = "Updated description",
+                NumPhrases = 15,
+                Popularity = 5,
+                OriginalLanguageId = 2
+            }
+        );
+
+        // Act
+        var result = await app.Client.PUTAsync<UpdateTitleEndpoint, UpdateTitleRequest>(request);
+
+        // Assert
+        result.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+    
+    [Fact]
+    public async Task DeleteTitle_ShouldDeleteAndReturnNoContent()
+    {
+        // Arrange
+        var request = new TitlesRequest("1");
+
+        // Act
+        var result = await app.Client.DELETEAsync<DeleteTitleEndpoint, TitlesRequest>(request);
+
+        // Assert
+        result.StatusCode.ShouldBe(HttpStatusCode.NoContent);
+    }
+
+    [Fact]
+    public async Task DeleteTitle_WithNonExistentId_ShouldReturnNotFound()
+    {
+        // Arrange
+        var request = new TitlesRequest("999");
+
+        // Act
+        var result = await app.Client.DELETEAsync<DeleteTitleEndpoint, TitlesRequest>(request);
+
+        // Assert
+        result.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 }

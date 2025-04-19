@@ -9,6 +9,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" />
+    <PackageReference Include="DotEnv.Core"/>
   </ItemGroup>
 
   <ItemGroup Label="To use the TalkLikeTv entity models.">

@@ -3,7 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TalkLikeTv.EntityModels; // To use Title.
 using TalkLikeTv.Repositories;
-using TalkLikeTv.Services.Abstractions; // To use ITitleRepository.
+using TalkLikeTv.Services.Abstractions;
+using TalkLikeTv.WebApi.Mappers; // To use ITitleRepository.
 using TalkLikeTv.WebApi.Models;
 
 namespace TalkLikeTv.WebApi.Controllers;
@@ -39,16 +40,18 @@ public class TitlesController : ControllerBase
     // GET: api/titles/?originallanguageid=[originallanguageid]
     // this will always return a list of titles (but it might be empty)
     [HttpGet]
-    [ProducesResponseType(200, Type = typeof(IEnumerable<Title>))]
+    [ProducesResponseType(200, Type = typeof(IEnumerable<TitleMapper.TitleResponse>))]
     [ProducesResponseType(400, Type = typeof(ErrorResponse))]
     [ResponseCache(Duration = 3600, // Cache-Control: max-age=5
         Location = ResponseCacheLocation.Any // Cache-Control: public
     )]
-    public async Task<ActionResult<IEnumerable<Title>>> GetTitles(string? originallanguageid)
+    public async Task<ActionResult<IEnumerable<TitleMapper.TitleResponse>>> GetTitles(string? originallanguageid)
     {
         if (string.IsNullOrWhiteSpace(originallanguageid))
         {
-            return await _repo.RetrieveAllAsync(HttpContext.RequestAborted);
+            var titles = await _repo.RetrieveAllAsync(HttpContext.RequestAborted);
+            var response = TitleMapper.ToResponseList(titles);
+            return Ok(response);
         }
 
         if (!int.TryParse(originallanguageid, out var originalId))
@@ -59,9 +62,12 @@ public class TitlesController : ControllerBase
             });
         }
 
-        return (await _repo.RetrieveAllAsync(HttpContext.RequestAborted))
+        var filteredTitles = (await _repo.RetrieveAllAsync(HttpContext.RequestAborted))
             .Where(title => title.OriginalLanguageId == originalId)
             .ToArray();
+
+        var filteredResponse = TitleMapper.ToResponseList(filteredTitles);
+        return Ok(filteredResponse);
     }
 
     // GET: api/titles/search?languageId=1&keyword=test&searchType=Both&pageNumber=1&pageSize=10

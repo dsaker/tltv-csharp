@@ -10,4 +10,8 @@
         <ProjectReference Include="..\TalkLikeTv.EntityModels\TalkLikeTv.EntityModels.csproj"/>
     </ItemGroup>
     
+    <ItemGroup>
+        <PackageReference Include="FastEndpoints" />
+    </ItemGroup>
+    
 </Project>

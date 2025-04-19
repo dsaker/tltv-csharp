@@ -1,6 +1,8 @@
 using FastEndpoints;
 using TalkLikeTv.EntityModels;
+using TalkLikeTv.FastEndpoints.Mappers;
 using TalkLikeTv.Repositories;
+using TalkLikeTv.Utilities.Mappers;
 
 namespace TalkLikeTv.FastEndpoints.Endpoints;
 
@@ -77,7 +79,7 @@ public class TitlesByNameEndpoint : Endpoint<TitlesByNameRequest, Title[]>
 }
 
 // POST endpoint for creating a title
-public class CreateTitleEndpoint : Endpoint<Title, Title>
+public class CreateTitleEndpoint : Endpoint<CreateTitleRequest, TitleResponse, TitleMapper>
 {
     private readonly ITitleRepository _titleRepository;
 
@@ -93,16 +95,28 @@ public class CreateTitleEndpoint : Endpoint<Title, Title>
         AllowAnonymous();
     }
 
-    public override async Task HandleAsync(Title request, CancellationToken ct)
+    public override async Task HandleAsync(CreateTitleRequest request, CancellationToken ct)
     {
-        var createdTitle = await _titleRepository.CreateAsync(request, ct);
-        
-        // Explicitly set the Location header
-        var locationUrl = $"/titles/{createdTitle.TitleId}";
-        HttpContext.Response.Headers.Location = locationUrl;
-        
+        // Map the request to a Title entity
+        var title = new Title
+        {
+            TitleName = request.TitleName,
+            Description = request.Description,
+            NumPhrases = request.NumPhrases,
+            OriginalLanguageId = request.OriginalLanguageId
+        };
+
+        // Create the title in the repository
+        var createdTitle = await _titleRepository.CreateAsync(title, ct);
+
+        // Map the created Title entity to a TitleResponse
+        var response = Map.FromEntity(createdTitle);
+
+        // Set the Location header
+        HttpContext.Response.Headers.Location = $"/titles/{response.TitleId}";
+
         // Send the response with status code 201 (Created)
-        await SendAsync(createdTitle, 201, cancellation: ct);
+        await SendAsync(response, 201, cancellation: ct);
     }
 }
 
