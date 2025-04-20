@@ -1,3 +1,5 @@
+using TalkLikeTv.Services.Abstractions;
+
 namespace TalkLikeTv.Mvc.Extensions;
 
 using Microsoft.Extensions.DependencyInjection;
@@ -6,24 +8,26 @@ using Services;
 using Repositories;
 using AspNetCoreRateLimit;
 using Microsoft.Extensions.Caching.Hybrid;
-using Configurations;
 
 public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddTalkliketvFeatures(this IServiceCollection services, IConfiguration configuration)
     {
-        // Register TokenService and settings
-        services.AddScoped<TokenService>();
-        services.Configure<SharedSettings>(configuration.GetSection("SharedSettings"));
+
+        services.Configure<TalkliketvOptions>(configuration.GetSection("TalkLikeTv"));
 
         // Register Services
         services.AddTransient<PatternService>();
-        services.AddScoped<TranslationService>();
-        services.AddSingleton<PhraseService>();
-        services.AddSingleton<AzureTextToSpeechService>();
-        services.AddSingleton<AzureTranslateService>();
-        services.AddScoped<AudioFileService>();
-        services.AddScoped<AudioProcessingService>();
+        services.AddScoped<ITranslationService, TranslationService>();
+        services.AddSingleton<IPhraseService, PhraseService>();
+        services.AddScoped<ITokenService, TokenService>(); 
+        services.AddSingleton<IAzureTextToSpeechService, AzureTextToSpeechService>();
+        services.AddScoped<IAudioFileService, AudioFileService>();
+        services.AddScoped<IAzureTranslateService, AzureTranslateService>();
+        services.AddScoped<IAudioProcessingService, AudioProcessingService>();
+        services.AddSingleton<IZipDirService, ZipDirService>(_ =>
+            new ZipDirService(new System.IO.Abstractions.FileSystem()));
+        services.AddSingleton<IParseService, ParseService>();
         
         // Register Repositories
         services.AddScoped<ITitleRepository, TitleRepository>();

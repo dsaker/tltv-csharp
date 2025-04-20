@@ -19,14 +19,14 @@ public class VoiceRepository : IVoiceRepository
         _cache = hybridCache;
     }
 
-    public Task<Voice[]> RetrieveAllAsync()
+    public Task<Voice[]> RetrieveAllAsync(CancellationToken token = default)
     {
         return _db.Voices
             .Include(v => v.Styles)
             .Include(v => v.Scenarios)
             .Include(v => v.Personalities)
             .OrderBy(v => v.DisplayName)
-            .ToArrayAsync();;
+            .ToArrayAsync(token);;
     }
 
     public async Task<Voice?> RetrieveAsync(string id, CancellationToken cancel = default)

@@ -11,7 +11,7 @@ public interface ITitleRepository
     Task<bool> DeleteAsync(string id, CancellationToken token = default);
     Task<Title?> RetrieveByNameAsync(string name, CancellationToken token = default);
     Task<(Title[] titles, int totalCount)> SearchTitlesAsync(
-        int? languageId,
+        string? languageId,
         string? keyword,
         string searchType,
         int pageNumber,

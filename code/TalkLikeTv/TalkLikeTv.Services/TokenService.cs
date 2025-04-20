@@ -1,11 +1,11 @@
 using System.Security.Cryptography;
 using System.Text;
 using TalkLikeTv.Repositories;
-using TalkLikeTv.Services.Exceptions;
+using TalkLikeTv.Services.Abstractions;
 
 namespace TalkLikeTv.Services;
 
-public class TokenService
+public class TokenService : ITokenService
 {
     private readonly ITokenRepository _tokenRepository;
 
@@ -13,14 +13,8 @@ public class TokenService
     {
         _tokenRepository = tokenRepository;
     }
-    
-    public class TokenResult
-    {
-        public bool Success { get; set; }
-        public string? ErrorMessage { get; set; }
-    }
 
-    public async Task<TokenResult> CheckTokenStatus(string token, CancellationToken cancellationToken = default)
+    public async Task<ITokenService.TokenResult> CheckTokenStatus(string token, CancellationToken cancellationToken = default)
     {
         token = token ?? throw new ArgumentNullException(nameof(token));
 
@@ -30,14 +24,14 @@ public class TokenService
         var dbToken = await _tokenRepository.RetrieveByHashAsync(hashString, cancellationToken);
         if (dbToken == null)
         {
-            return new TokenResult { Success = false, ErrorMessage = "Token not found." };
+            return new ITokenService.TokenResult { Success = false, ErrorMessage = "Token not found." };
         }
 
         if (dbToken.Used)
         {
-            return new TokenResult { Success = false, ErrorMessage = "Token already used." };
+            return new ITokenService.TokenResult { Success = false, ErrorMessage = "Token already used." };
         }
 
-        return new TokenResult { Success = true };
+        return new ITokenService.TokenResult { Success = true };
     }
 }

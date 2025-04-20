@@ -2,15 +2,16 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using TalkLikeTv.EntityModels;
 using TalkLikeTv.Repositories;
+using TalkLikeTv.Services.Abstractions;
 using TalkLikeTv.Utilities;
 
 namespace TalkLikeTv.Services;
 
-public class AudioProcessingService
+public class AudioProcessingService : IAudioProcessingService
 {
     private readonly ILogger<AudioProcessingService> _logger;
-    private readonly TranslationService _translationService;
-    private readonly AudioFileService _audioFileService;
+    private readonly ITranslationService _translationService;
+    private readonly IAudioFileService _audioFileService;
     private readonly string _audioOutputDir;
     private readonly IVoiceRepository _voiceRepository;
     private readonly ILanguageRepository _languageRepository;
@@ -18,17 +19,21 @@ public class AudioProcessingService
     private readonly ITitleRepository _titleRepository;
     private readonly IPhraseRepository _phraseRepository;
     private readonly ITranslateRepository _translateRepository;
+    private readonly IAzureTranslateService _azureTranslateService;
+    private readonly IZipDirService _zipDirService;
 
     public AudioProcessingService(
         ILogger<AudioProcessingService> logger,
-        TranslationService translationService,
-        AudioFileService audioFileService,
+        ITranslationService translationService,
+        IAudioFileService audioFileService,
         IVoiceRepository voiceRepository,
         ILanguageRepository languageRepository,
         ITokenRepository tokenRepository,
         ITitleRepository titleRepository,
         IPhraseRepository phraseRepository,
         ITranslateRepository translateRepository,
+        IAzureTranslateService azureTranslateService,
+        IZipDirService zipDirService,
         IConfiguration configuration)
     {
         _logger = logger;
@@ -40,7 +45,9 @@ public class AudioProcessingService
         _titleRepository = titleRepository;
         _phraseRepository = phraseRepository;
         _translateRepository = translateRepository;
-        _audioOutputDir = configuration.GetValue<string>("SharedSettings:AudioOutputDir") ?? throw new InvalidOperationException("AudioOutputdir is not configured.");
+        _azureTranslateService = azureTranslateService;
+        _zipDirService = zipDirService;
+        _audioOutputDir = configuration.GetValue<string>("TalkLikeTv:AudioOutputDir") ?? throw new InvalidOperationException("AudioOutputdir is not configured.");
     }
 
     private async Task<(Voice?, Voice?)> GetVoicesAsync(int toVoiceId, int fromVoiceId, CancellationToken cancel = default)
@@ -66,8 +73,7 @@ public class AudioProcessingService
     
         try
         {
-            var translator = new AzureTranslateService();
-            var detectedCode = await translator.DetectLanguageFromPhrasesAsync(phraseStrings);
+            var detectedCode = await _azureTranslateService.DetectLanguageFromPhrasesAsync(phraseStrings);
 
             var detectedLanguage = await _languageRepository.RetrieveByTagAsync(detectedCode, token);
             if (detectedLanguage == null)
@@ -150,12 +156,12 @@ public class AudioProcessingService
         }
     }
 
-    private async Task<AudioFileService.AudioFileResult> BuildAudioFilesAsync(
+    private async Task<IAudioFileService.AudioFileResult> BuildAudioFilesAsync(
         Title title, Voice toVoice, Voice fromVoice, Language toLang, 
         Language fromLang, int pauseDuration, string pattern,
         CancellationToken token = default)
     {
-        var parameters = new AudioFileService.BuildAudioFilesParams
+        var parameters = new IAudioFileService.BuildAudioFilesParams
         {
             Title = title,
             ToVoice = toVoice,
@@ -175,10 +181,10 @@ public class AudioProcessingService
     {
         var zipFileName = $"{titleName}_{fromLangTag}_{toLangTag}.zip";
         var outputPath = Path.Combine(_audioOutputDir, titleName, fromVoiceShortName, toVoiceShortName);
-        return ZipDirService.CreateZipFile(outputPath, zipFileName);
+        return _zipDirService.CreateZipFile(outputPath, zipFileName);
     }
 
-    public async Task<(bool Success, List<string> Errors)> MarkTokenAsUsedAsync(string? tokenHash)
+    public async Task<(bool Success, List<string> Errors)> MarkTokenAsUsedAsync(string? tokenHash, CancellationToken cancellationToken = default)
     {
         var errors = new List<string>();
     
@@ -190,7 +196,7 @@ public class AudioProcessingService
                 return (false, errors);
             }
         
-            var token = await _tokenRepository.RetrieveByHashAsync(tokenHash);
+            var token = await _tokenRepository.RetrieveByHashAsync(tokenHash, cancellationToken);
             if (token == null)
             {
                 errors.Add("Invalid token.");
@@ -198,7 +204,7 @@ public class AudioProcessingService
             }
 
             token.Used = true;
-            await _tokenRepository.UpdateAsync(token.TokenId.ToString(), token);
+            await _tokenRepository.UpdateAsync(token.TokenId.ToString(), token, cancellationToken);
             return (true, errors);
         }
         catch (Exception ex)

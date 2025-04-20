@@ -1,10 +1,11 @@
 using System.Text;
 using System.Text.Json;
 using Newtonsoft.Json;
+using TalkLikeTv.Services.Abstractions;
 
 namespace TalkLikeTv.Services;
 
-public class AzureTranslateService
+public class AzureTranslateService : IAzureTranslateService
 {
     private const string Endpoint = "https://api.cognitive.microsofttranslator.com";
     private static readonly HttpClient HttpClient = new();

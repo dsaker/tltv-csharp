@@ -19,11 +19,12 @@
     <ItemGroup>
         <ProjectReference Include="..\TalkLikeTv.Services\TalkLikeTv.Services.csproj"/>
         <ProjectReference Include="..\TalkLikeTv.EntityModels\TalkLikeTv.EntityModels.csproj"/>
-
+        <ProjectReference Include="..\TalkLikeTv.WebApi\TalkLikeTv.WebApi.csproj"/>
+        <ProjectReference Include="..\TalkLikeTv.FastEndpoints\TalkLikeTv.FastEndpoints.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
         <Using Include="Xunit"/>
     </ItemGroup>
-
+    
 </Project>

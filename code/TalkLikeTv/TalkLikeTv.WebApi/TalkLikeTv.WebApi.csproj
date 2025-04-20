@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" />
+    <PackageReference Include="DotEnv.Core"/>
+  </ItemGroup>
+
+  <ItemGroup Label="To use the TalkLikeTv entity models.">
+    <ProjectReference Include="..\TalkLikeTv.EntityModels\TalkLikeTv.EntityModels.csproj" />
+    <ProjectReference Include="..\TalkLikeTv.Repositories\TalkLikeTv.Repositories.csproj" />
+    <ProjectReference Include="..\TalkLikeTv.Services\TalkLikeTv.Services.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Label="To simplify use of WriteLine.">
+    <Using Include="System.Console" Static="true" />
+  </ItemGroup>
+  
+</Project>

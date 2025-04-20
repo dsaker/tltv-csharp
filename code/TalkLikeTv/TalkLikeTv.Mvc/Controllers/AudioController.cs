@@ -5,15 +5,16 @@ using TalkLikeTv.EntityModels;
 using TalkLikeTv.Mvc.Models;
 using TalkLikeTv.Services;
 using TalkLikeTv.Repositories;
+using TalkLikeTv.Services.Abstractions;
 
 namespace TalkLikeTv.Mvc.Controllers;
 
 public class AudioController : Controller
 {
     private readonly ILogger<AudioController> _logger;
-    private readonly TokenService _tokenService;
-    private readonly AudioProcessingService _audioProcessingService;
-    private readonly AudioFileService _audioFileService;
+    private readonly ITokenService _tokenService;
+    private readonly IAudioProcessingService _audioProcessingService;
+    private readonly IAudioFileService _audioFileService;
     private readonly IWebHostEnvironment _env;
     private readonly ILanguageRepository _languageRepository;
     private readonly IVoiceRepository _voiceRepository;
@@ -21,9 +22,9 @@ public class AudioController : Controller
 
     public AudioController(
         ILogger<AudioController> logger,
-        TokenService tokenService,
-        AudioProcessingService audioProcessingService,
-        AudioFileService audioFileService,
+        ITokenService tokenService,
+        IAudioProcessingService audioProcessingService,
+        IAudioFileService audioFileService,
         ILanguageRepository languageRepository,
         IVoiceRepository voiceRepository,
         ITitleRepository titleRepository,
@@ -176,7 +177,7 @@ public class AudioController : Controller
 
         if (ModelState.IsValid)
         {
-            var dbVoices = await _voiceRepository.RetrieveAllAsync();
+            var dbVoices = await _voiceRepository.RetrieveAllAsync(HttpContext.RequestAborted);
             var toVoice = dbVoices.FirstOrDefault(v => v.VoiceId == modelIn.ToVoice);
             var fromVoice = dbVoices.FirstOrDefault(v => v.VoiceId == modelIn.FromVoice);
 
@@ -201,7 +202,7 @@ public class AudioController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> GetVoices([FromBody] GetVoicesRequest request)
     {
-        var dbVoices = await _voiceRepository.RetrieveAllAsync();
+        var dbVoices = await _voiceRepository.RetrieveAllAsync(HttpContext.RequestAborted);
         var filteredVoices = dbVoices.Where(v => v.LanguageId == request.SelectedLanguage);
 
         var voiceData = filteredVoices.Select(v => new {

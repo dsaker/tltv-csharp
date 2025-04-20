@@ -1,65 +1,74 @@
-namespace TalkLikeTv.Services;
+using System.IO.Abstractions;
+using TalkLikeTv.Services.Abstractions;
 
-public static class ZipDirService
+public class ZipDirService : IZipDirService
 {
-    public static FileInfo ZipStringsList(List<string> stringList, int max, string txtPath, string filename)
+    protected readonly IFileSystem FileSystem;
+
+    public ZipDirService(IFileSystem fileSystem)
     {
-        var chunkedPhrases = stringList.Chunk(max).Select(chunk => chunk.ToList()).ToList();
-        _createPhrasesTxt(chunkedPhrases, txtPath, filename);
-        return CreateZipFile(txtPath, filename);
+        FileSystem = fileSystem;
     }
 
-    private static void _createPhrasesTxt(IEnumerable<List<string>> chunkedPhrases, string zipPath, string filename)
+    public FileInfo CreateZipFile(string sourceDir, string filename)
     {
         try
         {
+            var zipOutputDirectory = "/tmp/CreateZipFile";
+            var zipFilePath = Path.Combine(zipOutputDirectory, filename);
+
+            if (!FileSystem.Directory.Exists(zipOutputDirectory))
+            {
+                FileSystem.Directory.CreateDirectory(zipOutputDirectory);
+            }
+
+            // Use CreateZipFromDirectory which can be overridden in tests
+            CreateZipFromDirectory(sourceDir, zipFilePath);
+
+            return new FileInfo(zipFilePath);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception("An error occurred while creating the zip file.", ex);
+        }
+    }
+
+    protected virtual void CreateZipFromDirectory(string sourceDir, string destinationPath)
+    {
+        // The real implementation still uses System.IO.Compression
+        System.IO.Compression.ZipFile.CreateFromDirectory(sourceDir, destinationPath);
+    }
+    
+    public FileInfo ZipStringsList(List<string> stringList, int max, string txtPath, string filename)
+    {
+        var chunkedPhrases = stringList.Chunk(max).Select(chunk => chunk.ToList()).ToList();
+        CreatePhrasesTxt(chunkedPhrases, txtPath, filename);
+        return CreateZipFile(txtPath, filename);
+    }
+
+    private void CreatePhrasesTxt(IEnumerable<List<string>> chunkedPhrases, string zipPath, string filename)
+    {
+        try
+        {
+            FileSystem.Directory.CreateDirectory(zipPath);
+
             var count = 0;
             foreach (var chunk in chunkedPhrases)
             {
                 var filePath = Path.Combine(zipPath, $"{filename}-phrases-{count}.txt");
                 count++;
 
-                using (var writer = new StreamWriter(filePath))
+                using var writer = new StreamWriter(FileSystem.File.Create(filePath));
+                foreach (var phrase in chunk)
                 {
-                    foreach (var phrase in chunk)
-                    {
-                        writer.WriteLine(phrase);
-                    }
+                    writer.WriteLine(phrase);
                 }
             }
         }
         catch (Exception ex)
         {
             var errorMessage = "An error occurred while creating phrase files.";
-            Console.WriteLine($"{errorMessage} {ex.Message}");
             throw new Exception(errorMessage, ex);
         }
-    }
-
-    public static FileInfo CreateZipFile(string sourceDir, string filename)
-    {
-        // create a directory to hold the zip file
-        Directory.CreateDirectory("/tmp/CreateZipFile/");
-
-        var zipFilePath = Path.Combine("/tmp/CreateZipFile/", $"{filename}");
-
-        try
-        {
-            if (File.Exists(zipFilePath))
-            {
-                File.Delete(zipFilePath);
-            }
-
-            System.IO.Compression.ZipFile.CreateFromDirectory(sourceDir, zipFilePath);
-            Console.WriteLine("Directory successfully zipped to: " + zipFilePath);
-        }
-        catch (Exception ex)
-        {
-            var errorMessage = "An error occurred while creating the zip file.";
-            Console.WriteLine($"{errorMessage} {ex.Message}");
-            throw new Exception(errorMessage, ex);
-        }
-
-        return new FileInfo(zipFilePath);
     }
 }
