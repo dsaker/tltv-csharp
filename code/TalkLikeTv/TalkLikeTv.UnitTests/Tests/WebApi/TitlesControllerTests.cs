@@ -7,6 +7,7 @@ using TalkLikeTv.Repositories;
 using TalkLikeTv.Services.Abstractions;
 using TalkLikeTv.WebApi.Controllers;
 using TalkLikeTv.WebApi.Models;
+using TalkLikeTv.WebApi.Mappers;
 
 namespace TalkLikeTv.UnitTests.Tests.WebApi;
 
@@ -53,8 +54,14 @@ public class TitlesControllerTests
             var result = await _controller.GetTitles(null);
 
             // Assert
-            var actionResult = Assert.IsType<ActionResult<IEnumerable<Title>>>(result);
-            Assert.Equal(titles, actionResult.Value);
+            var actionResult = Assert.IsType<OkObjectResult>(result.Result);
+            var titleResponses = Assert.IsAssignableFrom<IEnumerable<TitleMapper.TitleResponse>>(actionResult.Value);
+    
+            // Compare by ID - verify mapping was done correctly
+            Assert.Equal(
+                titles.Select(t => t.TitleId), 
+                titleResponses.Select(tr => tr.TitleId)
+            );
         }
 
         [Fact]
@@ -72,13 +79,13 @@ public class TitlesControllerTests
             var result = await _controller.GetTitles("1");
 
             // Assert
-            var actionResult = Assert.IsType<ActionResult<IEnumerable<Title>>>(result);
-            var filteredTitles = actionResult.Value?.ToArray();
-            Assert.NotNull(filteredTitles);
-            Assert.Single(filteredTitles);
-            Assert.Equal(1, filteredTitles[0].TitleId);
+            var actionResult = Assert.IsType<OkObjectResult>(result.Result);
+            var titleResponses = Assert.IsAssignableFrom<IEnumerable<TitleMapper.TitleResponse>>(actionResult.Value);
+    
+            Assert.Single(titleResponses);
+            Assert.Equal(1, titleResponses.First().TitleId);
         }
-
+        
         [Fact]
         public async Task GetTitles_ReturnsBadRequest_WhenInvalidLanguageIdFormat()
         {
@@ -148,7 +155,9 @@ public class TitlesControllerTests
             var result = await _controller.GetTitle("999");
 
             // Assert
-            Assert.IsType<NotFoundResult>(result);
+            var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
+            var errorResponse = Assert.IsType<ErrorResponse>(notFoundResult.Value);
+            Assert.Contains("Title with ID 999 was not found.", errorResponse.Errors);
         }
 
         [Fact]

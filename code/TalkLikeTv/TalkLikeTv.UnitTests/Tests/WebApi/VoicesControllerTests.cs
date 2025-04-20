@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using TalkLikeTv.EntityModels;
 using TalkLikeTv.Repositories;
 using TalkLikeTv.WebApi.Controllers;
+using TalkLikeTv.WebApi.Mappers;
 using TalkLikeTv.WebApi.Models;
 
 namespace TalkLikeTv.UnitTests.Tests.WebApi;
@@ -51,10 +52,11 @@ public class VoicesControllerTests
         var result = await _controller.GetVoices();
 
         // Assert
-        var okResult = Assert.IsType<ActionResult<IEnumerable<Voice>>>(result);
-        var returnValue = Assert.IsType<OkObjectResult>(okResult.Result);
-        Assert.Equal(200, returnValue.StatusCode);
-        Assert.Equal(voices, returnValue.Value);
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var returnValue = Assert.IsAssignableFrom<IEnumerable<VoiceMapper.VoiceResponse>>(okResult.Value);
+        Assert.Equal(voices.Length, returnValue.Count());
+        Assert.Equal(voices[0].VoiceId, returnValue.First().VoiceId);
+        Assert.Equal(voices[0].DisplayName, returnValue.First().DisplayName);
     }
 
     [Fact]
