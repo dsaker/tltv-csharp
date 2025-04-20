@@ -42,37 +42,79 @@ public class TitlesController : ControllerBase
     [HttpGet]
     [ProducesResponseType(200, Type = typeof(IEnumerable<TitleMapper.TitleResponse>))]
     [ProducesResponseType(400, Type = typeof(ErrorResponse))]
-    [ResponseCache(Duration = 3600, // Cache-Control: max-age=5
-        Location = ResponseCacheLocation.Any // Cache-Control: public
-    )]
+    [ProducesResponseType(500, Type = typeof(ErrorResponse))]
+    [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any)]
     public async Task<ActionResult<IEnumerable<TitleMapper.TitleResponse>>> GetTitles(string? originallanguageid)
     {
-        if (string.IsNullOrWhiteSpace(originallanguageid))
+        try
         {
-            var titles = await _repo.RetrieveAllAsync(HttpContext.RequestAborted);
-            var response = TitleMapper.ToResponseList(titles);
-            return Ok(response);
-        }
-
-        if (!int.TryParse(originallanguageid, out var originalId))
-        {
-            return BadRequest(new ErrorResponse
+            if (string.IsNullOrWhiteSpace(originallanguageid))
             {
-                Errors = new[] { $"Invalid originalLanguageId format: {originallanguageid}" }
+                var titles = await _repo.RetrieveAllAsync(HttpContext.RequestAborted);
+                var response = TitleMapper.ToResponseList(titles);
+                return Ok(response);
+            }
+
+            if (!int.TryParse(originallanguageid, out var originalId))
+            {
+                return BadRequest(new ErrorResponse
+                {
+                    Errors = new[] { $"Invalid originalLanguageId format: {originallanguageid}" }
+                });
+            }
+
+            var filteredTitles = (await _repo.RetrieveAllAsync(HttpContext.RequestAborted))
+                .Where(title => title.OriginalLanguageId == originalId)
+                .ToArray();
+
+            var filteredResponse = TitleMapper.ToResponseList(filteredTitles);
+            return Ok(filteredResponse);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while retrieving titles.");
+            return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse
+            {
+                Errors = new[] { "An error occurred while processing your request." }
             });
         }
-
-        var filteredTitles = (await _repo.RetrieveAllAsync(HttpContext.RequestAborted))
-            .Where(title => title.OriginalLanguageId == originalId)
-            .ToArray();
-
-        var filteredResponse = TitleMapper.ToResponseList(filteredTitles);
-        return Ok(filteredResponse);
     }
-
+    
+    // GET: api/titles/[id]
+    [HttpGet("{id}", Name = nameof(GetTitle))]
+    [ProducesResponseType(200, Type = typeof(Title))]
+    [ProducesResponseType(404, Type = typeof(ErrorResponse))]
+    [ProducesResponseType(500, Type = typeof(ErrorResponse))]
+    [ResponseCache(Duration = 5, Location = ResponseCacheLocation.Any)]
+    public async Task<IActionResult> GetTitle(string id)
+    {
+        try
+        {
+            var title = await _repo.RetrieveAsync(id, HttpContext.RequestAborted);
+            if (title == null)
+            {
+                return NotFound(new ErrorResponse
+                {
+                    Errors = new[] { $"Title with ID {id} was not found." }
+                });
+            }
+            return Ok(title);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while retrieving title with ID {Id}.", id);
+            return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse
+            {
+                Errors = new[] { "An error occurred while processing your request." }
+            });
+        }
+    }
+    
     // GET: api/titles/search?languageId=1&keyword=test&searchType=Both&pageNumber=1&pageSize=10
     [HttpGet("search")]
     [ProducesResponseType(200, Type = typeof(PaginatedResult<Title>))]
+    [ProducesResponseType(400, Type = typeof(ErrorResponse))]
+    [ProducesResponseType(500, Type = typeof(ErrorResponse))]
     public async Task<IActionResult> SearchTitles(
         [FromQuery] string? languageId,
         [FromQuery] string? keyword,
@@ -80,46 +122,49 @@ public class TitlesController : ControllerBase
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10)
     {
-        if (pageNumber < 1) pageNumber = 1;
-        if (pageSize < 1) pageSize = 10;
-        if (pageSize > 100) pageSize = 100; // Limit max page size
-
-        var (titles, totalCount) = await _repo.SearchTitlesAsync(
-            languageId,
-            keyword,
-            searchType,
-            pageNumber,
-            pageSize,
-            HttpContext.RequestAborted);
-
-        var result = new PaginatedResult<Title>
+        try
         {
-            Items = titles,
-            TotalCount = totalCount,
-            PageNumber = pageNumber,
-            PageSize = pageSize
-        };
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageSize < 1) pageSize = 10;
+            if (pageSize > 100) pageSize = 100; // Limit max page size
 
-        return Ok(result);
-    }
+            var (titles, totalCount) = await _repo.SearchTitlesAsync(
+                languageId,
+                keyword,
+                searchType,
+                pageNumber,
+                pageSize,
+                HttpContext.RequestAborted);
 
-    // GET: api/titles/[id]
-    [HttpGet("{id}", Name = nameof(GetTitle))] // Named route.
-    [ProducesResponseType(200, Type = typeof(Title))]
-    [ProducesResponseType(404)]
-    [ResponseCache(Duration = 5, // Cache-Control: max-age=5
-    Location = ResponseCacheLocation.Any // Cache-Control: public
-    )]
-    public async Task<IActionResult> GetTitle(string id)
-    {
-        var title = await _repo.RetrieveAsync(id, HttpContext.RequestAborted);
-        if (title == null)
-        {
-            return NotFound(); // 404 Resource not found.
+            var result = new PaginatedResult<Title>
+            {
+                Items = titles,
+                TotalCount = totalCount,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            };
+
+            return Ok(result);
         }
-        return Ok(title); // 200 OK with title in body.
+        catch (ArgumentException ex)
+        {
+            _logger.LogError(ex, "Invalid argument provided for SearchTitles.");
+            return BadRequest(new ErrorResponse
+            {
+                Errors = new[] { ex.Message }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while searching titles.");
+            return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse
+            {
+                Errors = new[] { "An error occurred while processing your request." }
+            });
+        }
     }
 
+    
     [HttpPost("fromFile")]
     [Consumes("multipart/form-data")]
     [ProducesResponseType(200, Type = typeof(Title))]
@@ -137,6 +182,7 @@ public class TitlesController : ControllerBase
 
         try
         {
+            // Validate token
             var tokenResult = await _tokenService.CheckTokenStatus(model.Token, HttpContext.RequestAborted);
             if (!tokenResult.Success)
             {
@@ -146,6 +192,7 @@ public class TitlesController : ControllerBase
                 });
             }
 
+            // Extract and validate phrases
             var result = _audioFileService.ExtractAndValidatePhraseStrings(model.File);
             if (result.Errors.Any())
             {
@@ -161,6 +208,7 @@ public class TitlesController : ControllerBase
                 });
             }
 
+            // Detect language
             var (detectedLang, detectionErrors) = await _audioProcessingService.DetectLanguageAsync(phraseStrings, HttpContext.RequestAborted);
             if (detectedLang == null || detectionErrors.Any())
             {
@@ -171,8 +219,10 @@ public class TitlesController : ControllerBase
                 });
             }
 
+            // Process title
             var newTitle = await _audioProcessingService.ProcessTitleAsync(model.TitleName, model.Description, phraseStrings, detectedLang, HttpContext.RequestAborted);
 
+            // Mark token as used
             var (markSuccess, markErrors) = await _audioProcessingService.MarkTokenAsUsedAsync(model.Token);
             if (!markSuccess)
             {
@@ -203,6 +253,7 @@ public class TitlesController : ControllerBase
     [ProducesResponseType(204)]
     [ProducesResponseType(400, Type = typeof(ErrorResponse))]
     [ProducesResponseType(404, Type = typeof(ErrorResponse))]
+    [ProducesResponseType(500, Type = typeof(ErrorResponse))]
     public async Task<IActionResult> Update(string id, [FromBody] Title t)
     {
         if (t.TitleId.ToString() != id) // Compare as string
@@ -213,17 +264,36 @@ public class TitlesController : ControllerBase
             });
         }
 
-        var existing = await _repo.RetrieveAsync(id, HttpContext.RequestAborted);
-        if (existing == null)
+        try
         {
-            return NotFound(new ErrorResponse
+            var existing = await _repo.RetrieveAsync(id, HttpContext.RequestAborted);
+            if (existing == null)
             {
-                Errors = new[] { $"Title with ID {id} was not found." }
+                return NotFound(new ErrorResponse
+                {
+                    Errors = new[] { $"Title with ID {id} was not found." }
+                });
+            }
+
+            await _repo.UpdateAsync(id, t, HttpContext.RequestAborted);
+            return new NoContentResult(); // 204 No content.
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Database error while updating title with ID {Id}.", id);
+            return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse
+            {
+                Errors = new[] { "An error occurred while saving changes to the database." }
             });
         }
-
-        await _repo.UpdateAsync(id, t, HttpContext.RequestAborted);
-        return new NoContentResult(); // 204 No content.
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while updating title with ID {Id}.", id);
+            return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse
+            {
+                Errors = new[] { "An unexpected error occurred while processing your request." }
+            });
+        }
     }
 
     // DELETE: api/titles/[id]
@@ -231,26 +301,46 @@ public class TitlesController : ControllerBase
     [ProducesResponseType(204)]
     [ProducesResponseType(400, Type = typeof(ErrorResponse))]
     [ProducesResponseType(404, Type = typeof(ErrorResponse))]
+    [ProducesResponseType(500, Type = typeof(ErrorResponse))]
     public async Task<IActionResult> Delete(string id)
     {
-        var existing = await _repo.RetrieveAsync(id, HttpContext.RequestAborted);
-        if (existing == null)
+        try
         {
-            return NotFound(new ErrorResponse
+            var existing = await _repo.RetrieveAsync(id, HttpContext.RequestAborted);
+            if (existing == null)
             {
-                Errors = new[] { $"Title with ID {id} was not found." }
+                return NotFound(new ErrorResponse
+                {
+                    Errors = new[] { $"Title with ID {id} was not found." }
+                });
+            }
+
+            bool? deleted = await _repo.DeleteAsync(id, HttpContext.RequestAborted);
+            if (deleted == true)
+            {
+                return new NoContentResult(); // 204 No content.
+            }
+
+            return BadRequest(new ErrorResponse
+            {
+                Errors = new[] { $"Title {id} was found but failed to delete." }
             });
         }
-
-        bool? deleted = await _repo.DeleteAsync(id, HttpContext.RequestAborted);
-        if (deleted == true)
+        catch (DbUpdateException ex)
         {
-            return new NoContentResult(); // 204 No content.
+            _logger.LogError(ex, "Database error while deleting title with ID {Id}.", id);
+            return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse
+            {
+                Errors = new[] { "An error occurred while saving changes to the database." }
+            });
         }
-
-        return BadRequest(new ErrorResponse
+        catch (Exception ex)
         {
-            Errors = new[] { $"Title {id} was found but failed to delete." }
-        });
+            _logger.LogError(ex, "Error occurred while deleting title with ID {Id}.", id);
+            return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse
+            {
+                Errors = new[] { "An unexpected error occurred while processing your request." }
+            });
+        }
     }
 }

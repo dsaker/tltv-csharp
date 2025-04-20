@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.Formatters;
 using TalkLikeTv.EntityModels;
 using TalkLikeTv.WebApi.Extensions;
 using DotEnv.Core;
+using TalkLikeTv.Services;
 
 namespace TalkLikeTv.WebApi;
 
@@ -44,6 +45,10 @@ public class Program
         builder.Services.AddTalkliketvFeatures(builder.Configuration);
 
         var app = builder.Build();
+        
+        // Copy pause files to the destination directory
+        var pauseFileService = app.Services.GetRequiredService<PauseFileService>();
+        pauseFileService.EnsurePauseFilesExist();
 
         app.UseHttpLogging();
 

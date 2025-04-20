@@ -29,6 +29,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IZipDirService, ZipDirService>(_ =>
             new ZipDirService(new System.IO.Abstractions.FileSystem()));
         services.AddSingleton<IParseService, ParseService>();
+        services.AddSingleton<PauseFileService>();
         
         // Register Repositories
         services.AddScoped<ITitleRepository, TitleRepository>();
