@@ -45,7 +45,12 @@ The book [Real-World Web Development with .NET 9](https://github.com/markjprice/
     git clone git@github.com:dsaker/tltv-csharp.git
     cd tltv-csharp/code/TalkLikeTv/
     ```
-2. Open the project in your favorite IDE
+2. Copy the pause files to the base directory
+       > **Tip:** if you change BaseDir in the appsettings.json file you will need to change this command
+    ```bash
+    cp -R TalkLikeTv.Services/Resources/pause/ /tmp/TalkLikeTv/pause/
+    ```
+3. Open the project in your favorite IDE
 
 
 ## Setup .env file
@@ -68,28 +73,28 @@ The book [Real-World Web Development with .NET 9](https://github.com/markjprice/
     ```bash
     cd TalkLikeTv.EntityModels
     dotnet tool install --global dotnet-ef
-    dotnet ef database update
+    export MY_SQL_PWD=s3cret-Ninja
+    export MY_SQL_USR=sa
+    dotnet ef database update InitialBaseline
+    dotnet ef database update AddPopularityColumn
     ```
 
 ## Build and Run the Projects
 
 ### Run the MVC Project
-1. Copy pause wav files to base directory (if you change BaseDir in appsettings.json make appropriate changes to copy command)
-   ```bash
-   cp -R TalkLikeTv.Services/Resources/pause/ /tmp/TalkLikeTv/pause/
-   mkdir /tmp/TalkLikeTv/Audio
-   ```
-2. Navigate to the `TalkLikeTv.Mvc` directory:
+
+1. Navigate to the `TalkLikeTv.Mvc` directory:
     ```bash
     cd TalkLikeTv.Mvc
     ```
 
-3. Build and run the project:
+2. Build and run the project:
     ```bash
+    dotnet build
     dotnet run --launch-profile "https"
     ```
 
-4. Access the application at `https://localhost:7099`.
+3. Access the application at `https://localhost:7099`.
 
 ### Run the WebAPI Project
 1. Navigate to the `TalkLikeTv.WebApi` directory:
@@ -99,6 +104,7 @@ The book [Real-World Web Development with .NET 9](https://github.com/markjprice/
 
 2. Build and run the project:
     ```bash
+    dotnet build
     dotnet run --launch-profile "https"
     ```
 
@@ -112,6 +118,7 @@ The book [Real-World Web Development with .NET 9](https://github.com/markjprice/
 
 2. Build and run the project:
     ```bash
+    dotnet build
     dotnet run --launch-profile "https"
     ```
 
