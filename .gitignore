@@ -400,4 +400,4 @@ FodyWeavers.xsd
 *.sln.iml
 
 scratch.txt
-.env
+*.env
