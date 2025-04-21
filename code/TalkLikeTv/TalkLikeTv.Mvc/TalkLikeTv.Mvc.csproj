@@ -20,6 +20,7 @@
     
     <ItemGroup>
         <PackageReference Include="DotEnv.Core"/>
+        <PackageReference Include="AspNetCoreRateLimit" />
         <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" />
     </ItemGroup>
 </Project>
