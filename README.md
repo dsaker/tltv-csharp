@@ -80,18 +80,23 @@ The book [Real-World Web Development with .NET 9](https://github.com/markjprice/
 ## Build and Run the Projects
 
 ### Run the MVC Project
-1. Navigate to the `TalkLikeTv.Mvc` directory:
+1. Copy pause wav files to base directory (if you change BaseDir in appsettings.json make appropriate changes to copy command)
+   ```bash
+   cp -R TalkLikeTv.Services/Resources/pause/ /tmp/TalkLikeTv/pause/
+   mkdir /tmp/TalkLikeTv/Audio
+   ```
+2. Navigate to the `TalkLikeTv.Mvc` directory:
     ```bash
     cd TalkLikeTv.Mvc
     ```
 
-2. Build and run the project:
+3. Build and run the project:
     ```bash
     dotnet build
     dotnet run
     ```
 
-3. Access the application at `http://localhost:5001`.
+4. Access the application at `https://localhost:7197`.
 
 ### Run the WebAPI Project
 1. Navigate to the `TalkLikeTv.WebApi` directory:
@@ -105,7 +110,7 @@ The book [Real-World Web Development with .NET 9](https://github.com/markjprice/
     dotnet run
     ```
 
-3. Access the API at `http://localhost:5000`.
+3. Access the API at `http://localhost:5035/api/voices`.
 
 ### Run the FastEndpoints Project
 1. Navigate to the `TalkLikeTv.FastEndpoints` directory:
@@ -119,7 +124,7 @@ The book [Real-World Web Development with .NET 9](https://github.com/markjprice/
     dotnet run
     ```
 
-3. Access the application at `http://localhost:5002`.
+3. Access the application at `http://localhost:5287/`.
 
 ## Contributing
 
