@@ -4,6 +4,6 @@ namespace TalkLikeTv.Repositories;
 
 public interface ITokenRepository
 {
-    Task<bool> UpdateAsync(string id, Token phrase, CancellationToken token = default);
-    Task<Token?> RetrieveByHashAsync(string hash, CancellationToken token = default);
+    Task<bool> UpdateAsync(string id, Token phrase, CancellationToken cancellationToken = default);
+    Task<Token?> RetrieveByHashAsync(string hash, CancellationToken cancellationToken = default);
 }

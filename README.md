@@ -9,6 +9,7 @@
   - [Getting Started](#getting-started)
   - [Setup .env file](#setup-env-file)
   - [Initialize the database](#initialize-the-database)
+  - [Create and Add Tokens to the Database](#create-and-add-tokens-to-the-database)
   - [Build and Run the Projects](#build-and-run-the-projects)
     - [Run the MVC Project](#run-the-mvc-project)
     - [Run the WebAPI Project](#run-the-webapi-project)
@@ -79,6 +80,17 @@ The book [Real-World Web Development with .NET 9](https://github.com/markjprice/
     dotnet ef database update AddPopularityColumn
     ```
 
+## Create and Add Tokens to the Database
+
+1. Navigate to the `TalkLikeTv.Scripts` directory:
+    ```bash
+    cd TalkLikeTv.Scripts
+    ```
+
+2. Run script to create and upload the tokens:
+    ```bash
+    dotnet run -- tokens 
+    ```    
 ## Build and Run the Projects
 
 ### Run the MVC Project
