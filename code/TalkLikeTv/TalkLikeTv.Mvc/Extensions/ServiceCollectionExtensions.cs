@@ -1,13 +1,11 @@
 using TalkLikeTv.Services.Abstractions;
+using AspNetCoreRateLimit;
+using Microsoft.Extensions.Caching.Hybrid;
+using TalkLikeTv.Repositories;
+using TalkLikeTv.Services;
 
 namespace TalkLikeTv.Mvc.Extensions;
 
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Configuration;
-using Services;
-using Repositories;
-using AspNetCoreRateLimit;
-using Microsoft.Extensions.Caching.Hybrid;
 
 public static class ServiceCollectionExtensions
 {

@@ -55,7 +55,7 @@ public class TranslatesUploader(TalkliketvContext db)
 
                     // Parse the response JSON
                     var responseJson = JArray.Parse(result);
-                    var translations = responseJson[0]["translations"][0]["text"];
+                    var translations = responseJson[0]["translations"]?[0]?["text"]?.ToString() ?? "Translation not available";
 
                     // Append the new translation result to the JSON array
                     var newData = new JObject
