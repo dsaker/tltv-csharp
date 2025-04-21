@@ -3,6 +3,7 @@ using TalkLikeTv.EntityModels;
 using AspNetCoreRateLimit;
 using DotEnv.Core;
 using TalkLikeTv.Mvc.Extensions;
+using TalkLikeTv.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
@@ -36,6 +37,10 @@ else
 }
 
 var app = builder.Build();
+
+// Copy pause files to the destination directory
+var pauseFileService = app.Services.GetRequiredService<PauseFileService>();
+pauseFileService.EnsurePauseFilesExist();
 
 app.MapDefaultEndpoints();
 
