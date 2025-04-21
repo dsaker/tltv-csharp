@@ -21,6 +21,7 @@
     <ItemGroup>
         <PackageReference Include="DotEnv.Core"/>
         <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" />
+        <PackageReference Include="AspNetCoreRateLimit" />
     </ItemGroup>
     <ItemGroup>
       <AdditionalFiles Include="Views\Languages\Languages.cshtml" />

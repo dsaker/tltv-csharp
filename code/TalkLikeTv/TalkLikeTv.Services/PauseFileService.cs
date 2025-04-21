@@ -22,10 +22,24 @@ public class PauseFileService
             throw new InvalidOperationException("TalkLikeTv:BaseDir is not configured.");
         }
         
+        // Create the base directory if it doesn't exist
+        if (!Directory.Exists(baseDir))
+        {
+            Directory.CreateDirectory(baseDir);
+            _logger.LogInformation("Base directory created: {BaseDir}", baseDir);
+        }
+        
         var audioOutputDir = _configuration.GetValue<string>("TalkLikeTv:AudioOutputDir");
         if (string.IsNullOrEmpty(audioOutputDir))
         {
             throw new InvalidOperationException("TalkLikeTv:AudioOutputDir is not configured.");
+        }
+        
+        // Create the base directory if it doesn't exist
+        if (!Directory.Exists(audioOutputDir))
+        {
+            Directory.CreateDirectory(audioOutputDir);
+            _logger.LogInformation("Base directory created: {AudioOutputDir}", audioOutputDir);
         }
         
         // Ensure the base directory is writable

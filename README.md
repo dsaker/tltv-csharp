@@ -7,8 +7,8 @@
     - [Technologies Used](#technologies-used)
     - [Required Tools](#required-tools)
   - [Getting Started](#getting-started)
+  - [Setup .env file](#setup-env-file)
   - [Initialize the database](#initialize-the-database)
-  - [Setup azure translate and text-to-speech](#setup-azure-translate-and-text-to-speech)
   - [Build and Run the Projects](#build-and-run-the-projects)
     - [Run the MVC Project](#run-the-mvc-project)
     - [Run the WebAPI Project](#run-the-webapi-project)
@@ -26,7 +26,7 @@ The book [Real-World Web Development with .NET 9](https://github.com/markjprice/
 
 ### Technologies Used
 - **C#** for backend development
-- **ASP.NET Core MVC** for the web application
+- **ASP.NET Core** for the web application
 - **Entity Framework Core** for database management
 - **Azure Services** for translation and text-to-speech
 - **Docker** for containerization
@@ -42,16 +42,25 @@ The book [Real-World Web Development with .NET 9](https://github.com/markjprice/
 
 1. Clone the repository:
     ```bash
-    git clone https://github.com/yourusername/tltv-csharp.git
-    cd tltv-csharp
+    git clone git@github.com:dsaker/tltv-csharp.git
+    cd tltv-csharp/code/TalkLikeTv/
     ```
-
-2. Restore dependencies:
+2. Copy the pause files to the base directory
+       > **Tip:** if you change BaseDir in the appsettings.json file you will need to change this command
     ```bash
-    dotnet restore
+    cp -R TalkLikeTv.Services/Resources/pause/ /tmp/TalkLikeTv/pause/
     ```
-
 3. Open the project in your favorite IDE
+
+
+## Setup .env file
+
+1. create .env file
+    ```bash
+    cd TalkLikeTv.Mvc
+    mv .env.default .env
+    ```
+2. Obtain your [translate](https://learn.microsoft.com/en-us/answers/questions/1192881/how-to-get-microsoft-translator-api-key) and [text-to-speech](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/get-started-text-to-speech?source=recommendations&tabs=macos%2Cterminal&pivots=programming-language-csharp) api keys and add them to the .env file
 
 ## Initialize the database
 
@@ -63,40 +72,29 @@ The book [Real-World Web Development with .NET 9](https://github.com/markjprice/
 2. Initialize the database using Entity Framework Core:
     ```bash
     cd TalkLikeTv.EntityModels
-    dotnet ef database update
+    dotnet tool install --global dotnet-ef
+    export MY_SQL_PWD=s3cret-Ninja
+    export MY_SQL_USR=sa
+    dotnet ef database update InitialBaseline
+    dotnet ef database update AddPopularityColumn
     ```
-
-    > **Tip:** Ensure the `dotnet-ef` CLI tool is installed by running `dotnet tool install --global dotnet-ef` if needed.
-
-## Setup azure translate and text-to-speech
-
-1. create .env file
-    ```bash
-    cd TalkLikeTv.Mvc
-    mv .env.default .env
-    ```
-2. Obtain your [translate](https://learn.microsoft.com/en-us/answers/questions/1192881/how-to-get-microsoft-translator-api-key) and [text-to-speech](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/get-started-text-to-speech?source=recommendations&tabs=macos%2Cterminal&pivots=programming-language-csharp) api keys and add them to the .env file
 
 ## Build and Run the Projects
 
 ### Run the MVC Project
-1. Copy pause wav files to base directory (if you change BaseDir in appsettings.json make appropriate changes to copy command)
-   ```bash
-   cp -R TalkLikeTv.Services/Resources/pause/ /tmp/TalkLikeTv/pause/
-   mkdir /tmp/TalkLikeTv/Audio
-   ```
-2. Navigate to the `TalkLikeTv.Mvc` directory:
+
+1. Navigate to the `TalkLikeTv.Mvc` directory:
     ```bash
     cd TalkLikeTv.Mvc
     ```
 
-3. Build and run the project:
+2. Build and run the project:
     ```bash
     dotnet build
-    dotnet run
+    dotnet run --launch-profile "https"
     ```
 
-4. Access the application at `https://localhost:7197`.
+3. Access the application at `https://localhost:7099`.
 
 ### Run the WebAPI Project
 1. Navigate to the `TalkLikeTv.WebApi` directory:
@@ -107,7 +105,7 @@ The book [Real-World Web Development with .NET 9](https://github.com/markjprice/
 2. Build and run the project:
     ```bash
     dotnet build
-    dotnet run
+    dotnet run --launch-profile "https"
     ```
 
 3. Access the API at `http://localhost:5035/api/voices`.
@@ -121,7 +119,7 @@ The book [Real-World Web Development with .NET 9](https://github.com/markjprice/
 2. Build and run the project:
     ```bash
     dotnet build
-    dotnet run
+    dotnet run --launch-profile "https"
     ```
 
 3. Access the application at `http://localhost:5287/`.

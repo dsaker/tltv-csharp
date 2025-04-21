@@ -401,3 +401,4 @@ FodyWeavers.xsd
 
 scratch.txt
 *.env
+.DS_Store

@@ -10,6 +10,7 @@
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" />
     <PackageReference Include="DotEnv.Core"/>
+    <PackageReference Include="AspNetCoreRateLimit" />
   </ItemGroup>
 
   <ItemGroup Label="To use the TalkLikeTv entity models.">
