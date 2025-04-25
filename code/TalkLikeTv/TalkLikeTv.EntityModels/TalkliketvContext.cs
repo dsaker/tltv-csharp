@@ -1,6 +1,7 @@
 ﻿using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.Configuration;
 
 namespace TalkLikeTv.EntityModels;
 
@@ -37,23 +38,61 @@ public partial class TalkliketvContext : DbContext
     {
         if (!optionsBuilder.IsConfigured)
         {
-            SqlConnectionStringBuilder builder = new();
-            builder.DataSource = "tcp:127.0.0.1,1433"; // SQL Edge in Docker.
-            builder.InitialCatalog = "Talkliketv";
-            builder.TrustServerCertificate = true;
-            builder.MultipleActiveResultSets = true;
-            // Because we want to fail faster. Default is 15 seconds.
-            builder.ConnectTimeout = 3;
-            // SQL Server authentication.
-            builder.UserID = Environment.GetEnvironmentVariable("MY_SQL_USR");
-            builder.Password = Environment.GetEnvironmentVariable("MY_SQL_PWD");
+            Console.WriteLine("Not yet configured");
+            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development";
+            Console.WriteLine($"Environment: {environment}");
 
-            optionsBuilder.UseSqlServer(builder.ConnectionString);
+            // Try to find the solution directory first
+            string currentDir = AppDomain.CurrentDomain.BaseDirectory;
+            string solutionDir = currentDir;
+        
+            // Navigate up until we find the solution directory or reach the root
+            while (!Directory.Exists(Path.Combine(solutionDir, "TalkLikeTv.Mvc")) && 
+                   Directory.GetParent(solutionDir) != null)
+            {
+                solutionDir = Directory.GetParent(solutionDir).FullName;
+            }
 
-            optionsBuilder.LogTo(TalkliketvContextLogger.WriteLine,
-                new[] { RelationalEventId.CommandExecuting });
+            // Construct the path to the MVC project's appsettings.json
+            string configPath = Path.Combine(solutionDir, "TalkLikeTv.Mvc", "appsettings.json");
+        
+            Console.WriteLine($"Looking for appsettings.json at: {configPath}");
+            Console.WriteLine($"File exists: {File.Exists(configPath)}");
+
+            if (!File.Exists(configPath))
+            {
+                throw new FileNotFoundException($"Configuration file not found at {configPath}");
+            }
+
+            var configBuilder = new ConfigurationBuilder()
+                .AddJsonFile(configPath, optional: false);
+
+            var configuration = configBuilder.Build();
+
+            var connectionStrings = configuration.GetSection("ConnectionStrings");
+            if (!connectionStrings.Exists())
+            {
+                throw new InvalidOperationException("ConnectionStrings section not found in configuration file");
+            }
+
+            // Try to get the specific connection string
+            var sqlServerConnection = configuration.GetConnectionString("TalkliketvConnection");
+            Console.WriteLine($"TalkliketvConnection found: {sqlServerConnection != null}");
+
+            if (sqlServerConnection is not null)
+            {
+                Console.WriteLine("Using TalkliketvConnection from configuration");
+                Console.WriteLine($"Connection string: {sqlServerConnection}");
+                SqlConnectionStringBuilder sql = new(sqlServerConnection);
+                sql.IntegratedSecurity = false;
+                sql.UserID = Environment.GetEnvironmentVariable("MY_SQL_USR");
+                sql.Password = Environment.GetEnvironmentVariable("MY_SQL_PWD");
+
+                optionsBuilder.UseSqlServer(sql.ConnectionString);
+            }
         }
     }
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Language>(entity =>

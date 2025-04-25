@@ -9,7 +9,7 @@
   - [Getting Started](#getting-started)
   - [Setup .env file](#setup-env-file)
   - [Initialize the database](#initialize-the-database)
-  - [Create and Add Tokens to the Database](#create-and-add-tokens-to-the-database)
+  - [Run Data Scripts](#run-data-scripts)
   - [Build and Run the Projects](#build-and-run-the-projects)
     - [Run the MVC Project](#run-the-mvc-project)
     - [Run the WebAPI Project](#run-the-webapi-project)
@@ -59,7 +59,7 @@ The book [Real-World Web Development with .NET 9](https://github.com/markjprice/
 1. create .env file
     ```bash
     cd TalkLikeTv.Mvc
-    mv .env.default .env
+    mv .env.tmpl .env
     ```
 2. Obtain your [translate](https://learn.microsoft.com/en-us/answers/questions/1192881/how-to-get-microsoft-translator-api-key) and [text-to-speech](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/get-started-text-to-speech?source=recommendations&tabs=macos%2Cterminal&pivots=programming-language-csharp) api keys and add them to the .env file
 
@@ -80,14 +80,17 @@ The book [Real-World Web Development with .NET 9](https://github.com/markjprice/
     dotnet ef database update AddPopularityColumn
     ```
 
-## Create and Add Tokens to the Database
+## Run Data Scripts
 
 1. Navigate to the `TalkLikeTv.Scripts` directory:
     ```bash
     cd TalkLikeTv.Scripts
     ```
-
-2. Run script to create and upload the tokens:
+2. Run script to add data to the database:
+   ```
+   dotnet run -- all    # Run all data population scripts
+   ```
+3. Run script to create and upload the tokens:
     ```bash
     dotnet run -- tokens 
     ```    

@@ -21,20 +21,37 @@ builder.Services.AddInMemoryRateLimiting();
 
 var sqlServerConnection = builder.Configuration
     .GetConnectionString("TalkliketvConnection");
-if (sqlServerConnection is null)
+if (sqlServerConnection is not null)
 {
-    WriteLine("TalkLikeTv database connection string is missing from configuration!");
-}
-else
-{
-    // If you are using SQL Server authentication then disable
-    // Windows Integrated authentication and set user and password.
     SqlConnectionStringBuilder sql = new(sqlServerConnection);
     sql.IntegratedSecurity = false;
     sql.UserID = Environment.GetEnvironmentVariable("MY_SQL_USR");
     sql.Password = Environment.GetEnvironmentVariable("MY_SQL_PWD");
-    builder.Services.AddTalkliketvContext(sql.ConnectionString);
+    
+    // Add database connection verification
+    try
+    {
+        using var connection = new SqlConnection(sql.ConnectionString);
+        WriteLine("Attempting to connect to the database...");
+        connection.Open();
+        WriteLine("Successfully connected to the database!");
+        connection.Close();
+        
+        builder.Services.AddTalkliketvContext(sql.ConnectionString);
+    }
+    catch (SqlException ex)
+    {
+        WriteLine($"Failed to connect to the database: {ex.Message}");
+        WriteLine("Application will now exit due to database connection failure.");
+        Environment.Exit(1);
+    }
 }
+else
+{
+    WriteLine("TalkLikeTv database connection string is missing from configuration!");
+    Environment.Exit(1);
+}
+
 
 var app = builder.Build();
 

@@ -1,17 +1,3 @@
-# Create a Resource Group
-resource "azurerm_resource_group" "talkliketv" {
-  name     = "talkliketv-rg"
-  location = var.resource_group_location # Choose your desired Azure region
-}
-
-# Create an Azure Container Registry
-resource "azurerm_container_registry" "acr" {
-  name                = "talkliketvacr"
-  resource_group_name = azurerm_resource_group.talkliketv.name
-  location            = azurerm_resource_group.talkliketv.location
-  sku                = "Standard" # Or "Basic", "Premium", etc.
-}
-
 # Create an Azure Container Apps Environment
 resource "azurerm_container_app_environment" "aca_env" {
   name                = "talkliketv-aca-env"
@@ -39,7 +25,9 @@ resource "azurerm_role_assignment" "acr_pull_user_identity" {
 
 # Optional: Add a small delay after role assignment for propagation
 resource "time_sleep" "wait_for_user_rbac" {
-  depends_on = [azurerm_role_assignment.acr_pull_user_identity]
+  depends_on = [
+    azurerm_role_assignment.acr_pull_user_identity,
+  ]
   create_duration = "30s"
 }
 
@@ -51,7 +39,8 @@ resource "azurerm_container_app" "talkliketv" {
   revision_mode                = "Single"
 
   # Depend on the RBAC delay for the user identity
-  depends_on = [time_sleep.wait_for_user_rbac]
+  depends_on = [
+    time_sleep.wait_for_user_rbac]
 
   # Assign the User-Assigned Identity
   identity {
@@ -65,13 +54,59 @@ resource "azurerm_container_app" "talkliketv" {
     identity = azurerm_user_assigned_identity.container_app_identity.id # Use the User-Assigned Identity ID
   }
 
+  secret {
+    name = "mysql-pwd"  # Changed from MySqlPwd
+    value = var.my_sql_pwd
+  }
+
+  secret {
+    name = "mysql-usr"  # Changed from MySqlUsr
+    value = var.my_sql_usr
+  }
+
+  secret {
+    name = "azure-translate-key"  # Changed from AzureTranslateKey 
+    value = var.azure_translate_key
+  }
+
+  secret {
+    name = "azure-tts-key"  # Changed from AzureTtsKey
+    value = var.azure_tts_key
+  }
+
+  secret {
+    name = "azure-region"  # Changed from AzureRegion
+    value = var.azure_region
+  }
+
   template {
     container {
       name   = "talkliketvcontainerapp"
-      image  = "${azurerm_container_registry.acr.login_server}/talkliketv:helloworld"
+      //image  = "mcr.microsoft.com/k8se/quickstart:latest"
+      image  = "${azurerm_container_registry.acr.login_server}/talkliketv:4"
       cpu    = 0.25
       memory = "0.5Gi"
-      # ... env vars ...
+           
+      env {
+        name  = "MY_SQL_PWD"
+        secret_name = "mysql-pwd"  # Changed from MySqlPwd
+      }
+      env {
+        name = "MY_SQL_USR"
+        secret_name = "mysql-usr"  # Changed from MySqlUsr
+      }
+      env {
+        name  = "AZURE_TRANSLATE_KEY"
+        secret_name = "azure-translate-key"  # Changed from AzureTranslateKey
+      }
+      env {
+        name = "AZURE_TTS_KEY"
+        secret_name = "azure-tts-key"  # Changed from AzureTtsKey
+      }
+      env {
+        name = "AZURE_REGION"
+        secret_name = "azure-region"  # Changed from AzureRegion
+      }
     }
   }
 
@@ -85,3 +120,4 @@ resource "azurerm_container_app" "talkliketv" {
     }
   }
 }
+
