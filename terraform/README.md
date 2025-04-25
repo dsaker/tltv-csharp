@@ -62,3 +62,17 @@ az acr build \
     -t $REGISTRY_NAME".azurecr.io/"$CONTAINER_APP_NAME":helloworld" \
     -r $REGISTRY_NAME .
 ```
+
+1. Change image to name to the one you just pushed in main.tf and reapply terraform
+
+## Generate Database Scripts
+
+```bash
+cd TalkLikeTv/TalkLikeTv.EntityModels
+dotnet ef migrations script --context TalkliketvContext -o Migrations/InitialCreate.sql
+```
+
+- you can apply the InitialCreate.sql scirpt using you favorite IDE or in the [Azure Portal](https://learn.microsoft.com/en-us/azure/azure-sql/database/connect-query-portal?view=azuresql)
+
+
+
