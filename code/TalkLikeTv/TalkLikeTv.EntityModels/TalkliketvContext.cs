@@ -1,6 +1,5 @@
 ﻿using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 
 namespace TalkLikeTv.EntityModels;
@@ -43,8 +42,8 @@ public partial class TalkliketvContext : DbContext
             Console.WriteLine($"Environment: {environment}");
 
             // Try to find the solution directory first
-            string currentDir = AppDomain.CurrentDomain.BaseDirectory;
-            string solutionDir = currentDir;
+            var currentDir = AppDomain.CurrentDomain.BaseDirectory;
+            var solutionDir = currentDir;
         
             // Navigate up until we find the solution directory or reach the root
             while (!Directory.Exists(Path.Combine(solutionDir, "TalkLikeTv.Mvc")) && 
@@ -54,7 +53,7 @@ public partial class TalkliketvContext : DbContext
             }
 
             // Construct the path to the MVC project's appsettings.json
-            string configPath = Path.Combine(solutionDir, "TalkLikeTv.Mvc", "appsettings.json");
+            var configPath = Path.Combine(solutionDir, "TalkLikeTv.Mvc", "appsettings.json");
         
             Console.WriteLine($"Looking for appsettings.json at: {configPath}");
             Console.WriteLine($"File exists: {File.Exists(configPath)}");

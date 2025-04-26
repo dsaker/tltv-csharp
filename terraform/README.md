@@ -20,15 +20,18 @@ az provider register --namespace 'Microsoft.App'
 
 ### Deploy Infrastructure with Terraform
 
+## Setup .env file
+
 ```bash
 cd terraform
 terraform init
 cp terraform.tfvars.tmpl terraform.tfvars
 ```
 
-1. Edit terraform.tfvars and fill in the required values, then apply the configuration
-2. Uncomment image line in main.tf mcr.microsoft.com/k8se/quickstart:latest
-3. Comment out image that will be pushed to azure container registry
+1. Edit terraform.tfvars and fill in the required values
+2. Obtain your [translate](https://learn.microsoft.com/en-us/answers/questions/1192881/how-to-get-microsoft-translator-api-key) and [text-to-speech](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/get-started-text-to-speech?source=recommendations&tabs=macos%2Cterminal&pivots=programming-language-csharp) api keys and add them to the tfvars file
+3. Uncomment image line in main.tf for mcr.microsoft.com/k8se/quickstart:latest
+4. Comment out image that will be pushed to azure container registry in following steps
 
 ```bash
 terraform apply 
@@ -65,14 +68,28 @@ az acr build \
 
 1. Change image to name to the one you just pushed in main.tf and reapply terraform
 
-## Generate Database Scripts
+## Initialize the database
 
-```bash
-cd TalkLikeTv/TalkLikeTv.EntityModels
-dotnet ef migrations script --context TalkliketvContext -o Migrations/InitialCreate.sql
-```
+1. Change the username and password in the following commands to the same values in your tfvars file
+   ```bash
+    export ASPNETCORE_ENVIRONMENT=Production
+    export MY_SQL_USR={username}
+    export MY_SQL_PWD={password}
+   ```
 
-- you can apply the InitialCreate.sql scirpt using you favorite IDE or in the [Azure Portal](https://learn.microsoft.com/en-us/azure/azure-sql/database/connect-query-portal?view=azuresql)
+2. Initialize the database using Entity Framework Core:
+    ```bash
+    cd TalkLikeTv.EntityModels
+    dotnet tool install --global dotnet-ef
+    dotnet ef database update InitialBaseline
+    dotnet ef database update AddPopularityColumn
+    ```
 
+3. Run scripts to fill the data in the tables
+    ```bash
+    cd ../TalkLikeTv/TalkLikeTv.Scripts
+    dotnet run -- all    # Run all data population scripts
+    dotnet run -- tokens # Generate authentication tokens
+    ```
 
 
