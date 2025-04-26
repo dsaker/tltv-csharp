@@ -20,8 +20,6 @@ az provider register --namespace 'Microsoft.App'
 
 ### Deploy Infrastructure with Terraform
 
-## Setup .env file
-
 ```bash
 cd terraform
 terraform init
@@ -30,7 +28,7 @@ cp terraform.tfvars.tmpl terraform.tfvars
 
 1. Edit terraform.tfvars and fill in the required values
 2. Obtain your [translate](https://learn.microsoft.com/en-us/answers/questions/1192881/how-to-get-microsoft-translator-api-key) and [text-to-speech](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/get-started-text-to-speech?source=recommendations&tabs=macos%2Cterminal&pivots=programming-language-csharp) api keys and add them to the tfvars file
-3. Uncomment image line in main.tf for mcr.microsoft.com/k8se/quickstart:latest
+3. Uncomment image line in main.tf for `mcr.microsoft.com/k8se/quickstart:latest`
 4. Comment out image that will be pushed to azure container registry in following steps
 
 ```bash
@@ -48,7 +46,7 @@ az acr login -n talkliketvacr
 
 ## Configure Database Access
 
-1. Add your IP address to the SQL Server firewall allowed list in the Azure Portal
+1. Add your IP address to the SQL Server firewall allowed list in the [Azure Portal](https://learn.microsoft.com/en-us/azure/azure-sql/database/firewall-configure?view=azuresql)
 2. Use the connection string format below (replace with your actual server name) and add to appsettings.json in TalkLikeTv.Mvc (you can also look up this string in the Azure Portal)
 
 ```
@@ -66,7 +64,7 @@ az acr build \
     -r $REGISTRY_NAME .
 ```
 
-1. Change image to name to the one you just pushed in main.tf and reapply terraform
+1. Change image name to the one you just pushed to azure container registry in main.tf and reapply terraform
 
 ## Initialize the database
 
@@ -92,4 +90,6 @@ az acr build \
     dotnet run -- tokens # Generate authentication tokens
     ```
 
+## Access the talkliketv application
 
+- the url of the container app will be output by terraform as container_app_urls

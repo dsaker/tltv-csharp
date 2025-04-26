@@ -83,7 +83,7 @@ resource "azurerm_container_app" "talkliketv" {
     container {
       name   = "talkliketvcontainerapp"
       //image  = "mcr.microsoft.com/k8se/quickstart:latest"
-      image  = "${azurerm_container_registry.acr.login_server}/talkliketv:4"
+      image  = "${azurerm_container_registry.acr.login_server}/talkliketv:helloworld"
       cpu    = 0.25
       memory = "0.5Gi"
            
