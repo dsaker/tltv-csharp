@@ -7,7 +7,7 @@ namespace TalkLikeTv.Scripts;
 
 public class LanguagesUploader(TalkliketvContext db)
 {
-    private const string JsonFilePath = "/Users/dustysaker/Documents/csharp-repos/tltv-net9/code/TalkLikeTv/TalkLikeTv.Scripts/json/azurelanguages.json";
+    private string _jsonFilePath = Path.Combine(Program.BaseJsonPath, "azurelanguages.json");
 
     public class Translation
     {
@@ -33,7 +33,7 @@ public class LanguagesUploader(TalkliketvContext db)
         try
         {
             // Read the JSON file
-            var jsonString = await File.ReadAllTextAsync(JsonFilePath);
+            var jsonString = await File.ReadAllTextAsync(_jsonFilePath);
 
             var translation = JsonSerializer.Deserialize<Translation>(jsonString);
 

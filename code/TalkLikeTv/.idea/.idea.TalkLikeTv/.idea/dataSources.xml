@@ -13,5 +13,13 @@
       </jdbc-additional-properties>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
+    <data-source source="LOCAL" name="SampleDB@sql-apparent-iguana.database.windows.net" uuid="b021cd05-ddad-4887-a82f-8562f444d476">
+      <driver-ref>azure.ms</driver-ref>
+      <synchronize>true</synchronize>
+      <configured-by-url>true</configured-by-url>
+      <jdbc-driver>com.microsoft.sqlserver.jdbc.SQLServerDriver</jdbc-driver>
+      <jdbc-url>jdbc:sqlserver://sql-apparent-iguana.database.windows.net:1433;database=SampleDB;user=azureadmin@sql-apparent-iguana;password=Ha.zDisb-FDqRF2;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
   </component>
 </project>

@@ -12,12 +12,21 @@ resource "random_pet" "azurerm_mssql_server_name" {
 }
 
 resource "azurerm_mssql_server" "server" {
-  name                         = random_pet.azurerm_mssql_server_name.id
-  resource_group_name          = azurerm_resource_group.rg.name
-  location                     = azurerm_resource_group.rg.location
-  administrator_login          = var.admin_username
-  administrator_login_password = var.admin_password
-  version                      = "12.0"
+    name                         = random_pet.azurerm_mssql_server_name.id
+    resource_group_name          = azurerm_resource_group.rg.name
+    location                     = azurerm_resource_group.rg.location
+    administrator_login          = var.my_sql_usr
+    administrator_login_password = var.my_sql_pwd
+    version                      = "12.0"
+}
+
+/// This allows access from all azure services to the SQL server
+/// This is needed for the container app to access the SQL server
+resource "azurerm_mssql_firewall_rule" "allow_container_app" {
+    server_id = azurerm_mssql_server.server.id
+    name                = "AllowContainerApp"
+    start_ip_address    = "0.0.0.0"
+    end_ip_address      = "0.0.0.0"
 }
 
 resource "azurerm_mssql_database" "db" {

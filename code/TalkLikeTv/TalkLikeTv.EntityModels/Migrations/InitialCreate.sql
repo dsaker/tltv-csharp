@@ -142,7 +142,12 @@ CREATE INDEX [IX_VoiceScenarios_ScenarioID] ON [VoiceScenarios] ([ScenarioID]);
 CREATE INDEX [IX_VoiceStyles_StyleID] ON [VoiceStyles] ([StyleID]);
 
 INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-VALUES (N'20250324005910_InitialBaseline', N'9.0.2');
+VALUES (N'20250324010417_InitialBaseline', N'9.0.2');
+
+ALTER TABLE [Titles] ADD [Popularity] int NOT NULL DEFAULT 0;
+
+INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+VALUES (N'20250324011152_AddPopularityColumn', N'9.0.2');
 
 COMMIT;
 GO

@@ -22,7 +22,7 @@ public class TranslatesUploader(TalkliketvContext db)
         var languages = await _db.Languages.ToListAsync();
 
         // Read the existing JSON file into a JArray
-        var jsonFilePath = "/Users/dustysaker/Documents/csharp-repos/tltv-net9/code/TalkLikeTv/TalkLikeTv.Scripts/json/translates.json";
+        var jsonFilePath = Path.Combine(Program.BaseJsonPath, "azuretranslates.json");        
         var jsonArray = new JArray();
         
         //using var synthesizer = new SpeechSynthesizer(config);

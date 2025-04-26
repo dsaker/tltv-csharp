@@ -9,24 +9,47 @@ namespace TalkLikeTv.Scripts;
 
 internal class Program
 {
+    // Add this property to Program.cs
+    public static string BaseJsonPath { get; private set; } = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "../../../json");
+    
     private static bool _isValidSelection(string[] selected)
     {
         return selected.Any(s => s == "all" || s == "languages" || s == "voices" || s == "delete" || s == "audio" || s == "translates" || s == "tokens");
     }
-    
+
     private static async Task Main(string[] args)
     {
-        new EnvLoader().AddEnvFile("../TalkLikeTv.Mvc/.env").Load();
+        // Load the appropriate .env file based on environment
+        var envLoader = new EnvLoader();
+
+        var envFile = $"../TalkLikeTv.Mvc/.env";
+        if (File.Exists(envFile))
+        {
+            envLoader.AddEnvFile(envFile);
+        }
+        else
+        {
+            Console.WriteLine($"Warning: .env file not found at {envFile}.");
+            Environment.Exit(1);
+        }
+
+        envLoader.Load();
         
+        // Set up the base JSON path - can be overridden via environment variable
+        BaseJsonPath = Environment.GetEnvironmentVariable("TALKLIKETV_JSON_PATH") 
+                       ?? Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "../../../json"));
+    
+        Console.WriteLine($"Using JSON path: {BaseJsonPath}");
+
         var selected = args.Select(arg => arg.ToLowerInvariant()).ToArray();
 
         if (!_isValidSelection(selected))
         {
-            Console.WriteLine("Error: You must specify 'voices', 'languages', 'translates', 'audio', or 'tokens'.");
+            Console.WriteLine("Error: You must specify 'voices', 'languages', 'translates', 'audio', 'tokens', or 'all'.");
             PrintUsage();
             return;
         }
-        
+
         // Configure services
         var serviceCollection = new ServiceCollection();
         ConfigureServices(serviceCollection);
@@ -35,7 +58,7 @@ internal class Program
         // Resolve dependencies
         var dbContext = serviceProvider.GetRequiredService<TalkliketvContext>();
         var tokenService = serviceProvider.GetRequiredService<TokenService>();
-        
+
         if (selected.Contains("all") || selected.Contains("languages"))
         {
             Console.WriteLine("Starting languages upload...");
@@ -49,7 +72,7 @@ internal class Program
             var voicesUploader = new VoicesUploader(dbContext);
             await voicesUploader.UploadJson();
         }
-        
+
         // delete languages with no voices
         if (selected.Contains("all") || selected.Contains("delete"))
         {
@@ -57,21 +80,21 @@ internal class Program
             var languagesWithNoVoicesDeleter = new LanguagesWithNoVoicesDeleter(dbContext);
             await languagesWithNoVoicesDeleter.DeleteLanguagesWithNoVoices();
         }
-        
+
         if (selected.Contains("audio"))
         {
             Console.WriteLine("Starting audio upload...");
             var audioUploader = new AudioUploader(dbContext);
             await audioUploader.UploadAudio();
         }
-        
+
         if (selected.Contains("translates"))
         {
             Console.WriteLine("Starting translates upload...");
             var translatesUploader = new TranslatesUploader(dbContext);
             await translatesUploader.UploadTranslates();
         }
-        
+
         if (selected.Contains("tokens"))
         {
             Console.WriteLine("Enter the number of tokens to generate:");
@@ -103,13 +126,15 @@ internal class Program
 
     private static void PrintUsage()
     {
-        Console.WriteLine("Usage: Upload [voices|languages|all|audio|translates|tokens]");
-        Console.WriteLine("Example:");
+        Console.WriteLine("Usage: Upload [options] [voices|languages|all|audio|translates|tokens]");
+        Console.WriteLine("Options:");
+        Console.WriteLine("  -e, --env <environment>  Specify environment (Development, Staging, Production)");
+        Console.WriteLine("Examples:");
         Console.WriteLine("  Upload all models: Upload all");
         Console.WriteLine("  Upload only voices: Upload voices");
-        Console.WriteLine("  Generate tokens: Upload tokens");
+        Console.WriteLine("  Generate tokens in production: Upload -e Production tokens");
     }
-    
+
     private static void ConfigureServices(IServiceCollection services)
     {
         // Register DbContext
