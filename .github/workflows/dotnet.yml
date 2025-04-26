@@ -14,12 +14,16 @@ jobs:
 
     runs-on: ubuntu-latest
     
-    defaults:
-      run:
-        shell: bash
-        working-directory: ./code/TalkLikeTv
+    # defaults:
+    #   run:
+    #     shell: bash
+    #     working-directory: ./code/TalkLikeTv
         
     steps:
+
+      # Debug step to show directory structure
+    - name: List directory structure
+      run: ls -la && find . -type d | sort
       
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
