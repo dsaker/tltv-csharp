@@ -14,12 +14,10 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    defaults:
+          run:
+            working-directory: ./code/TalkLikeTv
     steps:
-    - uses: actions/checkout@v4
-    
-    # Debug step to list directories
-    - name: List directory structure
-      run: ls -la && find . -type d -maxdepth 2 | sort
       
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
@@ -28,7 +26,9 @@ jobs:
         
     - name: Restore dependencies
       run: dotnet restore
+      
     - name: Build
       run: dotnet build --no-restore
+      
     - name: Test
       run: dotnet test --no-build --verbosity normal
