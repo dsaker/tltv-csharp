@@ -12,18 +12,20 @@ on:
 jobs:
   build:
 
-    defaults:
-      run:
-        working-directory: code/Talkliketv/
-
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
+    
+    # Debug step to list directories
+    - name: List directory structure
+      run: ls -la && find . -type d -maxdepth 2 | sort
+      
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 8.0.x
+        dotnet-version: 9.0.x
+        
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
