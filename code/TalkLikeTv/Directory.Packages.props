@@ -24,6 +24,7 @@
     <PackageVersion Include="System.IO.Abstractions" Version="5.0.1" />
     <PackageVersion Include="System.IO.Abstractions.TestingHelpers" Version="5.0.1" />
     <PackageVersion Include="FastEndpoints.Testing" Version="5.34.0"/>
+    <PackageVersion Include="Shouldly" Version="4.2.1" />
   </ItemGroup>
   <ItemGroup Label="For ASP.NET Core websites.">
     <PackageVersion Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="9.0.2" />
