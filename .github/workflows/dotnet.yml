@@ -16,7 +16,7 @@ jobs:
 
     defaults:
           run:
-            working-directory: ../code/TalkLikeTv
+            working-directory: code
     steps:
       
     - name: Setup .NET
