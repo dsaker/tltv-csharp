@@ -30,8 +30,8 @@ public class WavConcatenatorTests : IDisposable
         Directory.CreateDirectory("/tmp/test/WavConcatenatorTests/");
         
         // Ensure the test files are copied to the output directory
-        File.Copy($"/tmp/TalkLikeTv/pause/{InputFile1}", InputFile1, true);
-        File.Copy($"/tmp/TalkLikeTv/pause/{InputFile2}", InputFile2, true);
+        File.Copy($"../../../../TalkLikeTv.Services/Resources/pause/{InputFile1}", InputFile1, true);
+        File.Copy($"../../../../TalkLikeTv.Services/Resources/pause/{InputFile2}", InputFile2, true);
         
     }
 

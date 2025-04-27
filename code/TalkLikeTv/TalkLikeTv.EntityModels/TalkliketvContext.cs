@@ -51,23 +51,28 @@ public partial class TalkliketvContext : DbContext
             {
                 solutionDir = Directory.GetParent(solutionDir).FullName;
             }
-
-            // Construct the path to the MVC project's appsettings.json
-            var configPath = Path.Combine(solutionDir, "TalkLikeTv.Mvc", "appsettings.json");
+            
+            // Path to base appsettings.json
+            var baseConfigPath = Path.Combine(solutionDir, "TalkLikeTv.Mvc", "appsettings.json");
         
-            Console.WriteLine($"Looking for appsettings.json at: {configPath}");
-            Console.WriteLine($"File exists: {File.Exists(configPath)}");
+            // Path to environment-specific appsettings file
+            var envConfigPath = Path.Combine(solutionDir, "TalkLikeTv.Mvc", $"appsettings.{environment}.json");
 
-            if (!File.Exists(configPath))
+            Console.WriteLine($"Looking for base appsettings.json at: {baseConfigPath}");
+            Console.WriteLine($"Looking for environment-specific appsettings at: {envConfigPath}");
+
+            if (!File.Exists(baseConfigPath))
             {
-                throw new FileNotFoundException($"Configuration file not found at {configPath}");
+                throw new FileNotFoundException($"Base configuration file not found at {baseConfigPath}");
             }
 
+            // Build configuration with environment overrides
             var configBuilder = new ConfigurationBuilder()
-                .AddJsonFile(configPath, optional: false);
+                .AddJsonFile(baseConfigPath, optional: false)
+                .AddJsonFile(envConfigPath, optional: true); // Optional because it might not exist
 
             var configuration = configBuilder.Build();
-
+            
             var connectionStrings = configuration.GetSection("ConnectionStrings");
             if (!connectionStrings.Exists())
             {

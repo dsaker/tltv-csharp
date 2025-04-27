@@ -1,25 +1,12 @@
 ﻿using DotEnv.Core;
 using TalkLikeTv.EntityModels; // To use TalkLikeTvContext.
 
-namespace TalkLikeTv.UnitTests.Tests.EntityModels;
+namespace TalkLikeTv.IntegrationTests.EntityModels;
 
 public class EntityModelTests
 {
     private TalkliketvContext CreateDbContext()
     {
-        var currentDirectory = Directory.GetCurrentDirectory();
-        Console.WriteLine($"Current directory: {currentDirectory}");
-        
-        // Load .env file from test project or reference the MVC project's file
-        var envPath = Path.Combine(Directory.GetCurrentDirectory(), "../../../../TalkLikeTv.Mvc/.env"); 
-    
-        Assert.True(File.Exists(envPath), "The .env file does not exist in the expected location.");
-        
-        new EnvLoader()
-            .SetBasePath(Path.GetDirectoryName(envPath))
-            .AddEnvFile(Path.GetFileName(envPath))
-            .Load();
-
         return new TalkliketvContext();
     }
 

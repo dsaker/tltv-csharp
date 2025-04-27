@@ -30,6 +30,6 @@ jobs:
       working-directory: ./code/TalkLikeTv
       run: dotnet build --no-restore
       
-    - name: Test
+    - name: Unit Tests
       working-directory: ./code/TalkLikeTv
-      run: dotnet test --no-build --verbosity normal
+      run:  dotnet test TalkLikeTv.UnitTests --no-build --verbosity normal
