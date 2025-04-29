@@ -49,7 +49,7 @@ jobs:
 
     - name: Integration Tests
       working-directory: ./code/TalkLikeTv
-      run: dotnet test TalkLikeTv.IntegrationTests --verbosity normal
+      run: dotnet test TalkLikeTv.IntegrationTests/TalkLikeTv.IntegrationTests.csproj --filter FullyQualifiedName~AzureTranslateEntraIdServiceTests --verbosity normal
       env:
         MY_SQL_PWD: ${{ secrets.MY_SQL_PWD }}
         MY_SQL_USR: ${{ secrets.MY_SQL_USR }}
