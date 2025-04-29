@@ -45,7 +45,7 @@ jobs:
 
     - name: FastEndpoint Tests
       working-directory: ./code/TalkLikeTv
-      run:  dotnet test TalkLikeTv.FastEnpointsTests --no-build --verbosity normal
+      run:  dotnet test TalkLikeTv.FastEndpointsTests --no-build --verbosity normal
 
     - name: Integration Tests
       working-directory: ./code/TalkLikeTv
