@@ -21,6 +21,15 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 9.0.x
+    
+    - name: Cache NuGet packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.nuget/packages
+        # Look to see if there is a cache hit for the corresponding requirements file
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json', '**/packages.config', '**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
         
     - name: Restore dependencies
       working-directory: ./code/TalkLikeTv
@@ -33,3 +42,20 @@ jobs:
     - name: Unit Tests
       working-directory: ./code/TalkLikeTv
       run:  dotnet test TalkLikeTv.UnitTests --no-build --verbosity normal
+
+    - name: FastEndpoint Tests
+      working-directory: ./code/TalkLikeTv
+      run:  dotnet test TalkLikeTv.FastEnpointsTests --no-build --verbosity normal
+
+    - name: Integration Tests
+      working-directory: ./code/TalkLikeTv
+      run: dotnet test TalkLikeTv.IntegrationTests --verbosity normal
+      env:
+        MY_SQL_PWD: ${{ secrets.MY_SQL_PWD }}
+        MY_SQL_USR: ${{ secrets.MY_SQL_USR }}
+        AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        AZURE_TRANSLATE_ENDPOINT: ${{ secrets.AZURE_TRANSLATE_ENDPOINT }}
+        AZURE_TTS_ENDPOINT: ${{ secrets.AZURE_TRANSLATE_ENDPOINT }}
+        ASPNETCORE_ENVIRONMENT: GitHub 

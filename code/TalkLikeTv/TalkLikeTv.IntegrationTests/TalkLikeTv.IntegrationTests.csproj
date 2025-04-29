@@ -5,7 +5,8 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <IsPackable>false</IsPackable>
-    </PropertyGroup>
+      <UserSecretsId>9e8443ac-6f21-4811-9305-f06cc3c812aa</UserSecretsId>
+  </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="coverlet.collector" />
@@ -13,7 +14,7 @@
         <PackageReference Include="xunit" />
         <PackageReference Include="xunit.runner.visualstudio" />
         <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
-        <PackageReference Include="DotEnv.Core"/>
+        <PackageReference Include="DotEnv.Core" />
     </ItemGroup>
 
     <ItemGroup>

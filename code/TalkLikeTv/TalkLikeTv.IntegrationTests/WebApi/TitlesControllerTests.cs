@@ -5,8 +5,7 @@ using TalkLikeTv.WebApi.Models;
 
 namespace TalkLikeTv.IntegrationTests.WebApi;
 
-public class TitlesControllerTests :
-    IClassFixture<TestWebApplicationFactory>
+public class TitlesControllerTests : IClassFixture<TestWebApplicationFactory>
 {
     private readonly TestWebApplicationFactory _factory;
     private const string relativePath = "/api/titles";

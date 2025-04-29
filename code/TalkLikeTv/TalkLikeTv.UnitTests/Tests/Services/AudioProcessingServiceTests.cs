@@ -58,7 +58,7 @@ public class AudioProcessingServiceTests
     {
         // Arrange
         _mockTranslateService
-            .Setup(service => service.DetectLanguageFromPhrasesAsync(It.IsAny<List<string>>()))
+            .Setup(service => service.DetectLanguageFromPhrasesAsync(It.IsAny<List<string>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("en");
 
         _mockLanguageRepository

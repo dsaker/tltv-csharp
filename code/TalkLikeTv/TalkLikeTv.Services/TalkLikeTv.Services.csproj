@@ -4,15 +4,17 @@
         <TargetFramework>net9.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <UserSecretsId>5b9199dc-0ca6-4fdc-b960-a6a541e5decd</UserSecretsId>
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\TalkLikeTv.Utilities\TalkLikeTv.Utilities.csproj"/>
-        <ProjectReference Include="..\TalkLikeTv.EntityModels\TalkLikeTv.EntityModels.csproj"/>
-        <ProjectReference Include="..\TalkLikeTv.Repositories\TalkLikeTv.Repositories.csproj"/>
+        <ProjectReference Include="..\TalkLikeTv.Utilities\TalkLikeTv.Utilities.csproj" />
+        <ProjectReference Include="..\TalkLikeTv.EntityModels\TalkLikeTv.EntityModels.csproj" />
+        <ProjectReference Include="..\TalkLikeTv.Repositories\TalkLikeTv.Repositories.csproj" />
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="Azure.AI.Translation.Text" />
         <PackageReference Include="Microsoft.CognitiveServices.Speech" />
         <PackageReference Include="Newtonsoft.Json" />
         <PackageReference Include="Naudio" />

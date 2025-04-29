@@ -67,15 +67,15 @@ public class AudioProcessingService : IAudioProcessingService
 
     public async Task<(Language? Language, List<string> Errors)> DetectLanguageAsync(
         List<string> phraseStrings, 
-        CancellationToken token = default)
+        CancellationToken cancellationToken = default)
     {
         var errors = new List<string>();
     
         try
         {
-            var detectedCode = await _azureTranslateService.DetectLanguageFromPhrasesAsync(phraseStrings);
+            var detectedCode = await _azureTranslateService.DetectLanguageFromPhrasesAsync(phraseStrings, cancellationToken);
 
-            var detectedLanguage = await _languageRepository.RetrieveByTagAsync(detectedCode, token);
+            var detectedLanguage = await _languageRepository.RetrieveByTagAsync(detectedCode, cancellationToken);
             if (detectedLanguage == null)
             {
                 errors.Add($"Language '{detectedCode}' not found.");

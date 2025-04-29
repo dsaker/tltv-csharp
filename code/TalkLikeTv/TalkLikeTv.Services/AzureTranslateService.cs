@@ -24,7 +24,7 @@ public class AzureTranslateService : IAzureTranslateService
 
     }
     
-    private async Task<string> DetectLanguageAsync(string textToDetect)
+    private async Task<string> DetectLanguageAsync(string textToDetect, CancellationToken cancellationToken = default)
     {
         const string route = "/detect?api-version=3.0";
         // Input and output languages are defined as parameters.
@@ -42,7 +42,7 @@ public class AzureTranslateService : IAzureTranslateService
         // location required if you're using a multi-service or regional (not global) resource.
         request.Headers.Add("Ocp-Apim-Subscription-Region", _region);
         //var requestBody = JsonSerializer.Serialize(new object[] { new { Text = textToDetect } });
-        var response = await HttpClient.SendAsync(request).ConfigureAwait(false);
+        var response = await HttpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
         // Read response as a string.
         if (!response.IsSuccessStatusCode)
         {
@@ -60,7 +60,7 @@ public class AzureTranslateService : IAzureTranslateService
         return languageElement.GetString()!;
     }
 
-    public async Task<string> DetectLanguageFromPhrasesAsync(List<string> phraseStrings)
+    public async Task<string> DetectLanguageFromPhrasesAsync(List<string> phraseStrings, CancellationToken cancellationToken = default)
     {
         if (phraseStrings.Count < 3)
         {
@@ -70,7 +70,7 @@ public class AzureTranslateService : IAzureTranslateService
         var languages = new List<string>();
         for (var i = 0; i < 3; i++)
         {
-            var language = await DetectLanguageAsync(phraseStrings[i]);
+            var language = await DetectLanguageAsync(phraseStrings[i], cancellationToken);
             languages.Add(language);
         }
 
@@ -83,7 +83,7 @@ public class AzureTranslateService : IAzureTranslateService
         return languageGroups.First().Key;
     }
     
-    public async Task<List<string>> TranslatePhrasesAsync(List<string> phrases, string fromLanguage, string toLanguage)
+    public async Task<List<string>> TranslatePhrasesAsync(List<string> phrases, string fromLanguage, string toLanguage, CancellationToken cancellationToken = default)
     {
         const string route = "/translate?api-version=3.0";
         var uri = $"{Endpoint}{route}&from={fromLanguage}&to={toLanguage}";
@@ -99,7 +99,7 @@ public class AzureTranslateService : IAzureTranslateService
         request.Headers.Add("Ocp-Apim-Subscription-Key", _subscriptionKey);
         request.Headers.Add("Ocp-Apim-Subscription-Region", _region);
 
-        var response = await HttpClient.SendAsync(request).ConfigureAwait(false);
+        var response = await HttpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)
         {
             throw new Exception($"Failed to translate phrases. Status code: {response.StatusCode}");
