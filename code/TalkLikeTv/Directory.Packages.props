@@ -65,7 +65,7 @@
   </ItemGroup>
   <ItemGroup Label="For Translation and TTS.">
     <PackageVersion Include="Azure.AI.Translation.Text" Version="1.0.0" />
-    <PackageVersion Include="Microsoft.CognitiveServices.Speech" Version="1.42.0" />
+    <PackageVersion Include="Microsoft.CognitiveServices.Speech" Version="1.43.0" />
     <PackageVersion Include="NAudio" Version="2.2.1" />
   </ItemGroup>
 </Project>

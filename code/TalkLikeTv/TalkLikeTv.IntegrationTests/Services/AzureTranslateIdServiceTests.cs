@@ -1,24 +1,22 @@
-using System.Reflection;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Configuration.UserSecrets;
 using Microsoft.Extensions.DependencyInjection;
 using TalkLikeTv.Services;
 using TalkLikeTv.Services.Abstractions;
 
 namespace TalkLikeTv.IntegrationTests.Services
 {
-    public class AzureTranslateEntraIdServiceTests : IDisposable
+    public class AzureTranslateIdServiceTests : IDisposable
     {
         private readonly IAzureTranslateService _translateService;
         private readonly ServiceProvider _serviceProvider;
 
-        public AzureTranslateEntraIdServiceTests()
+        public AzureTranslateIdServiceTests()
         {
             var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development";
             if (!string.Equals(environment, "GitHub", StringComparison.OrdinalIgnoreCase))
             {
                 var configuration = new ConfigurationBuilder()
-                    .AddUserSecrets<AzureTranslateEntraIdServiceTests>()
+                    .AddUserSecrets<AzureTranslateIdServiceTests>()
                     .Build();
                 
                 // Set required environment variables from user secrets before creating the service

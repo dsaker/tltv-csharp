@@ -293,7 +293,7 @@ public class TitlesControllerTests
 
             // Fix 1: Define token result as the correct type
             _mockTokenService.Setup(s => s.CheckTokenStatus(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new ITokenService.TokenResult { Success = true, ErrorMessage = null });
+                .ReturnsAsync(new ITokenService.TokenResult { Token = new Token(), Success = true, ErrorMessage = null });
 
             // Fix 2: Create a proper ExtractAndValidateResult object
             var extractResult = new IAudioFileService.ExtractAndValidateResult
@@ -315,8 +315,7 @@ public class TitlesControllerTests
                     It.IsAny<Language>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(title);
 
-            // Fix 4: Use proper tuple return type compatible with Moq
-            _mockAudioProcessingService.Setup(s => s.MarkTokenAsUsedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            _mockTokenService.Setup(s => s.MarkTokenAsUsedAsync(It.IsAny<Token>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync((true, new List<string>()));
             
             var result = await _controller.CreateTitleFromFile(model);
@@ -434,7 +433,7 @@ public class TitlesControllerTests
             };
 
             _mockTokenService.Setup(s => s.CheckTokenStatus(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new ITokenService.TokenResult { Success = true, ErrorMessage = null });
+                .ReturnsAsync(new ITokenService.TokenResult {Token = new Token(), Success = true, ErrorMessage = null });
 
             var extractResult = new IAudioFileService.ExtractAndValidateResult
             {
@@ -455,7 +454,7 @@ public class TitlesControllerTests
                     It.IsAny<Language>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(title);
 
-            _mockAudioProcessingService.Setup(s => s.MarkTokenAsUsedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            _mockTokenService.Setup(s => s.MarkTokenAsUsedAsync(It.IsAny<Token>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync((false, new List<string> { "Token already used" }));
 
             // Act

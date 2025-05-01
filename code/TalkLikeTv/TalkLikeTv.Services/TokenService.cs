@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.Extensions.Logging;
 using TalkLikeTv.EntityModels;
 using TalkLikeTv.Repositories;
 using TalkLikeTv.Services.Abstractions;
@@ -9,10 +10,12 @@ namespace TalkLikeTv.Services;
 public class TokenService : ITokenService
 {
     private readonly ITokenRepository _tokenRepository;
+    private readonly ILogger<TokenService> _logger;
 
-    public TokenService(ITokenRepository tokenRepository)
+    public TokenService(ITokenRepository tokenRepository, ILogger<TokenService> logger)
     {
         _tokenRepository = tokenRepository;
+        _logger = logger;
     }
 
     public async Task<ITokenService.TokenResult> CheckTokenStatus(string token, CancellationToken cancellationToken = default)
@@ -33,7 +36,25 @@ public class TokenService : ITokenService
             return new ITokenService.TokenResult { Success = false, ErrorMessage = "Token already used." };
         }
 
-        return new ITokenService.TokenResult { Success = true };
+        return new ITokenService.TokenResult { Token = dbToken, Success = true };
+    }
+    
+    public async Task<(bool Success, List<string> Errors)> MarkTokenAsUsedAsync(Token token, CancellationToken cancellationToken = default)
+    {
+        var errors = new List<string>();
+    
+        try
+        {
+            token.Used = true;
+            await _tokenRepository.UpdateAsync(token.TokenId.ToString(), token, cancellationToken);
+            return (true, errors);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error marking token {TokenHash} as used", token.Hash);
+            errors.Add("An error occurred while processing the token.");
+            return (false, errors);
+        }
     }
     
     public (Token token, string plaintext) GenerateToken()

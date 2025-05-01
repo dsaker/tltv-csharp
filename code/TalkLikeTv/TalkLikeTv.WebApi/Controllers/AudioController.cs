@@ -72,8 +72,13 @@ public class AudioController : ControllerBase
             return StatusCode(StatusCodes.Status500InternalServerError,
                 new ErrorResponse { Errors = new[] { "Failed to create audio files." } });
         }
+        
+        if (tokenResult.Token == null)
+        {
+            return BadRequest(new ErrorResponse { Errors = new[] { "Token not found." } });
+        }
 
-        var (markSuccess, markErrors) = await _audioProcessingService.MarkTokenAsUsedAsync(model.Token, HttpContext.RequestAborted);
+        var (markSuccess, markErrors) = await _tokenService.MarkTokenAsUsedAsync(tokenResult.Token, HttpContext.RequestAborted);
         if (!markSuccess)
         {
             return BadRequest(new ErrorResponse { Errors = markErrors });
