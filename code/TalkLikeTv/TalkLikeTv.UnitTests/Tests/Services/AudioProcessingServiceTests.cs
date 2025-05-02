@@ -21,7 +21,6 @@ public class AudioProcessingServiceTests
         var mockLogger = new Mock<ILogger<AudioProcessingService>>();
         var mockTranslationService = new Mock<ITranslationService>();
         _mockLanguageRepository = new Mock<ILanguageRepository>();
-        var mockTokenRepository = new Mock<ITokenRepository>();
         var mockTitleRepository = new Mock<ITitleRepository>();
         var mockTranslateRepository = new Mock<ITranslateRepository>();
         _mockTranslateService = new Mock<IAzureTranslateService>();
@@ -43,7 +42,6 @@ public class AudioProcessingServiceTests
             mockAudioFileService.Object,
             _mockVoiceRepository.Object,
             _mockLanguageRepository.Object,
-            mockTokenRepository.Object,
             mockTitleRepository.Object,
             mockPhraseRepository.Object,
             mockTranslateRepository.Object,
@@ -58,7 +56,7 @@ public class AudioProcessingServiceTests
     {
         // Arrange
         _mockTranslateService
-            .Setup(service => service.DetectLanguageFromPhrasesAsync(It.IsAny<List<string>>()))
+            .Setup(service => service.DetectLanguageFromPhrasesAsync(It.IsAny<List<string>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("en");
 
         _mockLanguageRepository
@@ -92,23 +90,6 @@ public class AudioProcessingServiceTests
         // Assert
         Assert.Null(zipFile);
         Assert.Contains("Invalid voice selection.", errors);
-    }
-
-    [Fact]
-    public async Task MarkTokenAsUsedAsync_ReturnsError_WhenTokenIsInvalid()
-    {
-        // Arrange
-        var mockTokenRepository = new Mock<ITokenRepository>();
-        mockTokenRepository
-            .Setup(repo => repo.RetrieveByHashAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Token?)null);
-
-        // Act
-        var (success, errors) = await _service.MarkTokenAsUsedAsync("invalidToken");
-
-        // Assert
-        Assert.False(success);
-        Assert.Contains("Invalid token.", errors);
     }
     
     [Fact]
@@ -157,7 +138,6 @@ public class AudioProcessingServiceTests
             mockAudioFileService.Object,
             _mockVoiceRepository.Object,
             _mockLanguageRepository.Object,
-            Mock.Of<ITokenRepository>(),
             Mock.Of<ITitleRepository>(),
             Mock.Of<IPhraseRepository>(),
             Mock.Of<ITranslateRepository>(),

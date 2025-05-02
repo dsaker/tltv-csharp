@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using TalkLikeTv.EntityModels;
 using TalkLikeTv.Mvc.Models;
 using TalkLikeTv.Repositories;
-using TalkLikeTv.Services;
 using TalkLikeTv.Services.Abstractions;
 
 namespace TalkLikeTv.Mvc.Controllers;
@@ -155,7 +154,7 @@ public class TitlesController : Controller
             }
 
             // Mark token as used
-            var (markSuccess, markErrors) = await _audioProcessingService.MarkTokenAsUsedAsync(formModel.Token!, HttpContext.RequestAborted);
+            var (markSuccess, markErrors) = await _tokenService.MarkTokenAsUsedAsync(tokenResult.Token!, HttpContext.RequestAborted);
             if (markSuccess)
             {
                 return PhysicalFile(zipFilePath.FullName, "application/zip", zipFilePath.Name);

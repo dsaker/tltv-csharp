@@ -4,6 +4,7 @@
         <TargetFramework>net9.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
+        <UserSecretsId>7b73451e-26d9-4f1e-80bb-1698860791c3</UserSecretsId>
     </PropertyGroup>
 
     <ItemGroup Label="To simplify use of WriteLine.">

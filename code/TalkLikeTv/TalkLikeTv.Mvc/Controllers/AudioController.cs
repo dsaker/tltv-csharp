@@ -107,7 +107,7 @@ public class AudioController : Controller
             _logger.LogInformation("Audio processed successfully: {FileName}", zipFilePath.Name);
             if (_env.IsDevelopment()) return PhysicalFile(zipFilePath.FullName, "application/zip", zipFilePath.Name);
             
-            var (markSuccess, markErrors) = await _audioProcessingService.MarkTokenAsUsedAsync(formModel.Token!);
+            var (markSuccess, markErrors) = await _tokenService.MarkTokenAsUsedAsync(tokenResult.Token!);
             if (markSuccess) return PhysicalFile(zipFilePath.FullName, "application/zip", zipFilePath.Name);
 
             foreach (var error in markErrors) ModelState.AddModelError("", error);

@@ -15,7 +15,6 @@ public class AudioProcessingService : IAudioProcessingService
     private readonly string _audioOutputDir;
     private readonly IVoiceRepository _voiceRepository;
     private readonly ILanguageRepository _languageRepository;
-    private readonly ITokenRepository _tokenRepository;
     private readonly ITitleRepository _titleRepository;
     private readonly IPhraseRepository _phraseRepository;
     private readonly ITranslateRepository _translateRepository;
@@ -28,7 +27,6 @@ public class AudioProcessingService : IAudioProcessingService
         IAudioFileService audioFileService,
         IVoiceRepository voiceRepository,
         ILanguageRepository languageRepository,
-        ITokenRepository tokenRepository,
         ITitleRepository titleRepository,
         IPhraseRepository phraseRepository,
         ITranslateRepository translateRepository,
@@ -41,7 +39,6 @@ public class AudioProcessingService : IAudioProcessingService
         _audioFileService = audioFileService;
         _voiceRepository = voiceRepository;
         _languageRepository = languageRepository;
-        _tokenRepository = tokenRepository;
         _titleRepository = titleRepository;
         _phraseRepository = phraseRepository;
         _translateRepository = translateRepository;
@@ -67,15 +64,15 @@ public class AudioProcessingService : IAudioProcessingService
 
     public async Task<(Language? Language, List<string> Errors)> DetectLanguageAsync(
         List<string> phraseStrings, 
-        CancellationToken token = default)
+        CancellationToken cancellationToken = default)
     {
         var errors = new List<string>();
     
         try
         {
-            var detectedCode = await _azureTranslateService.DetectLanguageFromPhrasesAsync(phraseStrings);
+            var detectedCode = await _azureTranslateService.DetectLanguageFromPhrasesAsync(phraseStrings, cancellationToken);
 
-            var detectedLanguage = await _languageRepository.RetrieveByTagAsync(detectedCode, token);
+            var detectedLanguage = await _languageRepository.RetrieveByTagAsync(detectedCode, cancellationToken);
             if (detectedLanguage == null)
             {
                 errors.Add($"Language '{detectedCode}' not found.");
@@ -182,37 +179,6 @@ public class AudioProcessingService : IAudioProcessingService
         var zipFileName = $"{titleName}_{fromLangTag}_{toLangTag}.zip";
         var outputPath = Path.Combine(_audioOutputDir, titleName, fromVoiceShortName, toVoiceShortName);
         return _zipDirService.CreateZipFile(outputPath, zipFileName);
-    }
-
-    public async Task<(bool Success, List<string> Errors)> MarkTokenAsUsedAsync(string? tokenHash, CancellationToken cancellationToken = default)
-    {
-        var errors = new List<string>();
-    
-        try
-        {
-            if (string.IsNullOrEmpty(tokenHash))
-            {
-                errors.Add("Token hash is empty or null.");
-                return (false, errors);
-            }
-        
-            var token = await _tokenRepository.RetrieveByHashAsync(tokenHash, cancellationToken);
-            if (token == null)
-            {
-                errors.Add("Invalid token.");
-                return (false, errors);
-            }
-
-            token.Used = true;
-            await _tokenRepository.UpdateAsync(token.TokenId.ToString(), token, cancellationToken);
-            return (true, errors);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error marking token {TokenHash} as used", tokenHash);
-            errors.Add("An error occurred while processing the token.");
-            return (false, errors);
-        }
     }
 
     public async Task<Title> ProcessTitleAsync(

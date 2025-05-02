@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
+using TalkLikeTv.EntityModels;
 using TalkLikeTv.Repositories;
 using TalkLikeTv.Services.Abstractions;
 using TalkLikeTv.WebApi.Controllers;
@@ -131,14 +132,14 @@ public class AudioControllerTests
         var mockFilePath = new FileInfo(tempFilePath);
 
         _mockTokenService.Setup(s => s.CheckTokenStatus(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ITokenService.TokenResult { Success = true });
+            .ReturnsAsync(new ITokenService.TokenResult { Token = new Token(), Success = true });
         _mockTitleRepository.Setup(r => r.RetrieveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new TalkLikeTv.EntityModels.Title());
         _mockAudioProcessingService.Setup(s => s.ProcessAudioRequestAsync(
                 It.IsAny<int>(), It.IsAny<int>(), It.IsAny<TalkLikeTv.EntityModels.Title>(),
                 It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((mockFilePath, new List<string>()));
-        _mockAudioProcessingService.Setup(s => s.MarkTokenAsUsedAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        _mockTokenService.Setup(s => s.MarkTokenAsUsedAsync(It.IsAny<Token>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((true, new List<string>()));
 
         // Act

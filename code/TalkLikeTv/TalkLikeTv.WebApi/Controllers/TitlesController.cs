@@ -222,8 +222,13 @@ public class TitlesController : ControllerBase
             // Process title
             var newTitle = await _audioProcessingService.ProcessTitleAsync(model.TitleName, model.Description, phraseStrings, detectedLang, HttpContext.RequestAborted);
 
+            if (tokenResult.Token == null)
+            {
+                return BadRequest(new ErrorResponse { Errors = new[] { "Token not found." } });
+            }
+            
             // Mark token as used
-            var (markSuccess, markErrors) = await _audioProcessingService.MarkTokenAsUsedAsync(model.Token);
+            var (markSuccess, markErrors) = await _tokenService.MarkTokenAsUsedAsync(tokenResult.Token);
             if (!markSuccess)
             {
                 return BadRequest(new ErrorResponse { Errors = markErrors });

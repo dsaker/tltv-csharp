@@ -33,6 +33,11 @@ public class AzureTextToSpeechService : IAzureTextToSpeechService
 
         if (result.Reason != ResultReason.SynthesizingAudioCompleted)
         {
+            if (result.Reason == ResultReason.Canceled)
+            {
+                var cancellation = SpeechSynthesisCancellationDetails.FromResult(result);
+                throw new Exception($"Speech synthesis canceled: {cancellation.Reason}, ErrorDetails: {cancellation.ErrorDetails}");
+            }
             throw new Exception($"Speech synthesis failed: {result.Reason}");
         }
     }

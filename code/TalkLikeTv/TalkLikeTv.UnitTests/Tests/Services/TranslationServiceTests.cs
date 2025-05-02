@@ -131,7 +131,7 @@ public class TranslationServiceTests
             .ReturnsAsync(new Language { LanguageId = 1, Tag = "en" });
 
         _mockAzureTranslateService
-            .SetupSequence(service => service.TranslatePhrasesAsync(It.IsAny<List<string>>(), "en", "fr"))
+            .SetupSequence(service => service.TranslatePhrasesAsync(It.IsAny<List<string>>(), "en", "fr", It.IsAny<CancellationToken>()))
             .ReturnsAsync(translatedPhrases);
 
         _mockAzureTextToSpeechService

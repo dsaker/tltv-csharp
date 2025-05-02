@@ -19,22 +19,6 @@ internal class Program
 
     private static async Task Main(string[] args)
     {
-        // Load the appropriate .env file based on environment
-        var envLoader = new EnvLoader();
-
-        var envFile = $"../TalkLikeTv.Mvc/.env";
-        if (File.Exists(envFile))
-        {
-            envLoader.AddEnvFile(envFile);
-        }
-        else
-        {
-            Console.WriteLine($"Warning: .env file not found at {envFile}.");
-            Environment.Exit(1);
-        }
-
-        envLoader.Load();
-        
         // Set up the base JSON path - can be overridden via environment variable
         BaseJsonPath = Environment.GetEnvironmentVariable("TALKLIKETV_JSON_PATH") 
                        ?? Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "../../../json"));
