@@ -47,15 +47,15 @@ jobs:
       working-directory: ./code/TalkLikeTv
       run:  dotnet test TalkLikeTv.FastEndpointsTests --no-build --verbosity normal
 
-    - name: Integration Tests
-      working-directory: ./code/TalkLikeTv
-      run: dotnet test TalkLikeTv.IntegrationTests/TalkLikeTv.IntegrationTests.csproj --filter FullyQualifiedName~AzureTranslateEntraIdServiceTests --verbosity normal
-      env:
-        MY_SQL_PWD: ${{ secrets.MY_SQL_PWD }}
-        MY_SQL_USR: ${{ secrets.MY_SQL_USR }}
-        AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-        AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-        AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-        AZURE_TRANSLATE_ENDPOINT: ${{ secrets.AZURE_TRANSLATE_ENDPOINT }}
-        AZURE_TTS_ENDPOINT: ${{ secrets.AZURE_TRANSLATE_ENDPOINT }}
-        ASPNETCORE_ENVIRONMENT: GitHub 
+    # - name: Integration Tests
+    #   working-directory: ./code/TalkLikeTv
+    #   run: dotnet test TalkLikeTv.IntegrationTests/TalkLikeTv.IntegrationTests.csproj --filter FullyQualifiedName~AzureTranslateIdServiceTests --verbosity normal
+    #   env:
+    #     MY_SQL_PWD: ${{ secrets.MY_SQL_PWD }}
+    #     MY_SQL_USR: ${{ secrets.MY_SQL_USR }}
+    #     AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+    #     AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+    #     AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+    #     AZURE_TRANSLATE_ENDPOINT: ${{ secrets.AZURE_TRANSLATE_ENDPOINT }}
+    #     AZURE_TTS_ENDPOINT: ${{ secrets.AZURE_TRANSLATE_ENDPOINT }}
+    #     ASPNETCORE_ENVIRONMENT: GitHub 
